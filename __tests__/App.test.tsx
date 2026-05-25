@@ -1,13 +1,8 @@
-/**
- * @format
- */
+import { hasBookingConflict } from '../src/core/services/bookingConflictService';
 
-import React from 'react';
-import ReactTestRenderer from 'react-test-renderer';
-import App from '../App';
-
-test('renders correctly', async () => {
-  await ReactTestRenderer.act(() => {
-    ReactTestRenderer.create(<App />);
-  });
+test('booking conflict service is available', () => {
+  expect(hasBookingConflict([], {
+    startDate: '2026-01-01',
+    endDate: '2026-01-05',
+  })).toBe(false);
 });

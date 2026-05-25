@@ -1,97 +1,76 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# RMSH Rentals
 
-# Getting Started
+Production-grade **Car Rental Management** mobile app (POC) built with React Native CLI and TypeScript.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+Local-first architecture using AsyncStorage repositories — designed for seamless API migration later.
 
-## Step 1: Start Metro
+## Tech Stack
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+| Layer | Choice |
+|-------|--------|
+| Framework | React Native 0.85 + TypeScript |
+| Navigation | React Navigation 7 (typed stacks + bottom tabs) |
+| State | Zustand (domain stores + persist for UI prefs) |
+| Forms | React Hook Form + custom validators (no Zod/Yup) |
+| UI | React Native Paper + centralized theme tokens |
+| Lists | Shopify FlashList |
+| Bottom sheets | @gorhom/bottom-sheet |
+| Media | Image picker, image-viewing (fullscreen zoom/swipe) |
+| Dates | dayjs + `@react-native-community/datetimepicker` |
+| Storage | AsyncStorage via `storageService` + repository pattern |
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Getting Started
 
-```sh
-# Using npm
-npm start
+```bash
+cd RMSHRentals
+npm install
 
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+# One-time: install CocoaPods via Bundler (if `pod` command is not found)
 bundle install
-```
 
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+# iOS
+cd ios && bundle exec pod install && cd ..
 npm run ios
 
-# OR using Yarn
-yarn ios
+# Android
+npm run android
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Project Structure
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```
+src/
+├── app/          # Navigation, providers, theme
+├── core/         # Storage, services, validation, types, hooks
+├── shared/       # Reusable UI, media, bottom sheets, layouts, modals
+└── features/     # dashboard, cars, customers, rentals, fines, accidents, payments
+                  # (only subfolders with real code — no empty placeholders)
+```
 
-## Step 3: Modify your app
+Each feature grows with only the folders it needs (e.g. `screens/`, `store/`, `repository/`). Additional folders (`services/`, `types/`, etc.) are added when required — not pre-created empty.
 
-Now that you have successfully run the app, let's make changes!
+## Icons (vector fonts)
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Icons come from `react-native-vector-icons`, which is autolinked (CocoaPods on iOS, `fonts.gradle` on Android). **Do not run `react-native-asset`** for icon fonts — it duplicates the pod copy step and causes Xcode error *Multiple commands produce … .ttf*.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Scripts
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+- `npm start` — Metro bundler
+- `npm run ios` / `npm run android` — Run app
+- `npm test` — Jest unit tests
+- `npm run lint` — ESLint
 
-## Congratulations! :tada:
+## Seed Data
 
-You've successfully run and modified your React Native App. :partying_face:
+On first launch, sample cars, customers, rentals, fines, and payments are seeded automatically.
 
-### Now what?
+## Architecture
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for engineering decisions (Zustand vs Redux, repository pattern, API migration path).
 
-# Troubleshooting
+## Future Roadmap
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- REST/GraphQL API repositories
+- Authentication & multi-role access
+- Push notifications, analytics, payments
+- Offline sync & cloud media (CDN URLs)
