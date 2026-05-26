@@ -6,6 +6,7 @@ import {
   ImagePickerResponse,
 } from 'react-native-image-picker';
 import { MAX_CAR_IMAGES } from '@core/constants/app';
+import { ensureAndroidCameraPermission } from '@core/helpers/androidMediaPermissions';
 import type { MediaUri } from '@core/types/media';
 import { ImageSlider } from './ImageSlider';
 
@@ -16,6 +17,20 @@ interface MediaUploaderProps {
   imageHeight?: number;
 }
 
+const showPickerError = (response: ImagePickerResponse): void => {
+  if (response.didCancel) {
+    return;
+  }
+  if (response.errorMessage) {
+    Alert.alert('Could not open photos', response.errorMessage);
+  } else if (response.errorCode === 'permission') {
+    Alert.alert(
+      'Permission required',
+      'Allow camera or photo access in Settings to add images.',
+    );
+  }
+};
+
 const pickFromLibrary = async (selectionLimit: number): Promise<MediaUri[]> =>
   new Promise(resolve => {
     launchImageLibrary(
@@ -25,7 +40,12 @@ const pickFromLibrary = async (selectionLimit: number): Promise<MediaUri[]> =>
         quality: 0.8,
       },
       (response: ImagePickerResponse) => {
-        if (response.didCancel || response.errorMessage) {
+        if (response.didCancel) {
+          resolve([]);
+          return;
+        }
+        if (response.errorCode || response.errorMessage) {
+          showPickerError(response);
           resolve([]);
           return;
         }
@@ -36,16 +56,27 @@ const pickFromLibrary = async (selectionLimit: number): Promise<MediaUri[]> =>
     );
   });
 
-const pickFromCamera = async (): Promise<MediaUri | null> =>
-  new Promise(resolve => {
+const pickFromCamera = async (): Promise<MediaUri | null> => {
+  const allowed = await ensureAndroidCameraPermission();
+  if (!allowed) {
+    return null;
+  }
+
+  return new Promise(resolve => {
     launchCamera({ mediaType: 'photo', quality: 0.8 }, res => {
-      if (res.didCancel || res.errorMessage) {
+      if (res.didCancel) {
+        resolve(null);
+        return;
+      }
+      if (res.errorCode || res.errorMessage) {
+        showPickerError(res);
         resolve(null);
         return;
       }
       resolve(res.assets?.[0]?.uri ?? null);
     });
   });
+};
 
 const showImageSourcePicker = (
   onGallery: () => void,
