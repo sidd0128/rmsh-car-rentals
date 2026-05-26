@@ -19,13 +19,6 @@ export const useFineStore = create<FineState>((set, get) => ({
 
   addFine: async payload => {
     const fine = await repositories.fines.addFine(payload);
-    const customer = await repositories.customers.getCustomerById(payload.customerId);
-    if (customer) {
-      await repositories.customers.updateCustomer({
-        ...customer,
-        fineHistory: [...customer.fineHistory, fine.id],
-      });
-    }
     set({ fines: [...get().fines, fine] });
     return fine;
   },

@@ -1,8 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { colors } from '@app/theme';
+import { AccidentDetailsScreen } from '@features/accidents/screens/AccidentDetailsScreen';
 import { AccidentFormScreen } from '@features/accidents/screens/AccidentFormScreen';
 import { AccidentsListScreen } from '@features/accidents/screens/AccidentsListScreen';
+import { FineDetailsScreen } from '@features/fines/screens/FineDetailsScreen';
 import { FineFormScreen } from '@features/fines/screens/FineFormScreen';
 import { FinesListScreen } from '@features/fines/screens/FinesListScreen';
 import { SettingsScreen } from '@features/dashboard/screens/SettingsScreen';
@@ -20,11 +22,23 @@ export const SettingsStack = () => (
     <Stack.Screen name="SettingsHome" component={SettingsScreen} options={{ title: 'More' }} />
     <Stack.Screen name="FinesList" component={FinesListScreen} options={{ title: 'Fines' }} />
     <Stack.Screen
+      name="FineDetails"
+      component={FineDetailsScreen}
+      options={{ title: 'Fine details' }}
+    />
+    <Stack.Screen
       name="FineForm"
       component={FineFormScreen}
-      options={{ title: 'Add Fine' }}
+      options={({ route }) => ({
+        title: route.params?.fineId ? 'Edit fine' : 'Add fine',
+      })}
     />
     <Stack.Screen name="AccidentsList" component={AccidentsListScreen} options={{ title: 'Accidents' }} />
+    <Stack.Screen
+      name="AccidentDetails"
+      component={AccidentDetailsScreen}
+      options={{ title: 'Accident report' }}
+    />
     <Stack.Screen
       name="AccidentForm"
       component={AccidentFormScreen}

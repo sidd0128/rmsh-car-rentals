@@ -278,18 +278,3 @@ export const formatRentDueDaySummary = (
       return '';
   }
 };
-
-export const rentDueFieldsFromDate = (
-  frequency: BillingFrequency,
-  date: Date,
-): { rentDueWeekday?: number; rentDueDayOfMonth?: number } => {
-  const d = dayjs(date);
-  switch (frequency) {
-    case 'WEEKLY':
-      return { rentDueWeekday: d.day() };
-    case 'MONTHLY':
-      return { rentDueDayOfMonth: Math.min(d.date(), 28) };
-    default:
-      return {};
-  }
-};

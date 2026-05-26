@@ -17,6 +17,7 @@ import { FilterBottomSheet, FilterBottomSheetRef } from '@shared/bottomSheets/Fi
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { EmptyState } from '@shared/ui';
 import { SearchHeader } from '@reusable';
+import { returnsSoonFilterDescription } from '@core/services/availabilityService';
 import { useCarFilterStore, type CarFilter } from '../store/useCarFilterStore';
 import { CarCard } from '../components/CarCard';
 import { useFilteredCars } from '../hooks/useFilteredCars';
@@ -26,6 +27,7 @@ const FILTER_OPTIONS: { label: string; value: CarFilter }[] = [
   { label: 'Available', value: 'AVAILABLE' },
   { label: 'On Rent', value: 'ON_RENT' },
   { label: 'Upcoming Bookings', value: 'UPCOMING_BOOKING' },
+  { label: 'Returning Soon', value: 'RETURNING_SOON' },
 ];
 
 export const CarsListScreen = () => {
@@ -105,6 +107,9 @@ export const CarsListScreen = () => {
         {filter !== 'ALL' && activeFilterLabel ? (
           <Text style={styles.activeFilter}>Showing: {activeFilterLabel}</Text>
         ) : null}
+        {filter === 'RETURNING_SOON' ? (
+          <Text style={styles.filterHint}>{returnsSoonFilterDescription()}</Text>
+        ) : null}
       </View>
       <View style={styles.list}>
         <FlashList
@@ -122,7 +127,11 @@ export const CarsListScreen = () => {
           ListEmptyComponent={
             <EmptyState
               title="No cars found"
-              description="Try changing filters or add a new car"
+              description={
+                filter === 'RETURNING_SOON'
+                  ? returnsSoonFilterDescription()
+                  : 'Try changing filters or add a new car'
+              }
               actionLabel="Add Car"
               onAction={() => navigation.navigate('CarForm', {})}
             />
@@ -155,6 +164,11 @@ const styles = StyleSheet.create({
   activeFilter: {
     ...typography.label,
     color: colors.primary,
+  },
+  filterHint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
   list: { flex: 1 },
   fab: {

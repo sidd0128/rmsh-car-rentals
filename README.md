@@ -26,6 +26,7 @@ Configure Firebase before cloud features: see [PROJECT_GUIDE.md](./PROJECT_GUIDE
 | **[PROJECT_GUIDE.md](./PROJECT_GUIDE.md)** | **Architecture flow, folders, services, shared/reusable components** |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Design decisions (layers, Zustand, repos, sync) |
 | [docs/IOS_CLIENT_BUILD.md](./docs/IOS_CLIENT_BUILD.md) | **First-time iOS build / TestFlight for clients** |
+| [docs/ANDROID_CLIENT_APK.md](./docs/ANDROID_CLIENT_APK.md) | **Build APK to send Android clients** |
 | [firestore.rules.example](./firestore.rules.example) | Firestore security rules template |
 
 ## Tech stack (summary)

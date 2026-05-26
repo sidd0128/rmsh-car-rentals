@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { carHasUpcomingBookingOnly } from '@core/services/availabilityService';
+import {
+  carHasUpcomingBookingOnly,
+  carIsReturningSoon,
+} from '@core/services/availabilityService';
 import { useDebouncedValue } from '@reusable';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { useCarStore } from '../store/useCarStore';
@@ -22,6 +25,9 @@ const matchesFilter = (car: Car, filter: CarFilter, rentals: Rental[]): boolean 
   if (filter === 'ALL') return true;
   if (filter === 'UPCOMING_BOOKING') {
     return carHasUpcomingBookingOnly(car, rentals);
+  }
+  if (filter === 'RETURNING_SOON') {
+    return carIsReturningSoon(car, rentals);
   }
   return car.status === filter;
 };

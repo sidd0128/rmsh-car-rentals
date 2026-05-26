@@ -33,26 +33,4 @@ export const cloudEntityWriteService = {
     });
     await useCloudSyncStore.getState().refreshPendingSync();
   },
-
-  async deleteEntity(
-    collectionName: FirestoreCollectionName,
-    documentId: string,
-  ): Promise<void> {
-    if (!isFirebaseConfigured() || !getCurrentFirebaseUser()) {
-      return;
-    }
-
-    const online = await networkConnectivityService.isOnline();
-    if (online) {
-      await firestoreDocumentSyncService.deleteDocument(collectionName, documentId);
-      return;
-    }
-
-    await syncOutboxRepository.enqueue({
-      collectionName,
-      operation: 'delete',
-      payload: { id: documentId },
-    });
-    await useCloudSyncStore.getState().refreshPendingSync();
-  },
 };

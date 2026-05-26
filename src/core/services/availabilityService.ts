@@ -50,6 +50,29 @@ export const resolveNextUpcomingBookingForCar = (
 export const carHasUpcomingBookingOnly = (car: Car, rentals: Rental[]): boolean =>
   resolveNextUpcomingBookingForCar(car.id, rentals) !== undefined;
 
+/** Days until contract end (0 = ends today). */
+export const daysUntilRentalEnd = (rental: Rental): number =>
+  dayjs(rental.endDate).startOf('day').diff(dayjs().startOf('day'), 'day');
+
+/** Active rental ending within this many days (includes overdue still marked active). */
+export const RETURNS_SOON_WITHIN_DAYS = 3;
+
+/** User-facing copy for dashboard and filtered car list. */
+export const returnsSoonFilterDescription = (): string =>
+  `Cars whose active rental ends within ${RETURNS_SOON_WITHIN_DAYS} days`;
+
+export const rentalIsReturningSoon = (
+  rental: Rental,
+  withinDays = RETURNS_SOON_WITHIN_DAYS,
+): boolean =>
+  rental.status === 'ACTIVE' && daysUntilRentalEnd(rental) <= withinDays;
+
+/** Car currently on rent with the active contract ending soon. */
+export const carIsReturningSoon = (car: Car, rentals: Rental[]): boolean => {
+  const current = resolveCurrentBookingForCar(car.id, rentals);
+  return current ? rentalIsReturningSoon(current) : false;
+};
+
 export const deriveCarStatus = (car: Car, rentals: Rental[]): Car['status'] => {
   if (resolveCurrentBookingForCar(car.id, rentals)) {
     return 'ON_RENT';

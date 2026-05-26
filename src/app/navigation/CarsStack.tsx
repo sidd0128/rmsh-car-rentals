@@ -1,9 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { colors } from '@app/theme';
+import { AccidentDetailsScreen } from '@features/accidents/screens/AccidentDetailsScreen';
 import { CarDetailsScreen } from '@features/cars/screens/CarDetailsScreen';
 import { CarFormScreen } from '@features/cars/screens/CarFormScreen';
 import { CarsListScreen } from '@features/cars/screens/CarsListScreen';
+import { FineDetailsScreen } from '@features/fines/screens/FineDetailsScreen';
 import type { CarsStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<CarsStackParamList>();
@@ -24,6 +26,16 @@ export const CarsStack = () => (
       options={({ route }) => ({
         title: route.params?.carId ? 'Edit Car' : 'Add Car',
       })}
+    />
+    <Stack.Screen
+      name="FineDetails"
+      component={FineDetailsScreen}
+      options={{ title: 'Fine details' }}
+    />
+    <Stack.Screen
+      name="AccidentDetails"
+      component={AccidentDetailsScreen}
+      options={{ title: 'Accident report' }}
     />
   </Stack.Navigator>
 );

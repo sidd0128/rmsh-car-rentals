@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
 import {
   carHasUpcomingBookingOnly,
+  carIsReturningSoon,
   deriveCarStatus,
+  rentalIsReturningSoon,
   resolveCurrentBookingForCar,
   resolveNextUpcomingBookingForCar,
 } from '../availabilityService';
@@ -90,5 +92,33 @@ describe('availabilityService', () => {
     expect(deriveCarStatus(car('car1'), rentals)).toBe('ON_RENT');
     expect(carHasUpcomingBookingOnly(car('car1'), rentals)).toBe(false);
     expect(resolveNextUpcomingBookingForCar('car1', rentals)).toBeUndefined();
+  });
+
+  it('flags returning soon when active rental ends within three days', () => {
+    const today = dayjs().format('YYYY-MM-DD');
+    const rentals = [
+      rental({
+        id: 'r1',
+        carId: 'car1',
+        startDate: dayjs().subtract(5, 'day').format('YYYY-MM-DD'),
+        endDate: dayjs().add(2, 'day').format('YYYY-MM-DD'),
+        status: 'ACTIVE',
+      }),
+    ];
+    expect(rentalIsReturningSoon(rentals[0])).toBe(true);
+    expect(carIsReturningSoon(car('car1'), rentals)).toBe(true);
+  });
+
+  it('excludes cars whose active rental ends later than three days', () => {
+    const rentals = [
+      rental({
+        id: 'r1',
+        carId: 'car1',
+        startDate: dayjs().format('YYYY-MM-DD'),
+        endDate: dayjs().add(10, 'day').format('YYYY-MM-DD'),
+        status: 'ACTIVE',
+      }),
+    ];
+    expect(carIsReturningSoon(car('car1'), rentals)).toBe(false);
   });
 });

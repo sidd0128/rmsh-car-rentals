@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandPersistStorage } from '@core/storage/zustandPersistStorage';
 
-export type CarFilter = 'ALL' | 'AVAILABLE' | 'ON_RENT' | 'UPCOMING_BOOKING';
+export type CarFilter =
+  | 'ALL'
+  | 'AVAILABLE'
+  | 'ON_RENT'
+  | 'UPCOMING_BOOKING'
+  | 'RETURNING_SOON';
 
 interface CarFilterState {
   filter: CarFilter;

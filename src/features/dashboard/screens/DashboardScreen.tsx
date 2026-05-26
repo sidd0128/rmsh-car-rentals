@@ -8,7 +8,11 @@ import { Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabParamList, DashboardStackParamList } from '@app/navigation/types';
 import { openCarsListWithFilter } from '@features/cars/navigation/openCarsListWithFilter';
-import { carHasUpcomingBookingOnly } from '@core/services/availabilityService';
+import {
+  carHasUpcomingBookingOnly,
+  carIsReturningSoon,
+  returnsSoonFilterDescription,
+} from '@core/services/availabilityService';
 import { colors, spacing, typography } from '@app/theme';
 import { APP_NAME } from '@core/constants/app';
 import { formatDate } from '@core/helpers/date';
@@ -46,11 +50,7 @@ export const DashboardScreen = () => {
     const available = cars.filter(c => c.status === 'AVAILABLE').length;
     const onRent = cars.filter(c => c.status === 'ON_RENT').length;
     const upcomingBookings = cars.filter(c => carHasUpcomingBookingOnly(c, rentals)).length;
-    const upcomingReturns = rentals.filter(
-      r =>
-        r.status === 'ACTIVE' &&
-        dayjs(r.endDate).diff(dayjs(), 'day') <= 3,
-    ).length;
+    const returningSoon = cars.filter(c => carIsReturningSoon(c, rentals)).length;
     const totalEarnings = computeFleetTotalPaid(rentals, payments);
     const upcomingEarnings = computeUpcomingEarningsTotalForYear(payments, dayjs().year());
     const recent = [...rentals]
@@ -61,7 +61,7 @@ export const DashboardScreen = () => {
       available,
       onRent,
       upcomingBookings,
-      upcomingReturns,
+      returningSoon,
       totalEarnings,
       upcomingEarnings,
       recent,
@@ -80,7 +80,13 @@ export const DashboardScreen = () => {
         <StatCard label="Total Cars" value={cars.length} />
         <StatCard label="Available" value={stats.available} accent={colors.success} />
         <StatCard label="On Rent" value={stats.onRent} accent={colors.info} />
-        <StatCard label="Returns Soon" value={stats.upcomingReturns} accent={colors.warning} />
+        <StatCard
+          label="Returns Soon"
+          value={stats.returningSoon}
+          description={returnsSoonFilterDescription()}
+          accent={colors.warning}
+          onPress={() => openCarsListWithFilter(navigation, 'RETURNING_SOON')}
+        />
         <StatCard
           label="Upcoming Bookings"
           value={stats.upcomingBookings}

@@ -14,15 +14,3 @@ export const saveEntityWithCloudSync = async <T extends Identifiable>(
   await cloudEntityWriteService.upsertEntity(collectionName, entity);
   return entity;
 };
-
-/**
- * Deletes locally first, then removes from Firestore when online.
- */
-export const deleteEntityWithCloudSync = async (
-  collectionName: FirestoreCollectionName,
-  deleteLocal: () => Promise<void>,
-  documentId: string,
-): Promise<void> => {
-  await deleteLocal();
-  await cloudEntityWriteService.deleteEntity(collectionName, documentId);
-};

@@ -202,6 +202,7 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
             title="+ Add new customer"
             onPress={() => {
               setMenuVisible(false);
+              sheetRef.current?.close();
               onAddCustomer?.();
             }}
           />

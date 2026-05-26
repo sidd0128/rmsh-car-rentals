@@ -3,7 +3,7 @@ import type { RouteProp } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
-import type { SettingsStackParamList } from '@app/navigation/types';
+import type { FineFlowParamList } from '@app/navigation/types';
 import { spacing } from '@app/theme';
 import { currencyFieldLabel } from '@core/constants/app';
 import {
@@ -23,7 +23,7 @@ import dayjs from 'dayjs';
 
 export const FineFormScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<SettingsStackParamList, 'FineForm'>>();
+  const route = useRoute<RouteProp<FineFlowParamList, 'FineForm'>>();
   const addFine = useFineStore(s => s.addFine);
   const updateFine = useFineStore(s => s.updateFine);
   const fines = useFineStore(s => s.fines);

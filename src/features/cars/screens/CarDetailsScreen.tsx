@@ -1,7 +1,8 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
+import dayjs from 'dayjs';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
@@ -23,6 +24,8 @@ import { AssignmentModal, AssignmentModalRef } from '@shared/modals/AssignmentMo
 import { ExtendBookingModal, ExtendBookingModalRef } from '@shared/modals/ExtendBookingModal';
 import { AppButton, StatusBadge, carStatusToBadge, TimelineView } from '@shared/ui';
 import { ImageSlider } from '@shared/media';
+import { CustomerAccidentHistory } from '@features/customers/components/CustomerAccidentHistory';
+import { CustomerFineHistory } from '@features/customers/components/CustomerFineHistory';
 import { useCarStore } from '../store/useCarStore';
 
 export const CarDetailsScreen = () => {
@@ -34,6 +37,7 @@ export const CarDetailsScreen = () => {
   const payments = usePaymentStore(s => s.payments);
   const fines = useFineStore(s => s.fines);
   const accidents = useAccidentStore(s => s.accidents);
+  const cars = useCarStore(s => s.cars);
   const assignmentRef = useRef<AssignmentModalRef>(null);
   const extendRef = useRef<ExtendBookingModalRef>(null);
   const { hydrateAll } = useHydrateStores();
@@ -46,8 +50,33 @@ export const CarDetailsScreen = () => {
     [rentals, route.params.carId],
   );
 
-  const carFines = fines.filter(f => f.carId === route.params.carId);
-  const carAccidents = accidents.filter(a => a.carId === route.params.carId);
+  const carsById = useMemo(() => new Map(cars.map(c => [c.id, c])), [cars]);
+
+  const carFines = useMemo(
+    () =>
+      fines
+        .filter(f => f.carId === route.params.carId)
+        .sort((a, b) => dayjs(b.fineDate).valueOf() - dayjs(a.fineDate).valueOf()),
+    [fines, route.params.carId],
+  );
+
+  const carAccidents = useMemo(
+    () =>
+      accidents
+        .filter(a => a.carId === route.params.carId)
+        .sort((a, b) => dayjs(b.accidentDate).valueOf() - dayjs(a.accidentDate).valueOf()),
+    [accidents, route.params.carId],
+  );
+
+  const onFinePress = useCallback(
+    (fineId: string) => navigation.navigate('FineDetails', { fineId }),
+    [navigation],
+  );
+
+  const onAccidentPress = useCallback(
+    (accidentId: string) => navigation.navigate('AccidentDetails', { accidentId }),
+    [navigation],
+  );
 
   const currentCustomer = useMemo(() => {
     const cid = car?.currentBooking?.customerId;
@@ -153,25 +182,21 @@ export const CarDetailsScreen = () => {
         <TimelineView items={timeline} />
       </ScreenSection>
 
-      {carFines.length > 0 ? (
-        <ScreenSection title="Fine history">
-          {carFines.map(f => (
-            <Text key={f.id} style={typography.bodySmall}>
-              {formatCurrency(f.amount)} — {f.reason}
-            </Text>
-          ))}
-        </ScreenSection>
-      ) : null}
+      <ScreenSection title={`Fines (${carFines.length})`} showDivider>
+        <CustomerFineHistory
+          fines={carFines}
+          carsById={carsById}
+          onFinePress={onFinePress}
+        />
+      </ScreenSection>
 
-      {carAccidents.length > 0 ? (
-        <ScreenSection title="Accident history">
-          {carAccidents.map(a => (
-            <Text key={a.id} style={typography.bodySmall}>
-              {formatCurrency(a.damageCost)} — {a.description}
-            </Text>
-          ))}
-        </ScreenSection>
-      ) : null}
+      <ScreenSection title={`Accidents (${carAccidents.length})`}>
+        <CustomerAccidentHistory
+          accidents={carAccidents}
+          carsById={carsById}
+          onAccidentPress={onAccidentPress}
+        />
+      </ScreenSection>
     </ScreenLayout>
 
       <AssignmentModal

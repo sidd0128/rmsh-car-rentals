@@ -7,7 +7,7 @@ import {
 } from '@core/services/extensionBookingService';
 import { buildExtensionAssignInput } from '../helpers/buildExtensionAssignInput';
 import { createScheduledRental } from '@core/services/rentalScheduleService';
-import type { CreateRentalPayload, Rental } from '@core/types/domain';
+import type { Rental } from '@core/types/domain';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import type { AssignRentalInput } from '../types/assignRental';
@@ -16,7 +16,6 @@ import type { ExtendRentalInput } from '../types/extendRental';
 interface RentalState {
   rentals: Rental[];
   hydrate: () => Promise<void>;
-  addRental: (payload: CreateRentalPayload) => Promise<Rental>;
   assignRental: (input: AssignRentalInput) => Promise<{ success: boolean; error?: string }>;
   extendRental: (input: ExtendRentalInput) => Promise<{ success: boolean; error?: string }>;
 }
@@ -36,13 +35,6 @@ export const useRentalStore = create<RentalState>((set, get) => ({
   hydrate: async () => {
     const rentals = await repositories.rentals.getRentals();
     set({ rentals });
-  },
-
-  addRental: async payload => {
-    const rental = await repositories.rentals.addRental(payload);
-    set({ rentals: [...get().rentals, rental] });
-    await useCarStore.getState().hydrate();
-    return rental;
   },
 
   assignRental: async input => {

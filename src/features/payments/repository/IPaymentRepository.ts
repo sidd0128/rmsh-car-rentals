@@ -6,5 +6,4 @@ export interface IPaymentRepository {
     payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<PaymentRecord>;
   updatePayment(payment: PaymentRecord): Promise<void>;
-  deletePayment(id: string): Promise<void>;
 }

@@ -18,13 +18,6 @@ export const useAccidentStore = create<AccidentState>((set, get) => ({
 
   addAccident: async payload => {
     const record = await repositories.accidents.addAccident(payload);
-    const customer = await repositories.customers.getCustomerById(payload.customerId);
-    if (customer) {
-      await repositories.customers.updateCustomer({
-        ...customer,
-        accidentHistory: [...customer.accidentHistory, record.id],
-      });
-    }
     set({ accidents: [...get().accidents, record] });
     return record;
   },

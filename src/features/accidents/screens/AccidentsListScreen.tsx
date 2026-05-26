@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import type { SettingsStackParamList } from '@app/navigation/types';
 import { colors, spacing, typography, shadows, radius } from '@app/theme';
@@ -31,7 +31,13 @@ export const AccidentsListScreen = () => {
             const customer = customers.find(c => c.id === acc.customerId);
             const car = cars.find(c => c.id === acc.carId);
             return (
-              <View key={acc.id} style={[styles.card, shadows.sm]}>
+              <Pressable
+                key={acc.id}
+                style={[styles.card, shadows.sm]}
+                onPress={() =>
+                  navigation.navigate('AccidentDetails', { accidentId: acc.id })
+                }
+              >
                 <Text style={typography.h4}>{acc.description}</Text>
                 <Text style={[typography.bodySmall, styles.cardLine]}>
                   {customer?.name} · {car?.name}
@@ -39,7 +45,7 @@ export const AccidentsListScreen = () => {
                 <Text style={typography.caption}>
                   {formatDate(acc.accidentDate)} · {formatCurrency(acc.damageCost)}
                 </Text>
-              </View>
+              </Pressable>
             );
           })
         )}

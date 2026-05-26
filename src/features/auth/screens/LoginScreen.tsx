@@ -16,7 +16,6 @@ export const LoginScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const sessionExpiredMessage = useFirebaseAuthStore(s => s.sessionExpiredMessage);
   const clearSessionExpiredMessage = useFirebaseAuthStore(s => s.clearSessionExpiredMessage);
-  const setAuthError = useFirebaseAuthStore(s => s.setAuthError);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,15 +35,12 @@ export const LoginScreen = () => {
       return;
     }
 
-    setAuthError(null);
     clearSessionExpiredMessage();
 
     try {
       await signInWithEmail(email, password);
     } catch (error) {
-      const message = getFirebaseAuthErrorMessage(error);
-      setAuthError(message);
-      Alert.alert('Sign in failed', message);
+      Alert.alert('Sign in failed', getFirebaseAuthErrorMessage(error));
     }
   };
 

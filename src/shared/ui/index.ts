@@ -5,6 +5,5 @@ export { StatusBadge, carStatusToBadge } from './StatusBadge';
 export { EmptyState } from './EmptyState';
 export { TimelineView } from './TimelineView';
 export { AppDatePickerModal } from './AppDatePickerModal';
-export type { AppDatePickerModalProps } from './AppDatePickerModal';
 export { WeekdayPicker } from './WeekdayPicker';
 export { ReadOnlyFormField } from './ReadOnlyFormField';

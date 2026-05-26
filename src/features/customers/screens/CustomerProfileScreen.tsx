@@ -1,7 +1,7 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CustomersStackParamList } from '@app/navigation/types';
@@ -20,9 +20,13 @@ import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, TimelineView } from '@shared/ui';
 import { ImageSlider } from '@shared/media';
+import { CustomerAccidentHistory } from '../components/CustomerAccidentHistory';
+import { CustomerFineHistory } from '../components/CustomerFineHistory';
 import { CustomerPaymentHistory } from '../components/CustomerPaymentHistory';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useCustomerRentalInfo } from '../hooks/useCustomerRentalInfo';
+import { useHydrateStores } from '@core/hooks/useHydrateStores';
+import dayjs from 'dayjs';
 
 export const CustomerProfileScreen = () => {
   const route = useRoute<RouteProp<CustomersStackParamList, 'CustomerProfile'>>();
@@ -34,6 +38,15 @@ export const CustomerProfileScreen = () => {
   const accidents = useAccidentStore(s => s.accidents);
   const cars = useCarStore(s => s.cars);
   const { activeRental, car } = useCustomerRentalInfo(route.params.customerId);
+  const { hydrateAll } = useHydrateStores();
+
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateAll();
+    }, [hydrateAll]),
+  );
+
+  const carsById = useMemo(() => new Map(cars.map(c => [c.id, c])), [cars]);
 
   const customerRentals = useMemo(
     () => rentals.filter(r => r.customerId === route.params.customerId),
@@ -49,8 +62,21 @@ export const CustomerProfileScreen = () => {
   );
   const totalRentals = customerRentals.length;
   const totalSpent = computeCustomerTotalPaid(route.params.customerId, rentals, payments);
-  const customerFines = fines.filter(f => f.customerId === route.params.customerId);
-  const customerAccidents = accidents.filter(a => a.customerId === route.params.customerId);
+  const customerFines = useMemo(
+    () =>
+      fines
+        .filter(f => f.customerId === route.params.customerId)
+        .sort((a, b) => dayjs(b.fineDate).valueOf() - dayjs(a.fineDate).valueOf()),
+    [fines, route.params.customerId],
+  );
+
+  const customerAccidents = useMemo(
+    () =>
+      accidents
+        .filter(a => a.customerId === route.params.customerId)
+        .sort((a, b) => dayjs(b.accidentDate).valueOf() - dayjs(a.accidentDate).valueOf()),
+    [accidents, route.params.customerId],
+  );
 
   if (!customer) {
     return (
@@ -72,7 +98,7 @@ export const CustomerProfileScreen = () => {
   });
 
   return (
-    <ScreenLayout>
+    <ScreenLayout onRefresh={hydrateAll}>
       <View style={styles.profileHeader}>
         {customer.photo ? (
           <Image source={{ uri: customer.photo }} style={styles.avatar} />
@@ -137,25 +163,23 @@ export const CustomerProfileScreen = () => {
         <CustomerPaymentHistory payments={customerPayments} />
       </ScreenSection>
 
-      {customerFines.length > 0 ? (
-        <ScreenSection title="Fines">
-          {customerFines.map(f => (
-            <Text key={f.id} style={typography.bodySmall}>
-              {formatCurrency(f.amount)} — {f.reason} ({f.paidStatus ? 'Paid' : 'Unpaid'})
-            </Text>
-          ))}
-        </ScreenSection>
-      ) : null}
+      <ScreenSection title={`Fines (${customerFines.length})`} showDivider>
+        <CustomerFineHistory
+          fines={customerFines}
+          carsById={carsById}
+          onFinePress={fineId => navigation.navigate('FineDetails', { fineId })}
+        />
+      </ScreenSection>
 
-      {customerAccidents.length > 0 ? (
-        <ScreenSection title="Accidents">
-          {customerAccidents.map(a => (
-            <Text key={a.id} style={typography.bodySmall}>
-              {a.description} — {formatCurrency(a.damageCost)}
-            </Text>
-          ))}
-        </ScreenSection>
-      ) : null}
+      <ScreenSection title={`Accidents (${customerAccidents.length})`}>
+        <CustomerAccidentHistory
+          accidents={customerAccidents}
+          carsById={carsById}
+          onAccidentPress={accidentId =>
+            navigation.navigate('AccidentDetails', { accidentId })
+          }
+        />
+      </ScreenSection>
 
       <AppButton
         label="Edit Profile"

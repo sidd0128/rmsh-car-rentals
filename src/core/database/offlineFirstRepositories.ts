@@ -27,10 +27,7 @@ import type {
   PaymentRecord,
   Rental,
 } from '@core/types/domain';
-import {
-  deleteEntityWithCloudSync,
-  saveEntityWithCloudSync,
-} from './offlineFirstRepositoryHelpers';
+import { saveEntityWithCloudSync } from './offlineFirstRepositoryHelpers';
 
 class OfflineFirstCarRepository implements ICarRepository {
   getCars = () => asyncStorageCarRepository.getCars();
@@ -43,12 +40,6 @@ class OfflineFirstCarRepository implements ICarRepository {
     await asyncStorageCarRepository.updateCar(car);
     await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CARS, async () => car);
   };
-  deleteCar = (id: string) =>
-    deleteEntityWithCloudSync(
-      FIRESTORE_COLLECTION_NAMES.CARS,
-      () => asyncStorageCarRepository.deleteCar(id),
-      id,
-    );
 }
 
 class OfflineFirstCustomerRepository implements ICustomerRepository {
@@ -62,12 +53,6 @@ class OfflineFirstCustomerRepository implements ICustomerRepository {
     await asyncStorageCustomerRepository.updateCustomer(customer);
     await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CUSTOMERS, async () => customer);
   };
-  deleteCustomer = (id: string) =>
-    deleteEntityWithCloudSync(
-      FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-      () => asyncStorageCustomerRepository.deleteCustomer(id),
-      id,
-    );
 }
 
 class OfflineFirstRentalRepository implements IRentalRepository {
@@ -82,12 +67,6 @@ class OfflineFirstRentalRepository implements IRentalRepository {
     await asyncStorageRentalRepository.updateRental(rental);
     await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.RENTALS, async () => rental);
   };
-  deleteRental = (id: string) =>
-    deleteEntityWithCloudSync(
-      FIRESTORE_COLLECTION_NAMES.RENTALS,
-      () => asyncStorageRentalRepository.deleteRental(id),
-      id,
-    );
 }
 
 class OfflineFirstFineRepository implements IFineRepository {
@@ -100,12 +79,6 @@ class OfflineFirstFineRepository implements IFineRepository {
     await asyncStorageFineRepository.updateFine(fine);
     await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.FINES, async () => fine);
   };
-  deleteFine = (id: string) =>
-    deleteEntityWithCloudSync(
-      FIRESTORE_COLLECTION_NAMES.FINES,
-      () => asyncStorageFineRepository.deleteFine(id),
-      id,
-    );
 }
 
 class OfflineFirstAccidentRepository implements IAccidentRepository {
@@ -113,12 +86,6 @@ class OfflineFirstAccidentRepository implements IAccidentRepository {
   addAccident = (payload: CreateAccidentPayload) =>
     saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.ACCIDENTS, () =>
       asyncStorageAccidentRepository.addAccident(payload),
-    );
-  deleteAccident = (id: string) =>
-    deleteEntityWithCloudSync(
-      FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-      () => asyncStorageAccidentRepository.deleteAccident(id),
-      id,
     );
 }
 
@@ -134,12 +101,6 @@ class OfflineFirstPaymentRepository implements IPaymentRepository {
     await asyncStoragePaymentRepository.updatePayment(payment);
     await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.PAYMENTS, async () => payment);
   };
-  deletePayment = (id: string) =>
-    deleteEntityWithCloudSync(
-      FIRESTORE_COLLECTION_NAMES.PAYMENTS,
-      () => asyncStoragePaymentRepository.deletePayment(id),
-      id,
-    );
 }
 
 export const offlineFirstCarRepository = new OfflineFirstCarRepository();

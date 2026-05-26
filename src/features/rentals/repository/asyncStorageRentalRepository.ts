@@ -40,10 +40,6 @@ class AsyncStorageRentalRepository
   async updateRental(rental: Rental): Promise<void> {
     await this.save({ ...rental, updatedAt: todayISO() });
   }
-
-  deleteRental(id: string): Promise<void> {
-    return this.delete(id);
-  }
 }
 
 export const asyncStorageRentalRepository = new AsyncStorageRentalRepository();

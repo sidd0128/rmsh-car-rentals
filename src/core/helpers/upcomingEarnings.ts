@@ -3,7 +3,7 @@ import type { PaymentRecord } from '@core/types/domain';
 import { installmentDueDay } from './paymentInstallment';
 
 /** Pending installments with rent due in the given calendar year. */
-export const getPendingPaymentsInYear = (
+const getPendingPaymentsInYear = (
   payments: PaymentRecord[],
   year: number,
 ): PaymentRecord[] =>

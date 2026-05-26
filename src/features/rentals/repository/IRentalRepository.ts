@@ -6,5 +6,4 @@ export interface IRentalRepository {
   getRentalsByCarId(carId: string): Promise<Rental[]>;
   addRental(payload: CreateRentalPayload): Promise<Rental>;
   updateRental(rental: Rental): Promise<void>;
-  deleteRental(id: string): Promise<void>;
 }

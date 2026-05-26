@@ -34,7 +34,7 @@ export const FinesListScreen = () => {
               <Pressable
                 key={fine.id}
                 style={[styles.card, shadows.sm]}
-                onPress={() => navigation.navigate('FineForm', { fineId: fine.id })}
+                onPress={() => navigation.navigate('FineDetails', { fineId: fine.id })}
               >
                 <View style={styles.row}>
                   <Text style={typography.h4}>{formatCurrency(fine.amount)}</Text>

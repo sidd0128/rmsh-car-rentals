@@ -5,13 +5,24 @@ export type CarsStackParamList = {
   CarsList: { filter?: CarFilter } | undefined;
   CarDetails: { carId: string };
   CarForm: { carId?: string };
+} & AccidentFlowParamList &
+  Pick<FineFlowParamList, 'FineDetails'>;
+
+export type FineFlowParamList = {
+  FineDetails: { fineId: string };
+  FineForm: { fineId?: string };
+};
+
+export type AccidentFlowParamList = {
+  AccidentDetails: { accidentId: string };
 };
 
 export type CustomersStackParamList = {
   CustomersList: undefined;
   CustomerProfile: { customerId: string };
   CustomerForm: { customerId?: string };
-};
+} & FineFlowParamList &
+  AccidentFlowParamList;
 
 export type RentalsStackParamList = {
   RentalsList: undefined;
@@ -27,10 +38,10 @@ export type DashboardStackParamList = {
 export type SettingsStackParamList = {
   SettingsHome: undefined;
   FinesList: undefined;
-  FineForm: { fineId?: string };
   AccidentsList: undefined;
   AccidentForm: undefined;
-};
+} & FineFlowParamList &
+  AccidentFlowParamList;
 
 export type BottomTabParamList = {
   DashboardTab: NavigatorScreenParams<DashboardStackParamList>;

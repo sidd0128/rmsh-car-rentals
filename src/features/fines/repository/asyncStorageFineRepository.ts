@@ -24,10 +24,6 @@ class AsyncStorageFineRepository extends BaseLocalRepository<Fine> implements IF
   async updateFine(fine: Fine): Promise<void> {
     await this.save({ ...fine, updatedAt: todayISO() });
   }
-
-  deleteFine(id: string): Promise<void> {
-    return this.delete(id);
-  }
 }
 
 export const asyncStorageFineRepository = new AsyncStorageFineRepository();

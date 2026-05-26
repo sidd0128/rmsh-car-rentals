@@ -95,9 +95,8 @@ Modals that need full height (assign, extend) sit **outside** parent `ScrollView
 
 ## Recent cleanup (maintainers)
 
-- Removed unused `customerIsInPendingSection` (old customer filter).
-- Removed unused monthly upcoming-earnings helpers (dashboard uses year total).
-- Removed obsolete `@rmsh/customer-store-prefs` from data wipe.
-- Fixed wipe reset: car filter defaults to `ALL` (not `AVAILABLE`).
-- Shared `ReadOnlyFormField` for fine/accident car display.
-- Docs rewritten to match current behaviour (see PROJECT_GUIDE).
+- Removed dead `useRentalStore.addRental` (rentals created via `createScheduledRental` only).
+- Removed unused per-entity repository `delete*` APIs (full wipe uses `wipeAllAppData`).
+- Removed unused `rentDueFieldsFromDate` and misleading `authError` auth store field.
+- Fines/accidents on customer profile use `customerId` on records (not `fineHistory` / `accidentHistory` arrays).
+- Car and customer detail screens share `CustomerFineHistory` / `CustomerAccidentHistory` list UI.

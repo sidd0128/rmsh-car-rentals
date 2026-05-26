@@ -38,10 +38,6 @@ class AsyncStorageCarRepository
   async updateCar(car: Car): Promise<void> {
     await this.save({ ...car, updatedAt: todayISO() });
   }
-
-  deleteCar(id: string): Promise<void> {
-    return this.delete(id);
-  }
 }
 
 export const asyncStorageCarRepository = new AsyncStorageCarRepository();

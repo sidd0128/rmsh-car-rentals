@@ -8,11 +8,8 @@ import { getFirebaseAuthErrorMessage } from '@core/firebase/auth/utils/firebaseA
 import { spacing } from '@app/theme';
 import { AppButton, AppInput } from '@shared/ui';
 import { AuthScreenLayout } from '../components/AuthScreenLayout';
-import { useFirebaseAuthStore } from '../store/useFirebaseAuthStore';
-
 export const RegisterScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const setAuthError = useFirebaseAuthStore(s => s.setAuthError);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,14 +30,10 @@ export const RegisterScreen = () => {
       return;
     }
 
-    setAuthError(null);
-
     try {
       await registerWithEmail(email, password);
     } catch (error) {
-      const message = getFirebaseAuthErrorMessage(error);
-      setAuthError(message);
-      Alert.alert('Registration failed', message);
+      Alert.alert('Registration failed', getFirebaseAuthErrorMessage(error));
     }
   };
 
