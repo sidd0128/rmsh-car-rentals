@@ -8,17 +8,23 @@ import { formatCurrency } from '@core/utils/currency';
 import { ImageSlider } from '@shared/media';
 import { useTranslation } from '@core/i18n';
 
+type AccidentHistoryEmptyScope = 'customer' | 'car';
+
 interface CustomerAccidentHistoryProps {
   accidents: AccidentRecord[];
   carsById: Map<string, Car>;
   onAccidentPress: (accidentId: string) => void;
+  /** Car detail vs customer profile empty-state copy. */
+  emptyScope?: AccidentHistoryEmptyScope;
 }
 
 export const CustomerAccidentHistory = memo<CustomerAccidentHistoryProps>(
-  ({ accidents, carsById, onAccidentPress }) => {
+  ({ accidents, carsById, onAccidentPress, emptyScope = 'customer' }) => {
     const { t } = useTranslation();
     if (accidents.length === 0) {
-      return <Text style={typography.bodySmall}>{t('customers.noAccidents')}</Text>;
+      const emptyKey =
+        emptyScope === 'car' ? 'cars.noAccidentsForCar' : 'customers.noAccidents';
+      return <Text style={typography.bodySmall}>{t(emptyKey)}</Text>;
     }
 
     return (

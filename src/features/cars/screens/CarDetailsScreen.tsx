@@ -199,6 +199,7 @@ export const CarDetailsScreen = () => {
           fines={carFines}
           carsById={carsById}
           onFinePress={onFinePress}
+          emptyScope="car"
         />
       </ScreenSection>
 
@@ -212,6 +213,7 @@ export const CarDetailsScreen = () => {
           accidents={carAccidents}
           carsById={carsById}
           onAccidentPress={onAccidentPress}
+          emptyScope="car"
         />
       </ScreenSection>
     </ScreenLayout>

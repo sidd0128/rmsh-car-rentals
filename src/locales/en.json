@@ -146,6 +146,8 @@
     "rentalHistory": "Rental history",
     "fines": "Fines",
     "accidents": "Accidents",
+    "noFinesForCar": "No fines recorded for this car.",
+    "noAccidentsForCar": "No accident recorded for this car.",
     "noCarsFound": "No cars found",
     "carName": "Car name",
     "brand": "Brand",

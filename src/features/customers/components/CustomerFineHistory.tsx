@@ -9,17 +9,23 @@ import { ImageSlider } from '@shared/media';
 import { StatusBadge } from '@shared/ui';
 import { useTranslation } from '@core/i18n';
 
+type FineHistoryEmptyScope = 'customer' | 'car';
+
 interface CustomerFineHistoryProps {
   fines: Fine[];
   carsById: Map<string, Car>;
   onFinePress: (fineId: string) => void;
+  /** Car detail vs customer profile empty-state copy. */
+  emptyScope?: FineHistoryEmptyScope;
 }
 
 export const CustomerFineHistory = memo<CustomerFineHistoryProps>(
-  ({ fines, carsById, onFinePress }) => {
+  ({ fines, carsById, onFinePress, emptyScope = 'customer' }) => {
     const { t } = useTranslation();
     if (fines.length === 0) {
-      return <Text style={typography.bodySmall}>{t('customers.noFines')}</Text>;
+      const emptyKey =
+        emptyScope === 'car' ? 'cars.noFinesForCar' : 'customers.noFines';
+      return <Text style={typography.bodySmall}>{t(emptyKey)}</Text>;
     }
 
     return (
