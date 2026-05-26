@@ -16,6 +16,7 @@ module.exports = {
           '@shared': path.join(src, 'shared'),
           '@features': path.join(src, 'features'),
           '@reusable': path.join(src, 'reusable'),
+          '@locales': path.join(src, 'locales'),
         },
       },
     ],

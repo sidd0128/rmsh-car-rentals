@@ -6,9 +6,12 @@ import type { AuthStackParamList } from '@app/navigation/types';
 import { registerWithEmail } from '@core/firebase/auth/services/firebaseAuthService';
 import { getFirebaseAuthErrorMessage } from '@core/firebase/auth/utils/firebaseAuthErrorUtils';
 import { spacing } from '@app/theme';
+import { useTranslation } from '@core/i18n';
 import { AppButton, AppInput } from '@shared/ui';
 import { AuthScreenLayout } from '../components/AuthScreenLayout';
+
 export const RegisterScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   const [email, setEmail] = useState('');
@@ -16,47 +19,47 @@ export const RegisterScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const onRegister = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Missing fields', 'Enter email and password.');
+      Alert.alert(t('auth.missingFieldsTitle'), t('auth.missingEmailPasswordRegister'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Passwords do not match', 'Confirm password must match.');
+      Alert.alert(t('auth.passwordsMismatchTitle'), t('auth.passwordsMismatchMessage'));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Weak password', 'Use at least 6 characters.');
+      Alert.alert(t('auth.weakPasswordTitle'), t('auth.weakPasswordMessage'));
       return;
     }
 
     try {
       await registerWithEmail(email, password);
     } catch (error) {
-      Alert.alert('Registration failed', getFirebaseAuthErrorMessage(error));
+      Alert.alert(t('auth.registrationFailedTitle'), getFirebaseAuthErrorMessage(error));
     }
   };
 
   return (
     <AuthScreenLayout
-      title="Create account"
-      subtitle="Set up your email and password. You will be signed in automatically."
+      title={t('auth.createAccountTitle')}
+      subtitle={t('auth.createAccountSubtitle')}
       showBack
       onBackPress={() => navigation.goBack()}
     >
       <AppInput
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
         leftIcon="email-outline"
-        placeholder="you@company.com"
+        placeholder={t('auth.emailPlaceholder')}
         containerStyle={styles.field}
       />
       <AppInput
-        label="Password"
+        label={t('auth.password')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -64,27 +67,23 @@ export const RegisterScreen = () => {
         autoCapitalize="none"
         autoComplete="password"
         leftIcon="lock-outline"
-        placeholder="At least 6 characters"
+        placeholder={t('auth.passwordMinPlaceholder')}
         containerStyle={styles.field}
       />
       <AppInput
-        label="Confirm password"
+        label={t('auth.confirmPassword')}
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
         enablePasswordToggle
         autoCapitalize="none"
         leftIcon="lock-check-outline"
-        placeholder="Re-enter password"
+        placeholder={t('auth.confirmPasswordPlaceholder')}
         containerStyle={styles.fieldLast}
       />
 
       <View style={styles.actions}>
-        <AppButton
-          label="Create account"
-          onPress={onRegister}
-          fullWidth
-        />
+        <AppButton label={t('auth.createAccount')} onPress={onRegister} fullWidth />
       </View>
     </AuthScreenLayout>
   );

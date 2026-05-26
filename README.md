@@ -45,6 +45,11 @@ React Native 0.85 · TypeScript · React Navigation 7 · Zustand · AsyncStorage
 - Do **not** commit `ios/Pods/` — run `bundle exec pod install` after clone.
 - Do **not** run `react-native-asset` for icon fonts (duplicates CocoaPods fonts).
 
+## Android notes
+
+- Icon fonts come from `react-native-vector-icons/fonts.gradle` in `android/app/build.gradle` (MaterialCommunityIcons only).
+- Do **not** keep `android/app/src/main/assets/fonts/` — it duplicates fonts and breaks release builds. Remove with `rm -rf android/app/src/main/assets/fonts` if present.
+
 ## Data
 
 The app starts with **no sample data**. Lists are empty until you add cars, customers, and rentals (or sync from Firestore after sign-in).

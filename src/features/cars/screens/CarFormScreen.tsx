@@ -15,6 +15,7 @@ import { AppButton, ControlledAppInput } from '@shared/ui';
 import { useCarStore } from '../store/useCarStore';
 import { useCarFormData } from '../hooks/useCarFormData';
 import { CarPhotosSection } from '../components/CarPhotosSection';
+import { useTranslation } from '@core/i18n';
 
 interface CarFormValues {
   name: string;
@@ -28,6 +29,7 @@ interface CarFormValues {
 }
 
 export const CarFormScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarForm'>>();
   const carId = route.params?.carId;
@@ -112,21 +114,30 @@ export const CarFormScreen = () => {
     <ScreenLayout contentStyle={screenStyles.formStack}>
       <CarPhotosSection images={images} onChange={setImages} />
       <View>
-        <ControlledAppInput name="name" control={control} label="Car name" />
-        <ControlledAppInput name="brand" control={control} label="Brand" />
-        <ControlledAppInput name="model" control={control} label="Model" />
-        <ControlledAppInput name="year" control={control} label="Year" keyboardType="numeric" />
-        <ControlledAppInput name="color" control={control} label="Color" />
-        <ControlledAppInput name="numberPlate" control={control} label="Number plate" />
+        <ControlledAppInput name="name" control={control} label={t('cars.carName')} />
+        <ControlledAppInput name="brand" control={control} label={t('cars.brand')} />
+        <ControlledAppInput name="model" control={control} label={t('cars.model')} />
+        <ControlledAppInput
+          name="year"
+          control={control}
+          label={t('cars.year')}
+          keyboardType="numeric"
+        />
+        <ControlledAppInput name="color" control={control} label={t('cars.color')} />
+        <ControlledAppInput
+          name="numberPlate"
+          control={control}
+          label={t('cars.numberPlate')}
+        />
         <ControlledAppInput
           name="dailyRate"
           control={control}
-          label={currencyFieldLabel('Daily rate')}
+          label={currencyFieldLabel(t('cars.dailyRate'))}
           keyboardType="numeric"
         />
-        <ControlledAppInput name="notes" control={control} label="Notes" multiline />
+        <ControlledAppInput name="notes" control={control} label={t('common.notes')} multiline />
         <AppButton
-          label={isEdit ? 'Save Changes' : 'Add Car'}
+          label={isEdit ? t('cars.saveChanges') : t('common.addCar')}
           onPress={onSubmit}
           fullWidth
         />

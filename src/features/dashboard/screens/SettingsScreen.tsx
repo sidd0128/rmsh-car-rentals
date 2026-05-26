@@ -9,6 +9,7 @@ import { showDevDataTools } from '@core/config/env';
 import { wipeAllAppData } from '@core/data/wipeAllAppData';
 import { formatDateTime } from '@core/helpers/date';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
+import { useTranslation } from '@core/i18n';
 import { useCloudSyncStore } from '@core/store/useCloudSyncStore';
 import { performAppLogout } from '@core/storage/performAppLogout';
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
@@ -16,21 +17,8 @@ import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton } from '@shared/ui';
 
-const formatCloudWipeSummary = (
-  cloudSkipped: boolean,
-  deleted: Partial<Record<string, number>>,
-): string => {
-  if (cloudSkipped) {
-    return 'Firebase was not cleared (sign in while online to wipe cloud data too).';
-  }
-  const total = Object.values(deleted).reduce<number>(
-    (sum, count) => sum + (count ?? 0),
-    0,
-  );
-  return `Firebase cleared (${total} documents removed).`;
-};
-
 export const SettingsScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const { hydrateAll } = useHydrateStores();
   const authUser = useFirebaseAuthStore(s => s.user);
@@ -47,6 +35,20 @@ export const SettingsScreen = () => {
     firebaseConfigured && authStatus === 'authenticated' && hasPendingSync;
   const [wipingAll, setWipingAll] = useState(false);
 
+  const formatCloudWipeSummary = (
+    cloudSkipped: boolean,
+    deleted: Partial<Record<string, number>>,
+  ): string => {
+    if (cloudSkipped) {
+      return t('settings.cloudNotCleared');
+    }
+    const total = Object.values(deleted).reduce<number>(
+      (sum, count) => sum + (count ?? 0),
+      0,
+    );
+    return t('settings.cloudCleared', { count: total });
+  };
+
   useFocusEffect(
     useCallback(() => {
       void refreshPendingSync();
@@ -56,44 +58,42 @@ export const SettingsScreen = () => {
   const handleSync = async () => {
     const message = await syncNow();
     await hydrateAll();
-    Alert.alert('Cloud sync', message);
+    Alert.alert(t('settings.syncAlertTitle'), message);
   };
 
   const handleWipeAllData = () => {
-    Alert.alert(
-      'Wipe all data',
-      'This permanently deletes all cars, customers, rentals, payments, fines, and accidents from this device and from Firebase (when signed in). This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Wipe all data',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              setWipingAll(true);
-              const result = await wipeAllAppData();
-              await hydrateAll();
-              await refreshPendingSync();
-              setWipingAll(false);
-              Alert.alert(
-                'All data wiped',
-                `Local storage is empty. ${formatCloudWipeSummary(
+    Alert.alert(t('settings.wipeAllTitle'), t('settings.wipeAllMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.wipeAllConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setWipingAll(true);
+            const result = await wipeAllAppData();
+            await hydrateAll();
+            await refreshPendingSync();
+            setWipingAll(false);
+            Alert.alert(
+              t('settings.wipeAllDoneTitle'),
+              t('settings.wipeAllDoneMessage', {
+                cloudSummary: formatCloudWipeSummary(
                   result.cloudSkipped,
                   result.cloudDeletedByCollection,
-                )}`,
-              );
-            })();
-          },
+                ),
+              }),
+            );
+          })();
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleSignOut = () => {
-    Alert.alert('Sign out', 'You will return to the login screen.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('settings.signOutTitle'), t('settings.signOutMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Sign out',
+        text: t('settings.signOut'),
         style: 'destructive',
         onPress: () => {
           void performAppLogout();
@@ -104,16 +104,18 @@ export const SettingsScreen = () => {
 
   return (
     <ScreenLayout onRefresh={handleSync} refreshing={isSyncing}>
-      <Text style={typography.h2}>More</Text>
-      <Text style={styles.lead}>Account, sync, and fleet compliance tools.</Text>
+      <Text style={typography.h2}>{t('settings.title')}</Text>
+      <Text style={styles.lead}>{t('settings.lead')}</Text>
 
       <View style={screenStyles.syncCard}>
-        <Text style={typography.h3}>Account</Text>
+        <Text style={typography.h3}>{t('settings.account')}</Text>
         {authUser?.email ? (
-          <Text style={styles.syncLine}>Signed in as {authUser.email}</Text>
+          <Text style={styles.syncLine}>
+            {t('settings.signedInAs', { email: authUser.email })}
+          </Text>
         ) : null}
         <AppButton
-          label="Sign out"
+          label={t('settings.signOut')}
           variant="outline"
           onPress={handleSignOut}
           fullWidth
@@ -122,13 +124,10 @@ export const SettingsScreen = () => {
 
       {showDevDataTools() ? (
         <View style={screenStyles.syncCard}>
-          <Text style={typography.h3}>Data (development only)</Text>
-          <Text style={styles.syncHint}>
-            Removes everything from the app and Firebase. You stay signed in so you can start
-            fresh immediately. Hidden in release builds for clients.
-          </Text>
+          <Text style={typography.h3}>{t('settings.devDataTitle')}</Text>
+          <Text style={styles.syncHint}>{t('settings.devDataHint')}</Text>
           <AppButton
-            label="Wipe all data"
+            label={t('settings.wipeAllData')}
             variant="danger"
             onPress={handleWipeAllData}
             loading={wipingAll}
@@ -138,37 +137,43 @@ export const SettingsScreen = () => {
       ) : null}
 
       <View style={screenStyles.syncCard}>
-        <Text style={typography.h3}>Cloud sync (Firebase)</Text>
+        <Text style={typography.h3}>{t('settings.cloudSyncTitle')}</Text>
         <Text style={styles.syncLine}>
-          Firebase: {firebaseConfigured ? 'Configured' : 'Not configured (local only)'}
+          {firebaseConfigured
+            ? t('settings.firebaseConfigured')
+            : t('settings.firebaseNotConfigured')}
         </Text>
-        <Text style={styles.syncLine}>Network: {isOnline ? 'Online' : 'Offline'}</Text>
         <Text style={styles.syncLine}>
-          Last sync: {lastSyncedAt ? formatDateTime(lastSyncedAt) : 'Never'}
+          {isOnline ? t('settings.networkOnline') : t('settings.networkOffline')}
+        </Text>
+        <Text style={styles.syncLine}>
+          {lastSyncedAt
+            ? t('settings.lastSync', { time: formatDateTime(lastSyncedAt) })
+            : t('settings.lastSyncNever')}
         </Text>
         {lastMessage ? <Text style={styles.syncHint}>{lastMessage}</Text> : null}
         {showSyncButton ? (
           <AppButton
-            label="Sync now"
+            label={t('settings.syncNow')}
             onPress={handleSync}
             loading={isSyncing}
             fullWidth
           />
         ) : firebaseConfigured && authStatus === 'authenticated' ? (
-          <Text style={styles.syncHint}>All local changes are synced.</Text>
+          <Text style={styles.syncHint}>{t('settings.allSynced')}</Text>
         ) : null}
       </View>
 
       <View style={styles.menuCard}>
         <List.Item
-          title="Fine Management"
-          description="Track and manage customer fines"
+          title={t('settings.fineManagement')}
+          description={t('settings.fineManagementDesc')}
           left={props => <List.Icon {...props} icon="cash-multiple" />}
           onPress={() => navigation.navigate('FinesList')}
         />
         <List.Item
-          title="Accident Records"
-          description="Damage tracking and blacklist flags"
+          title={t('settings.accidentRecords')}
+          description={t('settings.accidentRecordsDesc')}
           left={props => <List.Icon {...props} icon="car-emergency" />}
           onPress={() => navigation.navigate('AccidentsList')}
         />

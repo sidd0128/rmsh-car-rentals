@@ -27,8 +27,10 @@ import { useCustomerStore } from '../store/useCustomerStore';
 import { useCustomerRentalInfo } from '../hooks/useCustomerRentalInfo';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import dayjs from 'dayjs';
+import { useTranslation } from '@core/i18n';
 
 export const CustomerProfileScreen = () => {
+  const { t } = useTranslation();
   const route = useRoute<RouteProp<CustomersStackParamList, 'CustomerProfile'>>();
   const navigation = useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
   const customer = useCustomerStore(s => s.getCustomerById(route.params.customerId));
@@ -81,7 +83,7 @@ export const CustomerProfileScreen = () => {
   if (!customer) {
     return (
       <ScreenLayout>
-        <Text>Customer not found</Text>
+        <Text>{t('customers.notFound')}</Text>
       </ScreenLayout>
     );
   }
@@ -90,7 +92,7 @@ export const CustomerProfileScreen = () => {
     const rentalCar = cars.find(c => c.id === r.carId);
     return {
       id: r.id,
-      title: rentalCar?.name ?? 'Car',
+      title: rentalCar?.name ?? t('common.car'),
       subtitle: formatCurrency(r.agreedPrice),
       date: `${formatDate(r.startDate)} – ${formatDate(r.endDate)}`,
       meta: r.status,
@@ -117,11 +119,11 @@ export const CustomerProfileScreen = () => {
         <View style={styles.profileText}>
           <Text style={typography.h2}>{customer.name}</Text>
           <Text style={typography.bodySmall}>
-            {customer.age} yrs · {customer.phone}
+            {t('customers.yearsOld', { age: customer.age })} · {customer.phone}
           </Text>
           <Text style={typography.bodySmall}>{customer.address}</Text>
           {customer.isBlacklisted ? (
-            <Text style={styles.blacklist}>Blacklisted customer</Text>
+            <Text style={styles.blacklist}>{t('customers.blacklisted')}</Text>
           ) : null}
         </View>
       </View>
@@ -129,41 +131,50 @@ export const CustomerProfileScreen = () => {
       <View style={screenStyles.statsRow}>
         <View style={screenStyles.statCard}>
           <Text style={screenStyles.statValue}>{totalRentals}</Text>
-          <Text style={screenStyles.statLabel}>Rentals</Text>
+          <Text style={screenStyles.statLabel}>{t('customers.rentals')}</Text>
         </View>
         <View style={screenStyles.statCard}>
           <Text style={screenStyles.statValue}>{formatCurrency(totalSpent)}</Text>
-          <Text style={screenStyles.statLabel}>Total spent</Text>
+          <Text style={screenStyles.statLabel}>{t('customers.totalSpent')}</Text>
         </View>
       </View>
 
-      <ScreenSection title="Current rental" showDivider>
+      <ScreenSection title={t('customers.currentRental')} showDivider>
         {car && activeRental ? (
           <Text style={typography.body}>
-            {car.name} until {formatDate(activeRental.endDate)}
+            {t('customers.rentalUntil', {
+              car: car.name,
+              date: formatDate(activeRental.endDate),
+            })}
           </Text>
         ) : (
-          <Text style={typography.bodySmall}>No active rental</Text>
+          <Text style={typography.bodySmall}>{t('customers.noActiveRental')}</Text>
         )}
       </ScreenSection>
 
-      <ScreenSection title="Driving license">
+      <ScreenSection title={t('customers.drivingLicense')}>
         <ImageSlider images={customer.drivingLicenseImages} imageHeight={140} />
       </ScreenSection>
 
-      <ScreenSection title="Documents">
+      <ScreenSection title={t('customers.documents')}>
         <ImageSlider images={customer.documents} imageHeight={140} />
       </ScreenSection>
 
-      <ScreenSection title="Rental history">
+      <ScreenSection title={t('customers.rentalHistory')}>
         <TimelineView items={timeline} />
       </ScreenSection>
 
-      <ScreenSection title="Payment history">
+      <ScreenSection title={t('customers.paymentHistory')}>
         <CustomerPaymentHistory payments={customerPayments} />
       </ScreenSection>
 
-      <ScreenSection title={`Fines (${customerFines.length})`} showDivider>
+      <ScreenSection
+        title={t('common.sectionCount', {
+          title: t('customers.fines'),
+          count: customerFines.length,
+        })}
+        showDivider
+      >
         <CustomerFineHistory
           fines={customerFines}
           carsById={carsById}
@@ -171,7 +182,12 @@ export const CustomerProfileScreen = () => {
         />
       </ScreenSection>
 
-      <ScreenSection title={`Accidents (${customerAccidents.length})`}>
+      <ScreenSection
+        title={t('common.sectionCount', {
+          title: t('customers.accidents'),
+          count: customerAccidents.length,
+        })}
+      >
         <CustomerAccidentHistory
           accidents={customerAccidents}
           carsById={carsById}
@@ -182,7 +198,7 @@ export const CustomerProfileScreen = () => {
       </ScreenSection>
 
       <AppButton
-        label="Edit Profile"
+        label={t('customers.editProfile')}
         variant="outline"
         onPress={() => navigation.navigate('CustomerForm', { customerId: customer.id })}
         fullWidth

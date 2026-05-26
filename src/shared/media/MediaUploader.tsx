@@ -7,6 +7,7 @@ import {
 } from 'react-native-image-picker';
 import { MAX_CAR_IMAGES } from '@core/constants/app';
 import { ensureAndroidCameraPermission } from '@core/helpers/androidMediaPermissions';
+import i18n from '@core/i18n';
 import type { MediaUri } from '@core/types/media';
 import { ImageSlider } from './ImageSlider';
 
@@ -22,11 +23,11 @@ const showPickerError = (response: ImagePickerResponse): void => {
     return;
   }
   if (response.errorMessage) {
-    Alert.alert('Could not open photos', response.errorMessage);
+    Alert.alert(i18n.t('media.couldNotOpenPhotos'), response.errorMessage);
   } else if (response.errorCode === 'permission') {
     Alert.alert(
-      'Permission required',
-      'Allow camera or photo access in Settings to add images.',
+      i18n.t('media.permissionRequiredTitle'),
+      i18n.t('media.permissionRequiredMessage'),
     );
   }
 };
@@ -83,16 +84,16 @@ const showImageSourcePicker = (
   onCamera: () => void,
 ): void => {
   if (Platform.OS === 'ios') {
-    Alert.alert('Choose photo', undefined, [
-      { text: 'Photo library', onPress: onGallery },
-      { text: 'Camera', onPress: onCamera },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(i18n.t('media.choosePhoto'), undefined, [
+      { text: i18n.t('media.photoLibrary'), onPress: onGallery },
+      { text: i18n.t('media.camera'), onPress: onCamera },
+      { text: i18n.t('common.cancel'), style: 'cancel' },
     ]);
   } else {
-    Alert.alert('Choose photo', undefined, [
-      { text: 'Gallery', onPress: onGallery },
-      { text: 'Camera', onPress: onCamera },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(i18n.t('media.choosePhoto'), undefined, [
+      { text: i18n.t('media.gallery'), onPress: onGallery },
+      { text: i18n.t('media.camera'), onPress: onCamera },
+      { text: i18n.t('common.cancel'), style: 'cancel' },
     ]);
   }
 };
@@ -102,7 +103,10 @@ export const MediaUploader = memo<MediaUploaderProps>(
     const handleAdd = useCallback(() => {
       const remaining = maxImages - images.length;
       if (remaining <= 0) {
-        Alert.alert('Limit reached', `Maximum ${maxImages} images allowed. Remove one first.`);
+        Alert.alert(
+          i18n.t('media.limitReachedTitle'),
+          i18n.t('media.limitReachedMessage', { max: maxImages }),
+        );
         return;
       }
 
@@ -124,10 +128,10 @@ export const MediaUploader = memo<MediaUploaderProps>(
 
     const handleDelete = useCallback(
       (index: number) => {
-        Alert.alert('Remove photo', 'Delete this image?', [
-          { text: 'Cancel', style: 'cancel' },
+        Alert.alert(i18n.t('media.removePhotoTitle'), i18n.t('media.removePhotoMessage'), [
+          { text: i18n.t('common.cancel'), style: 'cancel' },
           {
-            text: 'Remove',
+            text: i18n.t('common.remove'),
             style: 'destructive',
             onPress: () => onChange(images.filter((_, i) => i !== index)),
           },

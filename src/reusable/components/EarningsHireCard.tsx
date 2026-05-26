@@ -5,6 +5,7 @@ import { colors, radius, shadows, spacing, typography } from '@app/theme';
 import type { PaymentStatus } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
 import { StatusBadge } from '@shared/ui';
+import { useTranslation } from '@core/i18n';
 
 export interface EarningsHireCardProps {
   customerName: string;
@@ -24,6 +25,7 @@ export const EarningsHireCard = memo<EarningsHireCardProps>(
     paidAmount,
     paymentStatus,
   }) => {
+    const { t } = useTranslation();
     const isPaid = paymentStatus === 'DONE' && paidAmount > 0;
 
     return (
@@ -46,18 +48,18 @@ export const EarningsHireCard = memo<EarningsHireCardProps>(
               <Text style={styles.period}>{periodLabel}</Text>
             </View>
             <StatusBadge
-              label={isPaid ? 'Paid' : 'Pending'}
+              label={isPaid ? t('common.paid') : t('common.pending')}
               variant={isPaid ? 'done' : 'pending'}
             />
           </View>
 
           <View style={styles.metricsRow}>
             <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Agreed</Text>
+              <Text style={styles.metricLabel}>{t('earnings.agreed')}</Text>
               <Text style={styles.metricValue}>{formatCurrency(agreedPrice)}</Text>
             </View>
             <View style={[styles.metricBox, styles.metricBoxHighlight]}>
-              <Text style={styles.metricLabel}>Received</Text>
+              <Text style={styles.metricLabel}>{t('earnings.receivedMetric')}</Text>
               <Text
                 style={[
                   styles.metricValue,

@@ -1,6 +1,7 @@
 /**
  * Derives display status for a car from its non-completed rentals (pure function).
  */
+import i18n from '@core/i18n';
 import dayjs from 'dayjs';
 import type { Car, Rental } from '../types/domain';
 
@@ -59,7 +60,7 @@ export const RETURNS_SOON_WITHIN_DAYS = 3;
 
 /** User-facing copy for dashboard and filtered car list. */
 export const returnsSoonFilterDescription = (): string =>
-  `Cars whose active rental ends within ${RETURNS_SOON_WITHIN_DAYS} days`;
+  i18n.t('dashboard.returnsSoonDescription', { days: RETURNS_SOON_WITHIN_DAYS });
 
 export const rentalIsReturningSoon = (
   rental: Rental,

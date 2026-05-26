@@ -17,8 +17,10 @@ import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { StatusBadge } from '@shared/ui';
 import { useRentalStore } from '../store/useRentalStore';
+import { useTranslation } from '@core/i18n';
 
 export const RentalsListScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RentalsStackParamList>>();
   const rentals = useRentalStore(s => s.rentals);
   const payments = usePaymentStore(s => s.payments);
@@ -35,12 +37,14 @@ export const RentalsListScreen = () => {
           onPress={() => navigation.navigate('RentalDetails', { rentalId: item.id })}
           style={[styles.card, shadows.sm]}
         >
-          <Text style={typography.h4}>{car?.name ?? 'Car'}</Text>
+          <Text style={typography.h4}>{car?.name ?? t('common.car')}</Text>
           <Text style={[typography.bodySmall, styles.cardLine]}>{customer?.name}</Text>
           <Text style={typography.bodySmall}>
             {formatDate(item.startDate)} – {formatDate(item.endDate)}
           </Text>
-          <Text style={typography.body}>{formatCurrency(item.agreedPrice)} total</Text>
+          <Text style={typography.body}>
+            {t('rentals.totalSuffix', { amount: formatCurrency(item.agreedPrice) })}
+          </Text>
           {item.billingFrequency ? (
             <Text style={typography.caption}>
               {billingFrequencyLabel(item.billingFrequency)}
@@ -63,7 +67,7 @@ export const RentalsListScreen = () => {
         </Pressable>
       );
     },
-    [cars, customers, navigation, payments],
+    [cars, customers, navigation, payments, t],
   );
 
   return (

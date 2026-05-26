@@ -12,5 +12,6 @@ module.exports = {
     '^@features/(.*)$': '<rootDir>/src/features/$1',
     '^@reusable$': '<rootDir>/src/reusable/index.ts',
     '^@reusable/(.*)$': '<rootDir>/src/reusable/$1',
+    '^@locales/(.*)$': '<rootDir>/src/locales/$1',
   },
 };

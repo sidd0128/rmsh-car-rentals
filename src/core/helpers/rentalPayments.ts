@@ -1,3 +1,4 @@
+import i18n from '@core/i18n';
 import type { Car, PaymentRecord, Rental } from '@core/types/domain';
 import { installmentDueDay, sortPaymentsByDueDate } from './paymentInstallment';
 
@@ -53,18 +54,20 @@ export const rentalPaymentProgressLabel = (
 ): string => {
   const rentalPayments = paymentsForRental(rentalId, payments);
   if (rentalPayments.length === 0) {
-    return 'No payment schedule';
+    return i18n.t('rentals.noPaymentSchedule');
   }
   const notPaid = rentalPayments.filter(p => p.status === 'NOT_PAID').length;
   if (notPaid > 0) {
-    return `${notPaid} payment${notPaid === 1 ? '' : 's'} not paid`;
+    return i18n.t('rentals.paymentsNotPaid', { count: notPaid });
   }
   const paid = rentalPayments.filter(p => p.status === 'DONE').length;
   const total = rentalPayments.length;
   if (total === 1) {
-    return rentalPayments[0].status === 'DONE' ? 'Paid in full' : 'Payment pending';
+    return rentalPayments[0].status === 'DONE'
+      ? i18n.t('rentals.paidInFull')
+      : i18n.t('rentals.paymentPending');
   }
-  return `${paid} of ${total} received`;
+  return i18n.t('rentals.paymentsReceived', { paid, total });
 };
 
 export const computeFleetTotalPaid = (

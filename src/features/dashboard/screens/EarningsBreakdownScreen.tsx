@@ -25,8 +25,10 @@ import {
   type EarningsListItem,
 } from '../helpers/buildEarningsListItems';
 import { filterCarEarningsSections } from '../helpers/filterCarEarningsSections';
+import { useTranslation } from '@core/i18n';
 
 export const EarningsBreakdownScreen = () => {
+  const { t } = useTranslation();
   const cars = useCarStore(s => s.cars);
   const customers = useCustomerStore(s => s.customers);
   const rentals = useRentalStore(s => s.rentals);
@@ -111,24 +113,28 @@ export const EarningsBreakdownScreen = () => {
     () => (
       <View style={screenStyles.earningsHeader}>
         <Text style={screenStyles.earningsLead}>
-          Fleet total received: {formatCurrency(fleetTotal)}
+          {t('earnings.fleetTotalReceived', { amount: formatCurrency(fleetTotal) })}
         </Text>
-        <Text style={screenStyles.earningsHint}>
-          Totals reflect customer payments per rental. Tap a car to expand hires.
-        </Text>
+        <Text style={screenStyles.earningsHint}>{t('earnings.breakdownHint')}</Text>
         {isSearchActive ? (
           <Text style={screenStyles.earningsMeta}>
-            Showing {visibleHires} matching {visibleHires === 1 ? 'hire' : 'hires'} of {totalHires}{' '}
-            total
+            {t('earnings.showingMatchingHires', {
+              visible: visibleHires,
+              hireWord: visibleHires === 1 ? t('earnings.hire') : t('earnings.hires'),
+              total: totalHires,
+            })}
           </Text>
         ) : (
           <Text style={screenStyles.earningsMeta}>
-            {totalHires} hires across {allSections.length} cars
+            {t('earnings.hiresAcrossCars', {
+              count: totalHires,
+              cars: allSections.length,
+            })}
           </Text>
         )}
       </View>
     ),
-    [fleetTotal, isSearchActive, visibleHires, totalHires, allSections.length],
+    [fleetTotal, isSearchActive, visibleHires, totalHires, allSections.length, t],
   );
 
   return (
@@ -138,7 +144,7 @@ export const EarningsBreakdownScreen = () => {
         <SearchHeader
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search customer, car, or dates..."
+          placeholder={t('earnings.searchPlaceholder')}
         />
       </View>
 
@@ -155,9 +161,7 @@ export const EarningsBreakdownScreen = () => {
           extraData={{ expandedCarId, debouncedSearch }}
           ListEmptyComponent={
             <Text style={styles.empty}>
-              {isSearchActive
-                ? 'No hires match your search.'
-                : 'No rental hires recorded yet.'}
+              {isSearchActive ? t('earnings.noSearchResults') : t('earnings.noHiresYet')}
             </Text>
           }
         />

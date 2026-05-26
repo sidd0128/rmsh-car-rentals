@@ -8,11 +8,13 @@ import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { signInWithEmail } from '@core/firebase/auth/services/firebaseAuthService';
 import { getFirebaseAuthErrorMessage } from '@core/firebase/auth/utils/firebaseAuthErrorUtils';
 import { colors, radius, spacing, typography } from '@app/theme';
+import { useTranslation } from '@core/i18n';
 import { AppButton, AppInput } from '@shared/ui';
 import { AuthScreenLayout } from '../components/AuthScreenLayout';
 import { useFirebaseAuthStore } from '../store/useFirebaseAuthStore';
 
 export const LoginScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const sessionExpiredMessage = useFirebaseAuthStore(s => s.sessionExpiredMessage);
   const clearSessionExpiredMessage = useFirebaseAuthStore(s => s.clearSessionExpiredMessage);
@@ -24,14 +26,14 @@ export const LoginScreen = () => {
   const onLogin = async () => {
     if (!isFirebaseConfigured()) {
       Alert.alert(
-        'Firebase not configured',
-        'Add your Firebase keys to the .env file (see .env.example)',
+        t('auth.firebaseNotConfiguredTitle'),
+        t('auth.firebaseNotConfiguredMessage'),
       );
       return;
     }
 
     if (!email.trim() || !password) {
-      Alert.alert('Missing fields', 'Enter your email and password.');
+      Alert.alert(t('auth.missingFieldsTitle'), t('auth.missingEmailPassword'));
       return;
     }
 
@@ -40,14 +42,14 @@ export const LoginScreen = () => {
     try {
       await signInWithEmail(email, password);
     } catch (error) {
-      Alert.alert('Sign in failed', getFirebaseAuthErrorMessage(error));
+      Alert.alert(t('auth.signInFailedTitle'), getFirebaseAuthErrorMessage(error));
     }
   };
 
   return (
     <AuthScreenLayout
-      title="Welcome back"
-      subtitle="Sign in to sync your fleet data across devices."
+      title={t('auth.welcomeBack')}
+      subtitle={t('auth.signInSubtitle')}
       banner={
         sessionExpiredMessage ? (
           <View style={styles.expiredBanner}>
@@ -56,24 +58,22 @@ export const LoginScreen = () => {
         ) : null
       }
       footer={
-        <Text style={styles.footerNote}>
-          Your data stays on this device and syncs when you are signed in.
-        </Text>
+        <Text style={styles.footerNote}>{t('auth.dataStaysOnDevice')}</Text>
       }
     >
       <AppInput
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
         leftIcon="email-outline"
-        placeholder="you@company.com"
+        placeholder={t('auth.emailPlaceholder')}
         containerStyle={styles.field}
       />
       <AppInput
-        label="Password"
+        label={t('auth.password')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -81,19 +81,19 @@ export const LoginScreen = () => {
         autoCapitalize="none"
         autoComplete="password"
         leftIcon="lock-outline"
-        placeholder="Your password"
+        placeholder={t('auth.passwordPlaceholder')}
         containerStyle={styles.fieldLast}
       />
 
       <View style={styles.actions}>
         <AppButton
-          label="Sign in"
+          label={t('auth.signIn')}
           onPress={onLogin}
           onBusyChange={setFormLocked}
           fullWidth
         />
         <AppButton
-          label="Create account"
+          label={t('auth.createAccount')}
           variant="outline"
           onPress={() => navigation.navigate('Register')}
           disabled={formLocked}

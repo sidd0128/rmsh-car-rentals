@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs';
+import i18n from '@core/i18n';
 import type { PaymentRecord, PaymentStatus } from '@core/types/domain';
 import { formatDate } from './date';
 
@@ -11,7 +12,10 @@ export const installmentDueDay = (
 
 export const formatInstallmentDueLabel = (
   payment: Pick<PaymentRecord, 'dueDate' | 'createdAt'>,
-): string => `Rent due ${formatDate(payment.dueDate ?? payment.createdAt)}`;
+): string =>
+  i18n.t('rentals.rentDue', {
+    date: formatDate(payment.dueDate ?? payment.createdAt),
+  });
 
 export const sortPaymentsByDueDate = (
   payments: PaymentRecord[],
@@ -31,11 +35,11 @@ export const nextPendingInstallmentForCustomer = (
 export const formatPaymentStatusLabel = (status: PaymentStatus): string => {
   switch (status) {
     case 'DONE':
-      return 'Received';
+      return i18n.t('common.received');
     case 'NOT_PAID':
-      return 'Not paid';
+      return i18n.t('common.notPaid');
     default:
-      return 'Pending';
+      return i18n.t('common.pending');
   }
 };
 
@@ -59,7 +63,9 @@ export const formatPaymentHistoryDateLine = (
   payment: Pick<PaymentRecord, 'status' | 'dueDate' | 'createdAt' | 'paidAt'>,
 ): string => {
   if (payment.status === 'DONE' && payment.paidAt) {
-    return `Paid ${formatDate(payment.paidAt)}`;
+    return i18n.t('rentals.paidOn', { date: formatDate(payment.paidAt) });
   }
-  return `Due ${formatDate(payment.dueDate ?? payment.createdAt)}`;
+  return i18n.t('rentals.dueOn', {
+    date: formatDate(payment.dueDate ?? payment.createdAt),
+  });
 };

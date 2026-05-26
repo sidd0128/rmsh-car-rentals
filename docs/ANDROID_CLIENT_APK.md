@@ -65,6 +65,22 @@ android/app/build/outputs/apk/release/app-release.apk
 
 Share that file (Google Drive, etc.).
 
+### Duplicate font error (`mergeReleaseAssets`)
+
+If the build fails with **Duplicate resources** for `MaterialCommunityIcons.ttf`, you have fonts in **two** places:
+
+1. `android/app/build.gradle` applies `react-native-vector-icons/fonts.gradle` (correct — only MaterialCommunityIcons).
+2. A leftover `android/app/src/main/assets/fonts/` folder (often from `react-native-asset`).
+
+Remove the manual folder and rebuild:
+
+```bash
+rm -rf android/app/src/main/assets/fonts
+npm run build:android:apk
+```
+
+Do **not** run `npx react-native-asset` for vector icons on Android when `fonts.gradle` is configured.
+
 **Very old 32-bit-only phones** (rare): build with both ARM types (larger APK):
 
 ```bash

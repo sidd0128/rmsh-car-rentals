@@ -15,6 +15,7 @@ import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { AppButton, ReadOnlyFormField, StatusBadge } from '@shared/ui';
 import { useFineStore } from '../store/useFineStore';
+import { useTranslation } from '@core/i18n';
 
 type FineDetailsRoute = RouteProp<FineFlowParamList, 'FineDetails'>;
 type FineDetailsNavigation = NativeStackNavigationProp<
@@ -22,6 +23,7 @@ type FineDetailsNavigation = NativeStackNavigationProp<
 >;
 
 export const FineDetailsScreen = () => {
+  const { t } = useTranslation();
   const route = useRoute<FineDetailsRoute>();
   const navigation = useNavigation<FineDetailsNavigation>();
   const tabState = navigation.getParent()?.getState();
@@ -34,7 +36,7 @@ export const FineDetailsScreen = () => {
   if (!fine) {
     return (
       <ScreenLayout>
-        <Text>Fine not found</Text>
+        <Text>{t('fines.notFound')}</Text>
       </ScreenLayout>
     );
   }
@@ -47,24 +49,31 @@ export const FineDetailsScreen = () => {
       <View style={styles.hero}>
         <Text style={typography.h2}>{formatCurrency(fine.amount)}</Text>
         <StatusBadge
-          label={fine.paidStatus ? 'Paid' : 'Unpaid'}
+          label={fine.paidStatus ? t('common.paid') : t('common.unpaid')}
           variant={fine.paidStatus ? 'done' : 'pending'}
         />
       </View>
 
-      <ScreenSection title="Details" first showDivider>
+      <ScreenSection title={t('common.details')} first showDivider>
         <Text style={typography.body}>{fine.reason}</Text>
-        <Text style={typography.bodySmall}>Date: {formatDate(fine.fineDate)}</Text>
+        <Text style={typography.bodySmall}>
+          {t('fines.dateLabel', { date: formatDate(fine.fineDate) })}
+        </Text>
         {fine.notes ? (
-          <Text style={typography.bodySmall}>Notes: {fine.notes}</Text>
+          <Text style={typography.bodySmall}>
+            {t('fines.notesLabel', { notes: fine.notes })}
+          </Text>
         ) : null}
       </ScreenSection>
 
-      <ScreenSection title="Customer & car">
-        <ReadOnlyFormField label="Customer" value={customer?.name ?? '—'} />
+      <ScreenSection title={t('common.customerAndCar')}>
         <ReadOnlyFormField
-          label="Car"
-          value={car?.name ?? '—'}
+          label={t('common.customer')}
+          value={customer?.name ?? t('common.emDash')}
+        />
+        <ReadOnlyFormField
+          label={t('common.car')}
+          value={car?.name ?? t('common.emDash')}
           meta={
             car ? `${car.brand} ${car.model} · ${car.numberPlate}` : undefined
           }
@@ -72,13 +81,13 @@ export const FineDetailsScreen = () => {
       </ScreenSection>
 
       {fine.proofImages.length > 0 ? (
-        <ScreenSection title="Proof">
+        <ScreenSection title={t('common.proof')}>
           <ImageSlider images={fine.proofImages} imageHeight={160} />
         </ScreenSection>
       ) : null}
 
       <AppButton
-        label="Edit fine"
+        label={t('fines.editFine')}
         variant="outline"
         onPress={() => {
           if (openedFromCarsTab) {

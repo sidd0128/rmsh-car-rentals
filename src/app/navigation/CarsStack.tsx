@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { colors } from '@app/theme';
+import i18n from '@core/i18n';
 import { AccidentDetailsScreen } from '@features/accidents/screens/AccidentDetailsScreen';
 import { CarDetailsScreen } from '@features/cars/screens/CarDetailsScreen';
 import { CarFormScreen } from '@features/cars/screens/CarFormScreen';
@@ -18,24 +19,34 @@ export const CarsStack = () => (
       headerTitleStyle: { fontWeight: '600' },
     }}
   >
-    <Stack.Screen name="CarsList" component={CarsListScreen} options={{ title: 'Fleet' }} />
-    <Stack.Screen name="CarDetails" component={CarDetailsScreen} options={{ title: 'Car Details' }} />
+    <Stack.Screen
+      name="CarsList"
+      component={CarsListScreen}
+      options={{ title: i18n.t('navigation.fleet') }}
+    />
+    <Stack.Screen
+      name="CarDetails"
+      component={CarDetailsScreen}
+      options={{ title: i18n.t('navigation.carDetails') }}
+    />
     <Stack.Screen
       name="CarForm"
       component={CarFormScreen}
       options={({ route }) => ({
-        title: route.params?.carId ? 'Edit Car' : 'Add Car',
+        title: route.params?.carId
+          ? i18n.t('navigation.editCar')
+          : i18n.t('navigation.addCar'),
       })}
     />
     <Stack.Screen
       name="FineDetails"
       component={FineDetailsScreen}
-      options={{ title: 'Fine details' }}
+      options={{ title: i18n.t('navigation.fineDetails') }}
     />
     <Stack.Screen
       name="AccidentDetails"
       component={AccidentDetailsScreen}
-      options={{ title: 'Accident report' }}
+      options={{ title: i18n.t('navigation.accidentReport') }}
     />
   </Stack.Navigator>
 );

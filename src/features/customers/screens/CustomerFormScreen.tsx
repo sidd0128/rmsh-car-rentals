@@ -13,6 +13,7 @@ import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, ControlledAppInput } from '@shared/ui';
 import { MediaUploader } from '@shared/media';
 import { useCustomerStore } from '../store/useCustomerStore';
+import { useTranslation } from '@core/i18n';
 
 interface CustomerFormValues {
   name: string;
@@ -22,6 +23,7 @@ interface CustomerFormValues {
 }
 
 export const CustomerFormScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
   const route = useRoute<RouteProp<CustomersStackParamList, 'CustomerForm'>>();
   const customerId = route.params?.customerId;
@@ -74,21 +76,36 @@ export const CustomerFormScreen = () => {
 
   return (
     <ScreenLayout contentStyle={screenStyles.formStack}>
-      <Text variant="titleMedium">Driving License</Text>
+      <Text variant="titleMedium">{t('customers.drivingLicense')}</Text>
       <MediaUploader images={licenseImages} onChange={setLicenseImages} maxImages={2} />
-      <Text variant="titleMedium">Documents</Text>
+      <Text variant="titleMedium">{t('customers.documents')}</Text>
       <MediaUploader images={documents} onChange={setDocuments} maxImages={4} />
       <View style={styles.form}>
-        <ControlledAppInput name="name" control={control} label="Full name" />
-        <ControlledAppInput name="age" control={control} label="Age" keyboardType="numeric" />
-        <ControlledAppInput name="phone" control={control} label="Phone" keyboardType="phone-pad" />
-        <ControlledAppInput name="address" control={control} label="Address" multiline />
+        <ControlledAppInput name="name" control={control} label={t('customers.fullName')} />
+        <ControlledAppInput
+          name="age"
+          control={control}
+          label={t('customers.age')}
+          keyboardType="numeric"
+        />
+        <ControlledAppInput
+          name="phone"
+          control={control}
+          label={t('customers.phone')}
+          keyboardType="phone-pad"
+        />
+        <ControlledAppInput
+          name="address"
+          control={control}
+          label={t('customers.address')}
+          multiline
+        />
         <View style={styles.switchRow}>
-          <Text>Blacklisted</Text>
+          <Text>{t('customers.blacklistedLabel')}</Text>
           <Switch value={isBlacklisted} onValueChange={setBlacklisted} />
         </View>
         <AppButton
-          label={customerId ? 'Save' : 'Add Customer'}
+          label={customerId ? t('common.save') : t('customers.addCustomer')}
           onPress={onSubmit}
           fullWidth
         />

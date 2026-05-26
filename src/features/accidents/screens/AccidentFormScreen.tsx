@@ -18,8 +18,10 @@ import { AppButton, AppInput, AppDatePickerModal, ReadOnlyFormField } from '@sha
 import { MediaUploader } from '@shared/media';
 import { useAccidentStore } from '../store/useAccidentStore';
 import dayjs from 'dayjs';
+import { useTranslation } from '@core/i18n';
 
 export const AccidentFormScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const addAccident = useAccidentStore(s => s.addAccident);
   const updateCustomer = useCustomerStore(s => s.updateCustomer);
@@ -52,10 +54,7 @@ export const AccidentFormScreen = () => {
   const onSelectCustomer = (id: string) => {
     const linkedCarId = resolveCustomerCarId(id, rentals);
     if (!linkedCarId) {
-      Alert.alert(
-        'No car linked',
-        'This customer has no active or past rental. Assign a car first.',
-      );
+      Alert.alert(t('fines.noCarLinkedTitle'), t('fines.noCarLinkedMessage'));
       setCustomerMenu(false);
       return;
     }
@@ -65,7 +64,7 @@ export const AccidentFormScreen = () => {
 
   const onSubmit = async () => {
     if (!customerId || !carId || !description || !damageCost) {
-      Alert.alert('Fill all required fields');
+      Alert.alert(t('accidents.fillRequired'));
       return;
     }
 
@@ -97,7 +96,7 @@ export const AccidentFormScreen = () => {
         onDismiss={() => setCustomerMenu(false)}
         anchor={
           <AppButton
-            label={selectedCustomer?.name ?? 'Select customer'}
+            label={selectedCustomer?.name ?? t('fines.selectCustomer')}
             variant="outline"
             onPress={() => setCustomerMenu(true)}
           />
@@ -109,10 +108,10 @@ export const AccidentFormScreen = () => {
       </Menu>
 
       <ReadOnlyFormField
-        label="Car (from customer rental)"
+        label={t('fines.carFromRental')}
         value={
           selectedCar?.name ??
-          (customerId ? 'No car linked to this customer' : 'Select a customer first')
+          (customerId ? t('fines.noCarLinked') : t('fines.selectCustomerFirst'))
         }
         meta={
           selectedCar
@@ -121,24 +120,29 @@ export const AccidentFormScreen = () => {
         }
       />
 
-      <AppInput label="Description" value={description} onChangeText={setDescription} multiline />
       <AppInput
-        label={currencyFieldLabel('Damage cost')}
+        label={t('accidents.description')}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+      />
+      <AppInput
+        label={currencyFieldLabel(t('accidents.damageCost'))}
         value={damageCost}
         onChangeText={setDamageCost}
         keyboardType="numeric"
       />
-      <AppInput label="Notes" value={notes} onChangeText={setNotes} multiline />
+      <AppInput label={t('common.notes')} value={notes} onChangeText={setNotes} multiline />
       <View style={styles.switchRow}>
-        <Text>Blacklist customer</Text>
+        <Text>{t('accidents.blacklistCustomer')}</Text>
         <Switch value={blacklist} onValueChange={setBlacklist} />
       </View>
       <AppButton
-        label={`Date: ${dayjs(accidentDate).format('DD MMM YYYY')}`}
+        label={t('common.dateButton', { date: dayjs(accidentDate).format('DD MMM YYYY') })}
         variant="outline"
         onPress={() => setShowDate(true)}
       />
-      <AppButton label="Save Record" onPress={onSubmit} fullWidth />
+      <AppButton label={t('accidents.saveRecord')} onPress={onSubmit} fullWidth />
       <AppDatePickerModal
         open={showDate}
         date={accidentDate}

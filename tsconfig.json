@@ -10,7 +10,8 @@
       "@shared/*": ["src/shared/*"],
       "@features/*": ["src/features/*"],
       "@reusable": ["src/reusable/index.ts"],
-      "@reusable/*": ["src/reusable/*"]
+      "@reusable/*": ["src/reusable/*"],
+      "@locales/*": ["src/locales/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "App.tsx", "index.js"],

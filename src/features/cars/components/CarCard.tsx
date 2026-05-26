@@ -7,6 +7,7 @@ import { formatCurrency } from '@core/utils/currency';
 import type { NextRentDue } from '@core/helpers/rentalPayments';
 import type { Car, Customer } from '@core/types/domain';
 import { StatusBadge, carStatusToBadge } from '@shared/ui';
+import { useTranslation } from '@core/i18n';
 
 interface CarCardProps {
   car: Car;
@@ -17,6 +18,7 @@ interface CarCardProps {
 }
 
 export const CarCard = memo<CarCardProps>(({ car, customer, totalPaid, nextRentDue, onPress }) => {
+  const { t } = useTranslation();
   const badge = carStatusToBadge(car.status);
   const imageUri = car.images[0];
 
@@ -37,19 +39,28 @@ export const CarCard = memo<CarCardProps>(({ car, customer, totalPaid, nextRentD
         </Text>
         {nextRentDue ? (
           <Text style={styles.nextRent}>
-            Next rent {formatCurrency(nextRentDue.amount)} · due {formatDate(nextRentDue.dueDate)}
+            {t('cars.nextRent', {
+              amount: formatCurrency(nextRentDue.amount),
+              date: formatDate(nextRentDue.dueDate),
+            })}
           </Text>
         ) : null}
         {customer ? (
-          <Text style={styles.customer}>Rented by {customer.name}</Text>
+          <Text style={styles.customer}>
+            {t('cars.rentedBy', { name: customer.name })}
+          </Text>
         ) : car.futureBookings[0] ? (
           <Text style={styles.customer}>
-            Next booking: {formatDate(car.futureBookings[0].startDate)}
+            {t('cars.nextBooking', {
+              date: formatDate(car.futureBookings[0].startDate),
+            })}
           </Text>
         ) : (
-          <Text style={styles.customer}>Available now</Text>
+          <Text style={styles.customer}>{t('cars.availableNow')}</Text>
         )}
-        <Text style={styles.earnings}>{formatCurrency(totalPaid)} earned</Text>
+        <Text style={styles.earnings}>
+          {t('cars.earned', { amount: formatCurrency(totalPaid) })}
+        </Text>
       </View>
     </Pressable>
   );

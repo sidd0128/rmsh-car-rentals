@@ -7,6 +7,7 @@ import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors, spacing } from '@app/theme';
+import i18n from '@core/i18n';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { CarsStack } from './CarsStack';
 import { CustomersStack } from './CustomersStack';
@@ -49,7 +50,7 @@ export const BottomTabs = () => {
         name="DashboardTab"
         component={DashboardStack}
         options={{
-          title: 'Dashboard',
+          title: i18n.t('navigation.dashboard'),
           tabBarIcon: ({ color, size }) => (
             <Icon name="view-dashboard" color={color} size={size} />
           ),
@@ -59,7 +60,7 @@ export const BottomTabs = () => {
         name="CarsTab"
         component={CarsStack}
         options={{
-          title: 'Cars',
+          title: i18n.t('navigation.cars'),
           tabBarIcon: ({ color, size }) => <Icon name="car" color={color} size={size} />,
         }}
       />
@@ -67,7 +68,7 @@ export const BottomTabs = () => {
         name="CustomersTab"
         component={CustomersStack}
         options={{
-          title: 'Customers',
+          title: i18n.t('navigation.customers'),
           tabBarIcon: ({ color, size }) => (
             <Icon name="account-group" color={color} size={size} />
           ),
@@ -77,7 +78,7 @@ export const BottomTabs = () => {
         name="RentalsTab"
         component={RentalsStack}
         options={{
-          title: 'Rentals',
+          title: i18n.t('navigation.rentals'),
           tabBarIcon: ({ color, size }) => (
             <Icon name="calendar-clock" color={color} size={size} />
           ),
@@ -87,7 +88,7 @@ export const BottomTabs = () => {
         name="SettingsTab"
         component={SettingsStack}
         options={{
-          title: 'More',
+          title: i18n.t('navigation.more'),
           tabBarIcon: ({ color, size }) => (
             <Icon name="dots-horizontal" color={color} size={size} />
           ),

@@ -27,8 +27,10 @@ import { ImageSlider } from '@shared/media';
 import { CustomerAccidentHistory } from '@features/customers/components/CustomerAccidentHistory';
 import { CustomerFineHistory } from '@features/customers/components/CustomerFineHistory';
 import { useCarStore } from '../store/useCarStore';
+import { useTranslation } from '@core/i18n';
 
 export const CarDetailsScreen = () => {
+  const { t } = useTranslation();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarDetails'>>();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const car = useCarStore(s => s.getCarById(route.params.carId));
@@ -93,7 +95,7 @@ export const CarDetailsScreen = () => {
   if (!car) {
     return (
       <ScreenLayout>
-        <Text>Car not found</Text>
+        <Text>{t('cars.notFound')}</Text>
       </ScreenLayout>
     );
   }
@@ -106,7 +108,7 @@ export const CarDetailsScreen = () => {
     const customer = customers.find(c => c.id === r.customerId);
     return {
       id: r.id,
-      title: customer?.name ?? 'Customer',
+      title: customer?.name ?? t('common.customer'),
       subtitle: `${formatCurrency(r.agreedPrice)} · ${r.paymentStatus}`,
       date: `${formatDate(r.startDate)} – ${formatDate(r.endDate)}`,
       meta: r.status,
@@ -126,63 +128,73 @@ export const CarDetailsScreen = () => {
         <StatusBadge label={badge.label} variant={badge.variant} />
       </View>
 
-      <ScreenSection title="Current assignment" first>
+      <ScreenSection title={t('cars.currentAssignment')} first>
         {currentCustomer && car.currentBooking ? (
           <>
             <Text style={typography.body}>{currentCustomer.name}</Text>
             <Text style={typography.bodySmall}>
-              Since {formatDate(car.currentBooking.startDate)} until{' '}
-              {formatDate(car.currentBooking.endDate)}
+              {t('cars.sinceUntil', {
+                start: formatDate(car.currentBooking.startDate),
+                end: formatDate(car.currentBooking.endDate),
+              })}
             </Text>
             {nextRentDue ? (
               <Text style={styles.nextRent}>
-                Next rent {formatCurrency(nextRentDue.amount)} · payment due{' '}
-                {formatDate(nextRentDue.dueDate)}
+                {t('cars.nextRentPaymentDue', {
+                  amount: formatCurrency(nextRentDue.amount),
+                  date: formatDate(nextRentDue.dueDate),
+                })}
               </Text>
             ) : (
-              <Text style={typography.bodySmall}>All installments received for this contract.</Text>
+              <Text style={typography.bodySmall}>{t('cars.allInstallmentsReceived')}</Text>
             )}
           </>
         ) : (
           <Text style={typography.bodySmall}>
-            Available · Next booking:{' '}
-            {car.futureBookings[0]
-              ? formatDate(car.futureBookings[0].startDate)
-              : 'None scheduled'}
+            {t('cars.availableNextBooking', {
+              date: car.futureBookings[0]
+                ? formatDate(car.futureBookings[0].startDate)
+                : t('cars.noneScheduled'),
+            })}
           </Text>
         )}
-        <Text style={styles.earnings}>Total received: {formatCurrency(totalPaid)}</Text>
+        <Text style={styles.earnings}>
+          {t('cars.totalReceived', { amount: formatCurrency(totalPaid) })}
+        </Text>
       </ScreenSection>
 
       <View style={screenStyles.actions}>
         {isCarAvailable ? (
           <AppButton
-            label="Assign Customer"
+            label={t('cars.assignCustomer')}
             onPress={() => assignmentRef.current?.open(car.id)}
             fullWidth
           />
         ) : null}
         {canExtendBooking && activeBooking ? (
           <AppButton
-            label="Extend booking"
+            label={t('cars.extendBooking')}
             variant="outline"
             onPress={() => extendRef.current?.open(activeBooking)}
             fullWidth
           />
         ) : null}
         <AppButton
-          label="Edit Car"
+          label={t('cars.editCar')}
           variant="outline"
           onPress={() => navigation.navigate('CarForm', { carId: car.id })}
           fullWidth
         />
       </View>
 
-      <ScreenSection title="Rental history" showDivider>
+      <ScreenSection title={t('cars.rentalHistory')} showDivider>
         <TimelineView items={timeline} />
       </ScreenSection>
 
-      <ScreenSection title={`Fines (${carFines.length})`} showDivider>
+      <ScreenSection
+        title={t('common.sectionCount', { title: t('cars.fines'), count: carFines.length })}
+        showDivider
+      >
         <CustomerFineHistory
           fines={carFines}
           carsById={carsById}
@@ -190,7 +202,12 @@ export const CarDetailsScreen = () => {
         />
       </ScreenSection>
 
-      <ScreenSection title={`Accidents (${carAccidents.length})`}>
+      <ScreenSection
+        title={t('common.sectionCount', {
+          title: t('cars.accidents'),
+          count: carAccidents.length,
+        })}
+      >
         <CustomerAccidentHistory
           accidents={carAccidents}
           carsById={carsById}

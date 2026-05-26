@@ -1,6 +1,7 @@
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Rental } from '@core/types/domain';
 import { formatDate } from '@core/helpers/date';
+import i18n from '@core/i18n';
 /** Next booking must start more than this many days after extension start. */
 const MIN_DAYS_BEFORE_NEXT_BOOKING = 2;
 
@@ -80,7 +81,11 @@ export const formatExtensionBlockedMessage = (
   customerName: string,
   rental: Rental,
 ): string =>
-  `This car is already booked for ${customerName} from ${formatDate(rental.startDate)} to ${formatDate(rental.endDate)}. Cancel or change that booking before extending.`;
+  i18n.t('extension.blockedByBooking', {
+    customerName,
+    startDate: formatDate(rental.startDate),
+    endDate: formatDate(rental.endDate),
+  });
 
 export const rentalHasExtendableBilling = (rental: Rental): boolean =>
   rental.status !== 'COMPLETED' &&
@@ -112,14 +117,20 @@ export const formatExtensionWindowHint = (
   nextRental?: Rental,
 ): string => {
   if (!maxEndDate) {
-    return `Extension can run from ${extensionStart.format('D MMM YYYY')} onward.`;
+    return i18n.t('extension.windowFromOnward', {
+      from: extensionStart.format('D MMM YYYY'),
+    });
   }
   const through = maxEndDate.format('D MMM YYYY');
   const from = extensionStart.format('D MMM YYYY');
   if (nextRental) {
-    return `Available extension: ${from} – ${through} (next booking starts ${formatDate(nextRental.startDate)}).`;
+    return i18n.t('extension.windowWithNext', {
+      from,
+      through,
+      nextStart: formatDate(nextRental.startDate),
+    });
   }
-  return `Available extension: ${from} – ${through}.`;
+  return i18n.t('extension.windowRange', { from, through });
 };
 
 export const validateExtensionEndDate = (

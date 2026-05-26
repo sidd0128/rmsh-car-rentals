@@ -21,6 +21,7 @@ import { FilterBottomSheet, FilterBottomSheetRef } from '@shared/bottomSheets/Fi
 import { screenStyles, LIST_BOTTOM_INSET } from '@shared/layouts/screenStyles';
 import { AppButton, PaymentInstallmentActions } from '@shared/ui';
 import type { PaymentRecord } from '@core/types/domain';
+import { useTranslation } from '@core/i18n';
 
 type MonthSection = {
   key: string;
@@ -30,6 +31,7 @@ type MonthSection = {
 };
 
 export const UpcomingEarningsScreen = () => {
+  const { t } = useTranslation();
   const payments = usePaymentStore(s => s.payments);
   const rentals = useRentalStore(s => s.rentals);
   const customers = useCustomerStore(s => s.customers);
@@ -94,15 +96,20 @@ export const UpcomingEarningsScreen = () => {
 
       return (
         <View style={[screenStyles.surfaceCard, styles.card]}>
-          <Text style={typography.h4}>{customer?.name ?? 'Customer'}</Text>
-          <Text style={typography.bodySmall}>{car?.name ?? 'Car'}</Text>
-          <Text style={styles.installment}>{item.label ?? 'Installment'}</Text>
+          <Text style={typography.h4}>{customer?.name ?? t('common.customer')}</Text>
+          <Text style={typography.bodySmall}>{car?.name ?? t('common.car')}</Text>
+          <Text style={styles.installment}>
+            {item.label ?? t('upcomingEarnings.installmentFallback')}
+          </Text>
           <Text style={styles.dueLine}>{formatInstallmentDueLabel(item)}</Text>
           <Text style={styles.amount}>{formatCurrency(item.amount)}</Text>
           {rental ? (
             <Text style={typography.caption}>
-              Contract {formatCurrency(rental.agreedPrice)} · {formatDate(rental.startDate)} –{' '}
-              {formatDate(rental.endDate)}
+              {t('upcomingEarnings.contractLine', {
+                amount: formatCurrency(rental.agreedPrice),
+                startDate: formatDate(rental.startDate),
+                endDate: formatDate(rental.endDate),
+              })}
             </Text>
           ) : null}
           <PaymentInstallmentActions
@@ -116,7 +123,7 @@ export const UpcomingEarningsScreen = () => {
         </View>
       );
     },
-    [rentals, customers, cars, actingId, actingKind, onReceived, onNotPaid],
+    [rentals, customers, cars, actingId, actingKind, onReceived, onNotPaid, t],
   );
 
   const renderSectionHeader = useCallback(
@@ -133,25 +140,28 @@ export const UpcomingEarningsScreen = () => {
     () => (
       <View style={screenStyles.earningsHeader}>
         <Text style={screenStyles.earningsLead}>
-          {selectedYear} · Due {formatCurrency(yearTotal)}
+          {t('upcomingEarnings.yearDue', {
+            year: selectedYear,
+            amount: formatCurrency(yearTotal),
+          })}
         </Text>
-        <Text style={screenStyles.earningsHint}>
-          Pending rent installments grouped by month. Mark received when paid, or not paid to flag
-          the customer.
-        </Text>
+        <Text style={screenStyles.earningsHint}>{t('upcomingEarnings.hint')}</Text>
         <Text style={screenStyles.earningsMeta}>
-          {paymentCount} upcoming payment{paymentCount === 1 ? '' : 's'} in {selectedYear}
+          {t('upcomingEarnings.upcomingPaymentsInYear', {
+            count: paymentCount,
+            year: selectedYear,
+          })}
         </Text>
       </View>
     ),
-    [selectedYear, yearTotal, paymentCount],
+    [selectedYear, yearTotal, paymentCount, t],
   );
 
   return (
     <View style={styles.container}>
       <View style={[styles.topBar, { paddingHorizontal: horizontalPadding }]}>
         <AppButton
-          label={`Year: ${selectedYear}`}
+          label={t('common.yearButton', { year: selectedYear })}
           variant="outline"
           onPress={() => filterRef.current?.open()}
           fullWidth
@@ -170,12 +180,14 @@ export const UpcomingEarningsScreen = () => {
           { paddingHorizontal: horizontalPadding },
         ]}
         ListEmptyComponent={
-          <Text style={screenStyles.emptyHint}>No pending payments for {selectedYear}.</Text>
+          <Text style={screenStyles.emptyHint}>
+            {t('upcomingEarnings.noPendingForYear', { year: selectedYear })}
+          </Text>
         }
       />
       <FilterBottomSheet
         ref={filterRef}
-        title="Select year"
+        title={t('upcomingEarnings.selectYear')}
         options={yearFilterOptions}
         selected={String(selectedYear)}
         onSelect={value => setSelectedYear(Number(value))}

@@ -20,8 +20,10 @@ import { AppButton, AppInput, AppDatePickerModal, ReadOnlyFormField } from '@sha
 import { MediaUploader } from '@shared/media';
 import { useFineStore } from '../store/useFineStore';
 import dayjs from 'dayjs';
+import { useTranslation } from '@core/i18n';
 
 export const FineFormScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<FineFlowParamList, 'FineForm'>>();
   const addFine = useFineStore(s => s.addFine);
@@ -62,10 +64,7 @@ export const FineFormScreen = () => {
   const onSelectCustomer = (id: string) => {
     const linkedCarId = resolveCustomerCarId(id, rentals);
     if (!linkedCarId) {
-      Alert.alert(
-        'No car linked',
-        'This customer has no active or past rental. Assign a car first.',
-      );
+      Alert.alert(t('fines.noCarLinkedTitle'), t('fines.noCarLinkedMessage'));
       setCustomerMenu(false);
       return;
     }
@@ -75,7 +74,7 @@ export const FineFormScreen = () => {
 
   const onSubmit = async () => {
     if (!customerId || !carId || !amount || !reason) {
-      Alert.alert('Fill all required fields');
+      Alert.alert(t('fines.fillRequired'));
       return;
     }
 
@@ -114,7 +113,7 @@ export const FineFormScreen = () => {
         onDismiss={() => setCustomerMenu(false)}
         anchor={
           <AppButton
-            label={selectedCustomer?.name ?? 'Select customer'}
+            label={selectedCustomer?.name ?? t('fines.selectCustomer')}
             variant="outline"
             onPress={() => setCustomerMenu(true)}
           />
@@ -126,10 +125,10 @@ export const FineFormScreen = () => {
       </Menu>
 
       <ReadOnlyFormField
-        label="Car (from customer rental)"
+        label={t('fines.carFromRental')}
         value={
           selectedCar?.name ??
-          (customerId ? 'No car linked to this customer' : 'Select a customer first')
+          (customerId ? t('fines.noCarLinked') : t('fines.selectCustomerFirst'))
         }
         meta={
           selectedCar
@@ -138,23 +137,23 @@ export const FineFormScreen = () => {
         }
       />
       <AppInput
-        label={currencyFieldLabel('Amount')}
+        label={currencyFieldLabel(t('fines.amount'))}
         value={amount}
         onChangeText={setAmount}
         keyboardType="numeric"
       />
-      <AppInput label="Reason" value={reason} onChangeText={setReason} />
-      <AppInput label="Notes" value={notes} onChangeText={setNotes} multiline />
+      <AppInput label={t('fines.reason')} value={reason} onChangeText={setReason} />
+      <AppInput label={t('common.notes')} value={notes} onChangeText={setNotes} multiline />
       <View style={styles.switchRow}>
-        <Text>Paid</Text>
+        <Text>{t('fines.paidSwitch')}</Text>
         <Switch value={paidStatus} onValueChange={setPaidStatus} />
       </View>
       <AppButton
-        label={`Date: ${dayjs(fineDate).format('DD MMM YYYY')}`}
+        label={t('common.dateButton', { date: dayjs(fineDate).format('DD MMM YYYY') })}
         variant="outline"
         onPress={() => setShowDate(true)}
       />
-      <AppButton label="Save Fine" onPress={onSubmit} fullWidth />
+      <AppButton label={t('fines.saveFine')} onPress={onSubmit} fullWidth />
       <AppDatePickerModal
         open={showDate}
         date={fineDate}

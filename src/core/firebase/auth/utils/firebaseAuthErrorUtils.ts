@@ -1,3 +1,4 @@
+import i18n from '@core/i18n';
 import { FirebaseError } from 'firebase/app';
 
 /** Firestore / Auth error codes that indicate an invalid or expired session. */
@@ -40,27 +41,27 @@ export const isTokenRefreshFailure = (error: unknown): boolean => {
 /** Maps Firebase Auth error codes to user-facing copy for the login UI. */
 export const getFirebaseAuthErrorMessage = (error: unknown): string => {
   if (!isFirebaseError(error)) {
-    return 'Something went wrong. Please try again.';
+    return i18n.t('auth.errors.generic');
   }
 
   switch (error.code) {
     case 'auth/invalid-email':
-      return 'That email address is not valid.';
+      return i18n.t('auth.errors.invalidEmail');
     case 'auth/user-disabled':
-      return 'This account has been disabled.';
+      return i18n.t('auth.errors.userDisabled');
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
-      return 'Incorrect email or password.';
+      return i18n.t('auth.errors.wrongPassword');
     case 'auth/email-already-in-use':
-      return 'An account already exists with this email.';
+      return i18n.t('auth.errors.emailInUse');
     case 'auth/weak-password':
-      return 'Password must be at least 6 characters.';
+      return i18n.t('auth.errors.weakPassword');
     case 'auth/too-many-requests':
-      return 'Too many attempts. Wait a moment and try again.';
+      return i18n.t('auth.errors.tooManyRequests');
     case 'auth/network-request-failed':
-      return 'Network error. Check your connection.';
+      return i18n.t('auth.errors.network');
     default:
-      return error.message || 'Authentication failed.';
+      return error.message || i18n.t('auth.errors.authFailed');
   }
 };

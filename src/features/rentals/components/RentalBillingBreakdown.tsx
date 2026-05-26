@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { colors, radius, spacing, typography } from '@app/theme';
+import { useTranslation } from '@core/i18n';
 import { formatInstallmentDueLabel } from '@core/helpers/paymentInstallment';
 import type { RentalInstallmentDraft } from '@core/services/rentalBillingService';
 import { formatCurrency } from '@core/utils/currency';
@@ -15,6 +16,8 @@ interface RentalBillingBreakdownProps {
 
 export const RentalBillingBreakdown = memo<RentalBillingBreakdownProps>(
   ({ installments, totalAmount, rentalDayCount, collectFirstOnAssignment }) => {
+    const { t } = useTranslation();
+
     if (installments.length === 0) {
       return null;
     }
@@ -22,8 +25,10 @@ export const RentalBillingBreakdown = memo<RentalBillingBreakdownProps>(
     return (
       <View style={styles.box}>
         <Text style={styles.heading}>
-          {rentalDayCount} day{rentalDayCount === 1 ? '' : 's'} · {installments.length} payment
-          {installments.length === 1 ? '' : 's'}
+          {t('billing.breakdownHeading', {
+            days: rentalDayCount,
+            payments: installments.length,
+          })}
         </Text>
         {installments.map((row, index) => (
           <View key={row.index} style={styles.row}>
@@ -39,13 +44,13 @@ export const RentalBillingBreakdown = memo<RentalBillingBreakdownProps>(
             <View style={styles.rowRight}>
               <Text style={styles.rowAmount}>{formatCurrency(row.amount)}</Text>
               {index === 0 && collectFirstOnAssignment ? (
-                <Text style={styles.advanceTag}>Due today</Text>
+                <Text style={styles.advanceTag}>{t('billing.dueToday')}</Text>
               ) : null}
             </View>
           </View>
         ))}
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Contract total</Text>
+          <Text style={styles.totalLabel}>{t('billing.contractTotal')}</Text>
           <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
         </View>
       </View>

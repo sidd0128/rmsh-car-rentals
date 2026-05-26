@@ -10,14 +10,16 @@ import {
 import type { PaymentRecord } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
 import { StatusBadge } from '@shared/ui';
+import { useTranslation } from '@core/i18n';
 
 interface CustomerPaymentHistoryProps {
   payments: PaymentRecord[];
 }
 
 export const CustomerPaymentHistory = memo<CustomerPaymentHistoryProps>(({ payments }) => {
+  const { t } = useTranslation();
   if (payments.length === 0) {
-    return <Text style={typography.bodySmall}>No payments recorded yet.</Text>;
+    return <Text style={typography.bodySmall}>{t('customers.noPayments')}</Text>;
   }
 
   return (

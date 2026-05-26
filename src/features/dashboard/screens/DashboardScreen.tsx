@@ -14,7 +14,8 @@ import {
   returnsSoonFilterDescription,
 } from '@core/services/availabilityService';
 import { colors, spacing, typography } from '@app/theme';
-import { APP_NAME } from '@core/constants/app';
+import { getAppName } from '@core/constants/app';
+import { useTranslation } from '@core/i18n';
 import { formatDate } from '@core/helpers/date';
 import { formatCurrency } from '@core/utils/currency';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
@@ -38,6 +39,7 @@ type DashboardNav = CompositeNavigationProp<
 >;
 
 export const DashboardScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<DashboardNav>();
   const insets = useSafeAreaInsets();
   const cars = useCarStore(s => s.cars);
@@ -72,57 +74,57 @@ export const DashboardScreen = () => {
 
   return (
     <ScreenLayout onRefresh={onRefresh} style={{ paddingTop: insets.top + spacing.md }}>
-      <Text style={styles.brand}>{APP_NAME}</Text>
-      <Text style={typography.h1}>Dashboard</Text>
-      <Text style={styles.subtitle}>Fleet overview at a glance</Text>
+      <Text style={styles.brand}>{getAppName()}</Text>
+      <Text style={typography.h1}>{t('dashboard.title')}</Text>
+      <Text style={styles.subtitle}>{t('dashboard.subtitle')}</Text>
 
       <View style={styles.grid}>
-        <StatCard label="Total Cars" value={cars.length} />
-        <StatCard label="Available" value={stats.available} accent={colors.success} />
-        <StatCard label="On Rent" value={stats.onRent} accent={colors.info} />
+        <StatCard label={t('dashboard.totalCars')} value={cars.length} />
+        <StatCard label={t('dashboard.available')} value={stats.available} accent={colors.success} />
+        <StatCard label={t('dashboard.onRent')} value={stats.onRent} accent={colors.info} />
         <StatCard
-          label="Returns Soon"
+          label={t('dashboard.returnsSoon')}
           value={stats.returningSoon}
           description={returnsSoonFilterDescription()}
           accent={colors.warning}
           onPress={() => openCarsListWithFilter(navigation, 'RETURNING_SOON')}
         />
         <StatCard
-          label="Upcoming Bookings"
+          label={t('dashboard.upcomingBookings')}
           value={stats.upcomingBookings}
           accent={colors.warning}
           onPress={() => openCarsListWithFilter(navigation, 'UPCOMING_BOOKING')}
         />
-        <StatCard label="Customers" value={customers.length} />
+        <StatCard label={t('dashboard.customers')} value={customers.length} />
         <StatCard
-          label="Total Earnings"
+          label={t('dashboard.totalEarnings')}
           value={formatCurrency(stats.totalEarnings)}
           accent={colors.primary}
           onPress={() => navigation.navigate('EarningsBreakdown')}
         />
         <StatCard
-          label="Upcoming earnings this year"
+          label={t('dashboard.upcomingEarningsThisYear')}
           value={formatCurrency(stats.upcomingEarnings)}
           accent={colors.secondary}
           onPress={() => navigation.navigate('UpcomingEarnings')}
         />
       </View>
 
-      <Text style={[typography.h3, styles.recentHeading]}>Recent Bookings</Text>
+      <Text style={[typography.h3, styles.recentHeading]}>{t('dashboard.recentBookings')}</Text>
       <Text style={styles.recentHint}>
-        {RECENT_BOOKINGS_LIMIT} most recently created bookings
+        {t('dashboard.recentBookingsHint', { count: RECENT_BOOKINGS_LIMIT })}
       </Text>
       {stats.recent.length === 0 ? (
-        <Text style={screenStyles.emptyHint}>No bookings yet.</Text>
+        <Text style={screenStyles.emptyHint}>{t('dashboard.noBookingsYet')}</Text>
       ) : (
         stats.recent.map(r => {
           const car = cars.find(c => c.id === r.carId);
           const customer = customers.find(c => c.id === r.customerId);
           return (
             <View key={r.id} style={[screenStyles.surfaceCard, styles.recentItem]}>
-              <Text style={typography.h4}>{car?.name ?? 'Car'}</Text>
+              <Text style={typography.h4}>{car?.name ?? t('common.car')}</Text>
               <Text style={typography.bodySmall}>
-                {customer?.name ?? 'Customer'} · {r.status}
+                {customer?.name ?? t('common.customer')} · {r.status}
               </Text>
               <Text style={styles.recentDates}>
                 {formatDate(r.startDate)} – {formatDate(r.endDate)}

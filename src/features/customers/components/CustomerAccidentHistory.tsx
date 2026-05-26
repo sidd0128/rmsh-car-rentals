@@ -6,6 +6,7 @@ import { formatDate } from '@core/helpers/date';
 import type { AccidentRecord, Car } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
 import { ImageSlider } from '@shared/media';
+import { useTranslation } from '@core/i18n';
 
 interface CustomerAccidentHistoryProps {
   accidents: AccidentRecord[];
@@ -15,8 +16,9 @@ interface CustomerAccidentHistoryProps {
 
 export const CustomerAccidentHistory = memo<CustomerAccidentHistoryProps>(
   ({ accidents, carsById, onAccidentPress }) => {
+    const { t } = useTranslation();
     if (accidents.length === 0) {
-      return <Text style={typography.bodySmall}>No accident reports for this customer.</Text>;
+      return <Text style={typography.bodySmall}>{t('customers.noAccidents')}</Text>;
     }
 
     return (
@@ -31,9 +33,11 @@ export const CustomerAccidentHistory = memo<CustomerAccidentHistoryProps>(
               accessibilityRole="button"
             >
               <Text style={styles.description}>{accident.description}</Text>
-              <Text style={styles.damage}>Damage: {formatCurrency(accident.damageCost)}</Text>
+              <Text style={styles.damage}>
+                {t('accidents.damageLabel', { amount: formatCurrency(accident.damageCost) })}
+              </Text>
               <Text style={styles.meta}>
-                {car?.name ?? 'Car'} · {formatDate(accident.accidentDate)}
+                {car?.name ?? t('common.car')} · {formatDate(accident.accidentDate)}
               </Text>
               {accident.notes ? <Text style={styles.notes}>{accident.notes}</Text> : null}
               {accident.proofImages.length > 0 ? (

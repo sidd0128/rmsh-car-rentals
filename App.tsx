@@ -1,3 +1,4 @@
+import '@core/i18n';
 import React from 'react';
 import { StatusBar } from 'react-native';
 import { AppProvider } from './src/app/providers/AppProvider';

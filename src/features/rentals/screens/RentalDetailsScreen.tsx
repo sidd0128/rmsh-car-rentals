@@ -29,8 +29,10 @@ import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, StatusBadge } from '@shared/ui';
 import { useRentalStore } from '../store/useRentalStore';
+import { useTranslation } from '@core/i18n';
 
 export const RentalDetailsScreen = () => {
+  const { t } = useTranslation();
   const route = useRoute<RouteProp<RentalsStackParamList, 'RentalDetails'>>();
   const rental = useRentalStore(s => s.rentals.find(r => r.id === route.params.rentalId));
   const canExtend = useCanExtendRental(rental);
@@ -58,7 +60,7 @@ export const RentalDetailsScreen = () => {
   if (!rental) {
     return (
       <ScreenLayout>
-        <Text>Rental not found</Text>
+        <Text>{t('rentals.notFound')}</Text>
       </ScreenLayout>
     );
   }
@@ -73,8 +75,8 @@ export const RentalDetailsScreen = () => {
     <View style={styles.screen}>
     <ScreenLayout>
       <View style={styles.hero}>
-        <Text style={typography.h2}>{car?.name ?? 'Rental'}</Text>
-        <Text style={typography.body}>{customer?.name ?? 'Customer'}</Text>
+        <Text style={typography.h2}>{car?.name ?? t('rentals.rentalFallback')}</Text>
+        <Text style={typography.body}>{customer?.name ?? t('common.customer')}</Text>
         <View style={styles.badges}>
           <StatusBadge label={rental.status} variant="on_rent" />
           <StatusBadge
@@ -84,7 +86,7 @@ export const RentalDetailsScreen = () => {
         </View>
       </View>
 
-      <ScreenSection title="Schedule" first showDivider>
+      <ScreenSection title={t('rentals.schedule')} first showDivider>
         <Text style={typography.body}>
           {formatDate(rental.startDate)} – {formatDate(rental.endDate)}
         </Text>
@@ -92,7 +94,7 @@ export const RentalDetailsScreen = () => {
           <Text style={typography.bodySmall}>
             {billingFrequencyLabel(rental.billingFrequency)}
             {rental.rateAmount != null
-              ? ` at ${formatCurrency(rental.rateAmount)}`
+              ? t('rentals.rateAt', { amount: formatCurrency(rental.rateAmount) })
               : ''}
             {' · '}
             {formatRentDueDaySummary(
@@ -101,13 +103,13 @@ export const RentalDetailsScreen = () => {
               rental.rentDueDayOfMonth,
             )}
             {rental.collectFirstPaymentOnAssignment
-              ? ' · First installment collected on assignment'
+              ? ` · ${t('billing.firstCollectedOnAssignment')}`
               : ''}
           </Text>
         ) : null}
         {canExtend ? (
           <AppButton
-            label="Extend booking"
+            label={t('rentals.extendBooking')}
             variant="outline"
             onPress={() => extendRef.current?.open(rental)}
             fullWidth
@@ -116,15 +118,18 @@ export const RentalDetailsScreen = () => {
         ) : null}
       </ScreenSection>
 
-      <ScreenSection title="Contract value">
+      <ScreenSection title={t('rentals.contractValue')}>
         <Text style={typography.h3}>{formatCurrency(rental.agreedPrice)}</Text>
         <Text style={typography.bodySmall}>
-          Received {formatCurrency(paid)} · Outstanding {formatCurrency(pending)}
+          {t('rentals.receivedOutstanding', {
+            received: formatCurrency(paid),
+            outstanding: formatCurrency(pending),
+          })}
         </Text>
         {rental.notes ? <Text style={typography.bodySmall}>{rental.notes}</Text> : null}
       </ScreenSection>
 
-      <ScreenSection title="Payment breakdown">
+      <ScreenSection title={t('rentals.paymentBreakdown')}>
         <RentalPaymentSchedule
           rental={rental}
           payments={rentalPayments}

@@ -21,6 +21,7 @@ import {
   getLatestSelectableHistoryDate,
 } from '@core/helpers/historyDates';
 import dayjs from 'dayjs';
+import { useTranslation } from '@core/i18n';
 
 export interface AssignmentModalRef {
   open: (carId: string) => void;
@@ -31,12 +32,6 @@ interface AssignmentModalProps {
   onSuccess?: () => void;
   onAddCustomer?: () => void;
 }
-
-const FREQUENCY_OPTIONS: { value: BillingFrequency; label: string }[] = [
-  { value: 'DAILY', label: 'Daily' },
-  { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'MONTHLY', label: 'Monthly' },
-];
 
 const defaultRateForFrequency = (
   frequency: BillingFrequency,
@@ -58,7 +53,16 @@ const defaultRateForFrequency = (
 
 export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalProps>(
   ({ onSuccess, onAddCustomer }, ref) => {
+    const { t } = useTranslation();
     const sheetRef = useRef<AppBottomSheetRef>(null);
+    const frequencyOptions = useMemo(
+      (): { value: BillingFrequency; label: string }[] => [
+        { value: 'DAILY', label: t('assignment.frequencyDaily') },
+        { value: 'WEEKLY', label: t('assignment.frequencyWeekly') },
+        { value: 'MONTHLY', label: t('assignment.frequencyMonthly') },
+      ],
+      [t],
+    );
     const [carId, setCarId] = useState('');
     const [customerId, setCustomerId] = useState('');
     const [frequency, setFrequency] = useState<BillingFrequency>('WEEKLY');
@@ -129,16 +133,16 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
 
     const handleAssign = async () => {
       if (!customerId) {
-        Alert.alert('Select customer');
+        Alert.alert(t('assignment.selectCustomerAlert'));
         return;
       }
       const rateAmount = Number(rate);
       if (!Number.isFinite(rateAmount) || rateAmount <= 0) {
-        Alert.alert('Enter a valid rate');
+        Alert.alert(t('assignment.invalidRate'));
         return;
       }
       if (billingPreview.installments.length === 0) {
-        Alert.alert('Invalid schedule', 'Check dates, rate, and rent due day.');
+        Alert.alert(t('assignment.invalidScheduleTitle'), t('assignment.invalidScheduleMessage'));
         return;
       }
 
@@ -157,7 +161,7 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
       setSubmitting(false);
 
       if (!result.success) {
-        Alert.alert('Assignment failed', result.error);
+        Alert.alert(t('assignment.failedTitle'), result.error);
         return;
       }
       sheetRef.current?.close();
@@ -171,17 +175,15 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
 
     return (
       <AppBottomSheet ref={sheetRef} scrollable>
-        <Text style={typography.h3}>Assign Customer</Text>
-        <Text style={modalFormStyles.subtitle}>
-          Set how rent is charged, which day payments are due, then confirm the schedule.
-        </Text>
+        <Text style={typography.h3}>{t('assignment.title')}</Text>
+        <Text style={modalFormStyles.subtitle}>{t('assignment.subtitle')}</Text>
 
         <Menu
           visible={menuVisible}
           onDismiss={() => setMenuVisible(false)}
           anchor={
             <AppButton
-              label={selectedCustomer?.name ?? 'Select customer'}
+              label={selectedCustomer?.name ?? t('assignment.selectCustomer')}
               variant="outline"
               onPress={() => setMenuVisible(true)}
               fullWidth
@@ -199,7 +201,7 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
             />
           ))}
           <Menu.Item
-            title="+ Add new customer"
+            title={t('assignment.addNewCustomer')}
             onPress={() => {
               setMenuVisible(false);
               sheetRef.current?.close();
@@ -208,11 +210,11 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
           />
         </Menu>
 
-        <Text style={modalFormStyles.fieldLabel}>Rent payment frequency</Text>
+        <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentFrequency')}</Text>
         <SegmentedButtons
           value={frequency}
           onValueChange={v => setFrequency(v as BillingFrequency)}
-          buttons={FREQUENCY_OPTIONS}
+          buttons={frequencyOptions}
           style={styles.segment}
         />
 
@@ -225,13 +227,17 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
 
         <View style={styles.dateRow}>
           <AppButton
-            label={`Start: ${dayjs(startDate).format('DD MMM YYYY')}`}
+            label={t('common.startDateButton', {
+              date: dayjs(startDate).format('DD MMM YYYY'),
+            })}
             variant="outline"
             onPress={() => setShowStart(true)}
             fullWidth
           />
           <AppButton
-            label={`End: ${dayjs(endDate).format('DD MMM YYYY')}`}
+            label={t('common.endDateButton', {
+              date: dayjs(endDate).format('DD MMM YYYY'),
+            })}
             variant="outline"
             onPress={() => setShowEnd(true)}
             fullWidth
@@ -240,7 +246,7 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
 
         {frequency === 'WEEKLY' ? (
           <View>
-            <Text style={modalFormStyles.fieldLabel}>Rent paid on</Text>
+            <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentPaidOn')}</Text>
             <WeekdayPicker value={rentDueWeekday} onChange={setRentDueWeekday} />
             <Text style={styles.dueHint}>
               {formatRentDueDaySummary('WEEKLY', rentDueWeekday)}
@@ -250,9 +256,9 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
 
         {frequency === 'MONTHLY' ? (
           <View>
-            <Text style={modalFormStyles.fieldLabel}>Rent due day of month</Text>
+            <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentDueDayOfMonth')}</Text>
             <AppButton
-              label={`Day ${rentDueDayOfMonth} of each month`}
+              label={t('common.dayOfMonthButton', { day: rentDueDayOfMonth })}
               variant="outline"
               onPress={() => setShowRentDueDay(true)}
               fullWidth
@@ -269,10 +275,8 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
 
         <View style={modalFormStyles.switchRow}>
           <View style={modalFormStyles.switchText}>
-            <Text style={typography.body}>Collect first payment today</Text>
-            <Text style={modalFormStyles.switchHint}>
-              Turn on when the customer pays the first installment at handover.
-            </Text>
+            <Text style={typography.body}>{t('assignment.collectFirstToday')}</Text>
+            <Text style={modalFormStyles.switchHint}>{t('assignment.collectFirstHint')}</Text>
           </View>
           <Switch value={collectFirstOnAssignment} onValueChange={setCollectFirstOnAssignment} />
         </View>
@@ -287,8 +291,10 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
         <AppButton
           label={
             billingPreview.totalAmount > 0
-              ? `Confirm · ${formatCurrency(billingPreview.totalAmount)} total`
-              : 'Confirm assignment'
+              ? t('assignment.confirmTotal', {
+                  amount: formatCurrency(billingPreview.totalAmount),
+                })
+              : t('assignment.confirmAssignment')
           }
           onPress={handleAssign}
           loading={submitting}

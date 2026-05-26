@@ -7,6 +7,7 @@ import type { Car, Fine } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
 import { ImageSlider } from '@shared/media';
 import { StatusBadge } from '@shared/ui';
+import { useTranslation } from '@core/i18n';
 
 interface CustomerFineHistoryProps {
   fines: Fine[];
@@ -16,8 +17,9 @@ interface CustomerFineHistoryProps {
 
 export const CustomerFineHistory = memo<CustomerFineHistoryProps>(
   ({ fines, carsById, onFinePress }) => {
+    const { t } = useTranslation();
     if (fines.length === 0) {
-      return <Text style={typography.bodySmall}>No fines recorded for this customer.</Text>;
+      return <Text style={typography.bodySmall}>{t('customers.noFines')}</Text>;
     }
 
     return (
@@ -34,13 +36,13 @@ export const CustomerFineHistory = memo<CustomerFineHistoryProps>(
               <View style={styles.header}>
                 <Text style={styles.amount}>{formatCurrency(fine.amount)}</Text>
                 <StatusBadge
-                  label={fine.paidStatus ? 'Paid' : 'Unpaid'}
+                  label={fine.paidStatus ? t('common.paid') : t('common.unpaid')}
                   variant={fine.paidStatus ? 'done' : 'pending'}
                 />
               </View>
               <Text style={styles.reason}>{fine.reason}</Text>
               <Text style={styles.meta}>
-                {car?.name ?? 'Car'} · {formatDate(fine.fineDate)}
+                {car?.name ?? t('common.car')} · {formatDate(fine.fineDate)}
               </Text>
               {fine.notes ? <Text style={styles.notes}>{fine.notes}</Text> : null}
               {fine.proofImages.length > 0 ? (

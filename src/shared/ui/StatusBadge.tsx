@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { colors } from '@app/theme';
+import i18n from '@core/i18n';
 import { radius } from '@app/theme/radius';
 import { spacing } from '@app/theme/spacing';
 
@@ -53,11 +54,11 @@ export const carStatusToBadge = (
 ): { label: string; variant: BadgeVariant } => {
   switch (status) {
     case 'AVAILABLE':
-      return { label: 'Available', variant: 'available' };
+      return { label: i18n.t('cars.status.available'), variant: 'available' };
     case 'ON_RENT':
-      return { label: 'On Rent', variant: 'on_rent' };
+      return { label: i18n.t('cars.status.onRent'), variant: 'on_rent' };
     case 'UPCOMING_BOOKING':
-      return { label: 'Upcoming', variant: 'upcoming' };
+      return { label: i18n.t('cars.status.upcoming'), variant: 'upcoming' };
     default:
       return { label: status, variant: 'default' };
   }

@@ -14,10 +14,12 @@ import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { ReadOnlyFormField } from '@shared/ui';
 import { useAccidentStore } from '../store/useAccidentStore';
+import { useTranslation } from '@core/i18n';
 
 type AccidentDetailsRoute = RouteProp<AccidentFlowParamList, 'AccidentDetails'>;
 
 export const AccidentDetailsScreen = () => {
+  const { t } = useTranslation();
   const route = useRoute<AccidentDetailsRoute>();
   const accident = useAccidentStore(s =>
     s.accidents.find(a => a.id === route.params.accidentId),
@@ -28,7 +30,7 @@ export const AccidentDetailsScreen = () => {
   if (!accident) {
     return (
       <ScreenLayout>
-        <Text>Accident report not found</Text>
+        <Text>{t('accidents.notFound')}</Text>
       </ScreenLayout>
     );
   }
@@ -48,19 +50,22 @@ export const AccidentDetailsScreen = () => {
         </Text>
       </View>
 
-      <ScreenSection title="Notes" first showDivider>
+      <ScreenSection title={t('common.notes')} first showDivider>
         {accident.notes ? (
           <Text style={typography.body}>{accident.notes}</Text>
         ) : (
-          <Text style={typography.bodySmall}>No notes</Text>
+          <Text style={typography.bodySmall}>{t('common.noNotes')}</Text>
         )}
       </ScreenSection>
 
-      <ScreenSection title="Customer & car">
-        <ReadOnlyFormField label="Customer" value={customer?.name ?? '—'} />
+      <ScreenSection title={t('common.customerAndCar')}>
         <ReadOnlyFormField
-          label="Car"
-          value={car?.name ?? '—'}
+          label={t('common.customer')}
+          value={customer?.name ?? t('common.emDash')}
+        />
+        <ReadOnlyFormField
+          label={t('common.car')}
+          value={car?.name ?? t('common.emDash')}
           meta={
             car ? `${car.brand} ${car.model} · ${car.numberPlate}` : undefined
           }
@@ -68,7 +73,7 @@ export const AccidentDetailsScreen = () => {
       </ScreenSection>
 
       {accident.proofImages.length > 0 ? (
-        <ScreenSection title="Photos">
+        <ScreenSection title={t('common.photos')}>
           <ImageSlider images={accident.proofImages} imageHeight={160} />
         </ScreenSection>
       ) : null}

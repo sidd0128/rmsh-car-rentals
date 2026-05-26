@@ -24,6 +24,7 @@ import type { Rental } from '@core/types/domain';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { RentalBillingBreakdown } from '@features/rentals/components/RentalBillingBreakdown';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
+import { useTranslation } from '@core/i18n';
 
 export interface ExtendBookingModalRef {
   open: (rental: Rental) => void;
@@ -36,6 +37,7 @@ interface ExtendBookingModalProps {
 
 export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookingModalProps>(
   ({ onSuccess }, ref) => {
+    const { t } = useTranslation();
     const sheetRef = useRef<AppBottomSheetRef>(null);
     const [sourceRental, setSourceRental] = useState<Rental | null>(null);
     const [newEndDate, setNewEndDate] = useState(new Date());
@@ -95,16 +97,14 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
           const blocking = window.blockingRental;
           if (blocking) {
             const name =
-              customers.find(c => c.id === blocking.customerId)?.name ?? 'another customer';
+              customers.find(c => c.id === blocking.customerId)?.name ??
+              t('extension.anotherCustomer');
             Alert.alert(
-              'Extension not available',
+              t('extension.notAvailableTitle'),
               formatExtensionBlockedMessage(name, blocking),
             );
           } else {
-            Alert.alert(
-              'Extension not available',
-              'There is no room to extend this booking on the calendar.',
-            );
+            Alert.alert(t('extension.notAvailableTitle'), t('extension.noRoomMessage'));
           }
           return;
         }
@@ -127,7 +127,7 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
         return;
       }
       if (billingPreview.installments.length === 0) {
-        Alert.alert('Invalid extension', 'Choose an end date within the available extension window.');
+        Alert.alert(t('extension.invalidEndTitle'), t('extension.invalidEndMessage'));
         return;
       }
 
@@ -140,7 +140,7 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
       setSubmitting(false);
 
       if (!result.success) {
-        Alert.alert('Extension failed', result.error);
+        Alert.alert(t('extension.failedTitle'), result.error);
         return;
       }
       sheetRef.current?.close();
@@ -153,11 +153,8 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
 
     return (
       <AppBottomSheet ref={sheetRef} scrollable>
-        <Text style={typography.h3}>Extend booking</Text>
-        <Text style={modalFormStyles.subtitle}>
-          Creates a new contract from the current end date through your new end date. Billing
-          uses the same rate and rent due rules as the original booking.
-        </Text>
+        <Text style={typography.h3}>{t('extension.title')}</Text>
+        <Text style={modalFormStyles.subtitle}>{t('extension.subtitle')}</Text>
 
         <Text style={styles.windowHint}>
           {formatExtensionWindowHint(
@@ -168,14 +165,14 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
         </Text>
 
         <View style={screenStyles.insetPanel}>
-          <Text style={styles.summaryLabel}>Current booking</Text>
+          <Text style={styles.summaryLabel}>{t('extension.currentBooking')}</Text>
           <Text style={typography.body}>
             {formatDate(sourceRental.startDate)} – {formatDate(sourceRental.endDate)}
           </Text>
           {sourceRental.billingFrequency ? (
             <Text style={typography.bodySmall}>
-              {billingFrequencyLabel(sourceRental.billingFrequency)} at{' '}
-              {formatCurrency(sourceRental.rateAmount ?? 0)}
+              {billingFrequencyLabel(sourceRental.billingFrequency)}
+              {t('rentals.rateAt', { amount: formatCurrency(sourceRental.rateAmount ?? 0) })}
               {' · '}
               {formatRentDueDaySummary(
                 sourceRental.billingFrequency,
@@ -187,14 +184,16 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
         </View>
 
         <View style={screenStyles.insetPanel}>
-          <Text style={styles.summaryLabel}>Extension period</Text>
+          <Text style={styles.summaryLabel}>{t('extension.extensionPeriod')}</Text>
           <Text style={typography.body}>
             {formatDate(extensionStartIso)} – {formatDate(newEndDate.toISOString())}
           </Text>
         </View>
 
         <AppButton
-          label={`New end date: ${dayjs(newEndDate).format('DD MMM YYYY')}`}
+          label={t('common.newEndDateButton', {
+            date: dayjs(newEndDate).format('DD MMM YYYY'),
+          })}
           variant="outline"
           onPress={() => setShowEndPicker(true)}
           fullWidth
@@ -202,10 +201,8 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
 
         <View style={modalFormStyles.switchRow}>
           <View style={modalFormStyles.switchText}>
-            <Text style={typography.body}>Collect first extension payment today</Text>
-            <Text style={modalFormStyles.switchHint}>
-              Turn on if the customer pays the first extension installment now.
-            </Text>
+            <Text style={typography.body}>{t('extension.collectFirstExtensionToday')}</Text>
+            <Text style={modalFormStyles.switchHint}>{t('extension.collectFirstExtensionHint')}</Text>
           </View>
           <Switch
             value={collectFirstOnExtension}
@@ -223,8 +220,10 @@ export const ExtendBookingModal = forwardRef<ExtendBookingModalRef, ExtendBookin
         <AppButton
           label={
             billingPreview.totalAmount > 0
-              ? `Confirm extension · ${formatCurrency(billingPreview.totalAmount)}`
-              : 'Confirm extension'
+              ? t('extension.confirmExtensionTotal', {
+                  amount: formatCurrency(billingPreview.totalAmount),
+                })
+              : t('extension.confirmExtension')
           }
           onPress={handleConfirm}
           loading={submitting}

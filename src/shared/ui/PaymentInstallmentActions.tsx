@@ -4,6 +4,7 @@ import { Text } from 'react-native-paper';
 import { colors, spacing, typography } from '@app/theme';
 import type { PaymentInstallmentAction } from '@core/helpers/paymentInstallment';
 import type { PaymentRecord } from '@core/types/domain';
+import { useTranslation } from '@core/i18n';
 import { AppButton } from './AppButton';
 
 interface PaymentInstallmentActionsProps {
@@ -17,6 +18,8 @@ interface PaymentInstallmentActionsProps {
 
 export const PaymentInstallmentActions = memo<PaymentInstallmentActionsProps>(
   ({ status, paymentId, actingId, actingKind, onReceived, onNotPaid }) => {
+    const { t } = useTranslation();
+
     if (status === 'DONE') {
       return null;
     }
@@ -26,9 +29,9 @@ export const PaymentInstallmentActions = memo<PaymentInstallmentActionsProps>(
     if (status === 'NOT_PAID') {
       return (
         <View style={styles.stacked}>
-          <Text style={styles.notPaidTag}>Not paid</Text>
+          <Text style={styles.notPaidTag}>{t('common.notPaid')}</Text>
           <AppButton
-            label="Received"
+            label={t('common.received')}
             onPress={() => onReceived(paymentId)}
             loading={busy && actingKind === 'received'}
             fullWidth
@@ -41,13 +44,13 @@ export const PaymentInstallmentActions = memo<PaymentInstallmentActionsProps>(
     return (
       <View style={styles.row}>
         <AppButton
-          label="Received"
+          label={t('common.received')}
           onPress={() => onReceived(paymentId)}
           loading={busy && actingKind === 'received'}
           style={styles.btn}
         />
         <AppButton
-          label="Not paid"
+          label={t('common.notPaid')}
           variant="outline"
           onPress={() => onNotPaid(paymentId)}
           loading={busy && actingKind === 'not_paid'}

@@ -13,8 +13,10 @@ import { useCarStore } from '@features/cars/store/useCarStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { EmptyState, StatusBadge } from '@shared/ui';
 import { useFineStore } from '../store/useFineStore';
+import { useTranslation } from '@core/i18n';
 
 export const FinesListScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const fines = useFineStore(s => s.fines);
   const customers = useCustomerStore(s => s.customers);
@@ -25,7 +27,10 @@ export const FinesListScreen = () => {
     <View style={styles.container}>
       <ScreenLayout scrollable>
         {fines.length === 0 ? (
-          <EmptyState title="No fines recorded" description="Tap + to add a fine." />
+          <EmptyState
+            title={t('fines.listEmptyTitle')}
+            description={t('fines.listEmptyDescription')}
+          />
         ) : (
           fines.map(fine => {
             const customer = customers.find(c => c.id === fine.customerId);
@@ -39,7 +44,7 @@ export const FinesListScreen = () => {
                 <View style={styles.row}>
                   <Text style={typography.h4}>{formatCurrency(fine.amount)}</Text>
                   <StatusBadge
-                    label={fine.paidStatus ? 'Paid' : 'Unpaid'}
+                    label={fine.paidStatus ? t('common.paid') : t('common.unpaid')}
                     variant={fine.paidStatus ? 'done' : 'pending'}
                   />
                 </View>

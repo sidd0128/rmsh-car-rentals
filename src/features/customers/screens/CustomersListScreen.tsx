@@ -21,6 +21,7 @@ import {
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useFilteredCustomers } from '../hooks/useFilteredCustomers';
 import { useCustomerRentalInfo } from '../hooks/useCustomerRentalInfo';
+import { useTranslation } from '@core/i18n';
 
 const CustomerRow = ({
   customerId,
@@ -29,6 +30,7 @@ const CustomerRow = ({
   customerId: string;
   onPress: () => void;
 }) => {
+  const { t } = useTranslation();
   const customer = useCustomerStore(s => s.getCustomerById(customerId));
   const payments = usePaymentStore(s => s.payments);
   const { activeRental, car } = useCustomerRentalInfo(customerId);
@@ -42,10 +44,10 @@ const CustomerRow = ({
       <View style={styles.cardHeader}>
         <Text style={typography.h4}>{customer.name}</Text>
         {missedRent ? (
-          <StatusBadge label="Not paid" variant="not_paid" />
+          <StatusBadge label={t('customers.notPaid')} variant="not_paid" />
         ) : (
           <StatusBadge
-            label={activeRental?.paymentStatus ?? 'N/A'}
+            label={activeRental?.paymentStatus ?? t('common.notAvailable')}
             variant={activeRental?.paymentStatus === 'DONE' ? 'done' : 'pending'}
           />
         )}
@@ -60,13 +62,14 @@ const CustomerRow = ({
               : ''}
         </Text>
       ) : (
-        <Text style={typography.bodySmall}>No active rental</Text>
+        <Text style={typography.bodySmall}>{t('customers.noActiveRental')}</Text>
       )}
     </Pressable>
   );
 };
 
 export const CustomersListScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
   const filtered = useFilteredCustomers();
   const searchQuery = useCustomerStore(s => s.searchQuery);
@@ -90,7 +93,7 @@ export const CustomersListScreen = () => {
         <SearchHeader
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search customers..."
+          placeholder={t('customers.searchPlaceholder')}
         />
       </View>
       <View style={styles.list}>
@@ -106,7 +109,7 @@ export const CustomersListScreen = () => {
           ]}
           onRefresh={hydrateAll}
           refreshing={false}
-          ListEmptyComponent={<EmptyState title="No customers" />}
+          ListEmptyComponent={<EmptyState title={t('customers.listEmptyTitle')} />}
         />
       </View>
       <FAB

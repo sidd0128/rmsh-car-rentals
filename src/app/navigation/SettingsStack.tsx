@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { colors } from '@app/theme';
+import i18n from '@core/i18n';
 import { AccidentDetailsScreen } from '@features/accidents/screens/AccidentDetailsScreen';
 import { AccidentFormScreen } from '@features/accidents/screens/AccidentFormScreen';
 import { AccidentsListScreen } from '@features/accidents/screens/AccidentsListScreen';
@@ -19,30 +20,44 @@ export const SettingsStack = () => (
       headerTintColor: colors.primary,
     }}
   >
-    <Stack.Screen name="SettingsHome" component={SettingsScreen} options={{ title: 'More' }} />
-    <Stack.Screen name="FinesList" component={FinesListScreen} options={{ title: 'Fines' }} />
+    <Stack.Screen
+      name="SettingsHome"
+      component={SettingsScreen}
+      options={{ title: i18n.t('navigation.more') }}
+    />
+    <Stack.Screen
+      name="FinesList"
+      component={FinesListScreen}
+      options={{ title: i18n.t('navigation.fines') }}
+    />
     <Stack.Screen
       name="FineDetails"
       component={FineDetailsScreen}
-      options={{ title: 'Fine details' }}
+      options={{ title: i18n.t('navigation.fineDetails') }}
     />
     <Stack.Screen
       name="FineForm"
       component={FineFormScreen}
       options={({ route }) => ({
-        title: route.params?.fineId ? 'Edit fine' : 'Add fine',
+        title: route.params?.fineId
+          ? i18n.t('navigation.editFine')
+          : i18n.t('navigation.addFine'),
       })}
     />
-    <Stack.Screen name="AccidentsList" component={AccidentsListScreen} options={{ title: 'Accidents' }} />
+    <Stack.Screen
+      name="AccidentsList"
+      component={AccidentsListScreen}
+      options={{ title: i18n.t('navigation.accidents') }}
+    />
     <Stack.Screen
       name="AccidentDetails"
       component={AccidentDetailsScreen}
-      options={{ title: 'Accident report' }}
+      options={{ title: i18n.t('navigation.accidentReport') }}
     />
     <Stack.Screen
       name="AccidentForm"
       component={AccidentFormScreen}
-      options={{ title: 'Report Accident' }}
+      options={{ title: i18n.t('navigation.reportAccident') }}
     />
   </Stack.Navigator>
 );

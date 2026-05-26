@@ -1,3 +1,4 @@
+import i18n from '@core/i18n';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { BillingFrequency } from '@core/types/domain';
 
@@ -32,13 +33,24 @@ const startOfDay = (value: string | Date): Dayjs => dayjs(value).startOf('day');
 /** Calendar date for rent due (avoids UTC shift from toISOString). */
 const toDueDateString = (value: Dayjs): string => value.format('YYYY-MM-DD');
 
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAY_KEYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
 
-export const RENT_DUE_WEEKDAY_OPTIONS = WEEKDAY_NAMES.map((name, value) => ({
-  value,
-  label: name,
-  shortLabel: name.slice(0, 3),
-}));
+export const RENT_DUE_WEEKDAY_OPTIONS = WEEKDAY_KEYS.map((key, value) => {
+  const label = i18n.t(`billing.weekdays.${key}`);
+  return {
+    value,
+    label,
+    shortLabel: label.slice(0, 3),
+  };
+});
 
 /** Inclusive calendar days between start and end (minimum 1 when end >= start). */
 export const countRentalDays = (startDate: string | Date, endDate: string | Date): number => {
@@ -120,7 +132,10 @@ const buildDailyInstallments = (
       periodStart: periodStart.toISOString(),
       periodEnd: periodStart.toISOString(),
       amount: rate,
-      label: `Day ${i + 1} (${periodStart.format('D MMM YYYY')})`,
+      label: i18n.t('billing.dayInstallment', {
+        index: i + 1,
+        date: periodStart.format('D MMM YYYY'),
+      }),
     });
   }
   return installments;
@@ -154,7 +169,11 @@ const buildWeeklyInstallments = (
       periodStart: periodStart.toISOString(),
       periodEnd: periodEnd.toISOString(),
       amount: rate,
-      label: `Week ${weekNum} (${periodStart.format('D MMM')} – ${periodEnd.format('D MMM YYYY')})`,
+      label: i18n.t('billing.weekInstallment', {
+        index: weekNum,
+        start: periodStart.format('D MMM'),
+        end: periodEnd.format('D MMM YYYY'),
+      }),
     });
     cursor = periodEnd.add(1, 'day');
     weekNum += 1;
@@ -191,7 +210,11 @@ const buildMonthlyInstallments = (
       periodStart: periodStart.toISOString(),
       periodEnd: periodEnd.toISOString(),
       amount: rate,
-      label: `Month ${monthNum} (${periodStart.format('D MMM')} – ${periodEnd.format('D MMM YYYY')})`,
+      label: i18n.t('billing.monthInstallment', {
+        index: monthNum,
+        start: periodStart.format('D MMM'),
+        end: periodEnd.format('D MMM YYYY'),
+      }),
     });
     cursor = periodEnd.add(1, 'day');
     monthNum += 1;
@@ -233,11 +256,11 @@ export const calculateRentalBillingPreview = (
 export const billingFrequencyLabel = (frequency: BillingFrequency): string => {
   switch (frequency) {
     case 'DAILY':
-      return 'Per day';
+      return i18n.t('billing.perDay');
     case 'WEEKLY':
-      return 'Per week';
+      return i18n.t('billing.perWeek');
     case 'MONTHLY':
-      return 'Per month';
+      return i18n.t('billing.perMonth');
     default:
       return frequency;
   }
@@ -246,13 +269,13 @@ export const billingFrequencyLabel = (frequency: BillingFrequency): string => {
 export const rateFieldLabel = (frequency: BillingFrequency): string => {
   switch (frequency) {
     case 'DAILY':
-      return 'Daily rate (AUD)';
+      return i18n.t('billing.dailyRate');
     case 'WEEKLY':
-      return 'Weekly rate (AUD)';
+      return i18n.t('billing.weeklyRate');
     case 'MONTHLY':
-      return 'Monthly rate (AUD)';
+      return i18n.t('billing.monthlyRate');
     default:
-      return 'Rate (AUD)';
+      return i18n.t('billing.rate');
   }
 };
 
@@ -263,17 +286,19 @@ export const formatRentDueDaySummary = (
 ): string => {
   switch (frequency) {
     case 'DAILY':
-      return 'Due each rental day';
+      return i18n.t('billing.dueEachRentalDay');
     case 'WEEKLY':
       if (rentDueWeekday != null) {
-        return `Due every ${WEEKDAY_NAMES[rentDueWeekday]}`;
+        return i18n.t('billing.dueEveryWeekday', {
+          weekday: i18n.t(`billing.weekdays.${WEEKDAY_KEYS[rentDueWeekday]}`),
+        });
       }
-      return 'Pick a weekday for rent due';
+      return i18n.t('billing.pickWeekday');
     case 'MONTHLY':
       if (rentDueDayOfMonth != null) {
-        return `Due on day ${rentDueDayOfMonth} of each period`;
+        return i18n.t('billing.dueOnDayOfMonth', { day: rentDueDayOfMonth });
       }
-      return 'Pick a day of month for rent due';
+      return i18n.t('billing.pickDayOfMonth');
     default:
       return '';
   }

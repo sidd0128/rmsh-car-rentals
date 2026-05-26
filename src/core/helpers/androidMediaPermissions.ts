@@ -1,21 +1,16 @@
 import { PermissionsAndroid, Platform } from 'react-native';
+import i18n from '@core/i18n';
 
-/** Request camera access before `launchCamera` when declared in AndroidManifest. */
 export const ensureAndroidCameraPermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') {
     return true;
   }
 
-  const alreadyGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
-  if (alreadyGranted) {
-    return true;
-  }
-
   const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA, {
-    title: 'Camera permission',
-    message: 'RMSH Rentals needs camera access to photograph your cars and documents.',
-    buttonPositive: 'Allow',
-    buttonNegative: 'Cancel',
+    title: i18n.t('media.cameraPermissionTitle'),
+    message: i18n.t('media.cameraPermissionMessage'),
+    buttonPositive: i18n.t('common.allow'),
+    buttonNegative: i18n.t('common.cancel'),
   });
 
   return result === PermissionsAndroid.RESULTS.GRANTED;

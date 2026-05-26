@@ -13,8 +13,10 @@ import { useCarStore } from '@features/cars/store/useCarStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { EmptyState } from '@shared/ui';
 import { useAccidentStore } from '../store/useAccidentStore';
+import { useTranslation } from '@core/i18n';
 
 export const AccidentsListScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const accidents = useAccidentStore(s => s.accidents);
   const customers = useCustomerStore(s => s.customers);
@@ -25,7 +27,10 @@ export const AccidentsListScreen = () => {
     <View style={styles.container}>
       <ScreenLayout scrollable>
         {accidents.length === 0 ? (
-          <EmptyState title="No accidents recorded" description="Tap + to log a new incident." />
+          <EmptyState
+            title={t('accidents.listEmptyTitle')}
+            description={t('accidents.listEmptyDescription')}
+          />
         ) : (
           accidents.map(acc => {
             const customer = customers.find(c => c.id === acc.customerId);

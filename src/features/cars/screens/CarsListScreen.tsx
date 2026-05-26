@@ -21,16 +21,10 @@ import { returnsSoonFilterDescription } from '@core/services/availabilityService
 import { useCarFilterStore, type CarFilter } from '../store/useCarFilterStore';
 import { CarCard } from '../components/CarCard';
 import { useFilteredCars } from '../hooks/useFilteredCars';
-
-const FILTER_OPTIONS: { label: string; value: CarFilter }[] = [
-  { label: 'All Cars', value: 'ALL' },
-  { label: 'Available', value: 'AVAILABLE' },
-  { label: 'On Rent', value: 'ON_RENT' },
-  { label: 'Upcoming Bookings', value: 'UPCOMING_BOOKING' },
-  { label: 'Returning Soon', value: 'RETURNING_SOON' },
-];
+import { useTranslation } from '@core/i18n';
 
 export const CarsListScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarsList'>>();
   const filteredCars = useFilteredCars();
@@ -45,7 +39,18 @@ export const CarsListScreen = () => {
   const { hydrateAll } = useHydrateStores();
   const { listNumColumns, horizontalPadding } = useDeviceLayout();
 
-  const activeFilterLabel = FILTER_OPTIONS.find(option => option.value === filter)?.label;
+  const filterOptions = useMemo(
+    (): { label: string; value: CarFilter }[] => [
+      { label: t('cars.filters.all'), value: 'ALL' },
+      { label: t('cars.filters.available'), value: 'AVAILABLE' },
+      { label: t('cars.filters.onRent'), value: 'ON_RENT' },
+      { label: t('cars.filters.upcomingBookings'), value: 'UPCOMING_BOOKING' },
+      { label: t('cars.filters.returningSoon'), value: 'RETURNING_SOON' },
+    ],
+    [t],
+  );
+
+  const activeFilterLabel = filterOptions.find(option => option.value === filter)?.label;
 
   useFocusEffect(
     useCallback(() => {
@@ -101,11 +106,13 @@ export const CarsListScreen = () => {
         <SearchHeader
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search name, model, plate..."
+          placeholder={t('cars.searchPlaceholder')}
           onFilterPress={() => filterRef.current?.open()}
         />
         {filter !== 'ALL' && activeFilterLabel ? (
-          <Text style={styles.activeFilter}>Showing: {activeFilterLabel}</Text>
+          <Text style={styles.activeFilter}>
+            {t('common.showingFilter', { label: activeFilterLabel })}
+          </Text>
         ) : null}
         {filter === 'RETURNING_SOON' ? (
           <Text style={styles.filterHint}>{returnsSoonFilterDescription()}</Text>
@@ -126,13 +133,13 @@ export const CarsListScreen = () => {
           refreshing={false}
           ListEmptyComponent={
             <EmptyState
-              title="No cars found"
+              title={t('cars.noCarsFound')}
               description={
                 filter === 'RETURNING_SOON'
                   ? returnsSoonFilterDescription()
-                  : 'Try changing filters or add a new car'
+                  : t('common.tryChangeFilters')
               }
-              actionLabel="Add Car"
+              actionLabel={t('common.addCar')}
               onAction={() => navigation.navigate('CarForm', {})}
             />
           }
@@ -146,8 +153,8 @@ export const CarsListScreen = () => {
       />
       <FilterBottomSheet
         ref={filterRef}
-        title="Filter Cars"
-        options={FILTER_OPTIONS}
+        title={t('cars.filterTitle')}
+        options={filterOptions}
         selected={filter}
         onSelect={setFilter}
       />
