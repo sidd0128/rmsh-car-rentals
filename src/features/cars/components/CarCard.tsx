@@ -4,17 +4,19 @@ import { Text } from 'react-native-paper';
 import { colors, shadows, radius, spacing, typography } from '@app/theme';
 import { formatDate } from '@core/helpers/date';
 import { formatCurrency } from '@core/utils/currency';
-import type { Car } from '@core/types/domain';
-import type { Customer } from '@core/types/domain';
-import { StatusBadge, carStatusToBadge } from '@shared/ui/StatusBadge';
+import type { NextRentDue } from '@core/helpers/rentalPayments';
+import type { Car, Customer } from '@core/types/domain';
+import { StatusBadge, carStatusToBadge } from '@shared/ui';
 
 interface CarCardProps {
   car: Car;
   customer?: Customer;
+  totalPaid: number;
+  nextRentDue?: NextRentDue | null;
   onPress: () => void;
 }
 
-export const CarCard = memo<CarCardProps>(({ car, customer, onPress }) => {
+export const CarCard = memo<CarCardProps>(({ car, customer, totalPaid, nextRentDue, onPress }) => {
   const badge = carStatusToBadge(car.status);
   const imageUri = car.images[0];
 
@@ -33,6 +35,11 @@ export const CarCard = memo<CarCardProps>(({ car, customer, onPress }) => {
         <Text style={typography.bodySmall}>
           {car.brand} {car.model} · {car.numberPlate}
         </Text>
+        {nextRentDue ? (
+          <Text style={styles.nextRent}>
+            Next rent {formatCurrency(nextRentDue.amount)} · due {formatDate(nextRentDue.dueDate)}
+          </Text>
+        ) : null}
         {customer ? (
           <Text style={styles.customer}>Rented by {customer.name}</Text>
         ) : car.futureBookings[0] ? (
@@ -42,7 +49,7 @@ export const CarCard = memo<CarCardProps>(({ car, customer, onPress }) => {
         ) : (
           <Text style={styles.customer}>Available now</Text>
         )}
-        <Text style={styles.earnings}>{formatCurrency(car.totalEarnings)} earned</Text>
+        <Text style={styles.earnings}>{formatCurrency(totalPaid)} earned</Text>
       </View>
     </Pressable>
   );
@@ -57,7 +64,7 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', height: 140 },
   placeholder: { backgroundColor: colors.borderLight },
-  body: { padding: spacing.md },
+  body: { padding: spacing.lg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -65,5 +72,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   customer: { ...typography.bodySmall, marginTop: spacing.xs },
-  earnings: { ...typography.caption, color: colors.primary, marginTop: spacing.sm },
+  nextRent: {
+    ...typography.label,
+    color: colors.warning,
+    marginTop: spacing.sm,
+  },
+  earnings: { ...typography.caption, color: colors.primary, marginTop: spacing.xs },
 });

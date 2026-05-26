@@ -1,14 +1,16 @@
-import React, { forwardRef, useImperativeHandle, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text, RadioButton } from 'react-native-paper';
+import { calculateFilterSheetSnapHeight } from '@core/helpers/bottomSheetSnapHeight';
+import { useBottomSheetLayoutMetrics } from '@core/hooks/useBottomSheetLayoutMetrics';
 import { AppBottomSheet, AppBottomSheetRef } from './AppBottomSheet';
 import { spacing } from '@app/theme/spacing';
 import { typography } from '@app/theme/typography';
 
-export interface FilterOption<T extends string> {
+type FilterOption<T extends string> = {
   label: string;
   value: T;
-}
+};
 
 interface FilterBottomSheetProps<T extends string> {
   title: string;
@@ -27,6 +29,18 @@ function FilterBottomSheetInner<T extends string>(
   ref: React.Ref<FilterBottomSheetRef>,
 ) {
   const sheetRef = useRef<AppBottomSheetRef>(null);
+  const { height: screenHeight } = useWindowDimensions();
+  const { topInset } = useBottomSheetLayoutMetrics();
+
+  const snapHeight = useMemo(
+    () =>
+      calculateFilterSheetSnapHeight({
+        optionCount: options.length,
+        screenHeight,
+        topInset,
+      }),
+    [options.length, screenHeight, topInset],
+  );
 
   useImperativeHandle(ref, () => ({
     open: () => sheetRef.current?.open(),
@@ -34,7 +48,7 @@ function FilterBottomSheetInner<T extends string>(
   }));
 
   return (
-    <AppBottomSheet ref={sheetRef} snapPoints={['45%']}>
+    <AppBottomSheet ref={sheetRef} snapPoints={[snapHeight]}>
       <Text style={typography.h3}>{title}</Text>
       <View style={styles.options}>
         <RadioButton.Group
@@ -58,5 +72,5 @@ export const FilterBottomSheet = forwardRef(FilterBottomSheetInner) as <T extend
 ) => React.ReactElement;
 
 const styles = StyleSheet.create({
-  options: { marginTop: spacing.md },
+  options: { marginTop: spacing.sm },
 });

@@ -1,47 +1,73 @@
 import { create } from 'zustand';
 import { repositories } from '@core/database/repositoryRegistry';
+import {
+  deriveRentalPaymentStatus,
+  paymentsForRental,
+} from '@core/helpers/rentalPayments';
 import type { PaymentRecord } from '@core/types/domain';
+import { useRentalStore } from '@features/rentals/store/useRentalStore';
 
 interface PaymentState {
   payments: PaymentRecord[];
-  isLoading: boolean;
   hydrate: () => Promise<void>;
-  updatePaymentStatus: (
-    paymentId: string,
-    status: PaymentRecord['status'],
-  ) => Promise<void>;
+  markPaymentReceived: (paymentId: string) => Promise<void>;
+  markPaymentNotPaid: (paymentId: string) => Promise<void>;
 }
+
+const syncRentalPaymentStatus = async (rentalId: string): Promise<void> => {
+  const allPayments = await repositories.payments.getPayments();
+  const rentalPayments = paymentsForRental(rentalId, allPayments);
+  const rental = await repositories.rentals.getRentalById(rentalId);
+  if (!rental) {
+    return;
+  }
+  const paymentStatus = deriveRentalPaymentStatus(rentalPayments);
+  if (paymentStatus !== rental.paymentStatus) {
+    await repositories.rentals.updateRental({ ...rental, paymentStatus });
+  }
+};
+
+const refreshStores = async () => {
+  const payments = await repositories.payments.getPayments();
+  usePaymentStore.setState({ payments });
+  await useRentalStore.getState().hydrate();
+};
 
 export const usePaymentStore = create<PaymentState>((set, get) => ({
   payments: [],
-  isLoading: false,
 
   hydrate: async () => {
-    set({ isLoading: true });
     const payments = await repositories.payments.getPayments();
-    set({ payments, isLoading: false });
+    set({ payments });
   },
 
-  updatePaymentStatus: async (paymentId, status) => {
+  markPaymentReceived: async paymentId => {
     const payment = get().payments.find(p => p.id === paymentId);
-    if (!payment) {
+    if (!payment || payment.status === 'DONE') {
       return;
     }
     const updated: PaymentRecord = {
       ...payment,
-      status,
-      paidAt: status === 'DONE' ? new Date().toISOString() : undefined,
+      status: 'DONE',
+      paidAt: new Date().toISOString(),
     };
     await repositories.payments.updatePayment(updated);
+    await syncRentalPaymentStatus(payment.rentalId);
+    await refreshStores();
+  },
 
-    const rental = await repositories.rentals.getRentalById(payment.rentalId);
-    if (rental) {
-      await repositories.rentals.updateRental({
-        ...rental,
-        paymentStatus: status,
-      });
+  markPaymentNotPaid: async paymentId => {
+    const payment = get().payments.find(p => p.id === paymentId);
+    if (!payment || payment.status === 'NOT_PAID') {
+      return;
     }
-
-    set({ payments: get().payments.map(p => (p.id === paymentId ? updated : p)) });
+    const updated: PaymentRecord = {
+      ...payment,
+      status: 'NOT_PAID',
+      paidAt: undefined,
+    };
+    await repositories.payments.updatePayment(updated);
+    await syncRentalPaymentStatus(payment.rentalId);
+    await refreshStores();
   },
 }));

@@ -1,4 +1,5 @@
 import { MD3LightTheme, configureFonts } from 'react-native-paper';
+import { buttonLabelStyle } from './buttonMetrics';
 import { colors } from './colors';
 import { radius } from './radius';
 
@@ -18,5 +19,13 @@ export const paperTheme = {
     onPrimary: colors.textInverse,
     onSurface: colors.text,
     outline: colors.border,
+  },
+  components: {
+    Button: {
+      labelStyle: buttonLabelStyle,
+    },
+    SegmentedButtons: {
+      style: { minHeight: 48 },
+    },
   },
 };

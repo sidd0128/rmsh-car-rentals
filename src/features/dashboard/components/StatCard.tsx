@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { colors, shadows, radius, spacing, typography } from '@app/theme';
 
@@ -7,14 +7,34 @@ interface StatCardProps {
   label: string;
   value: string | number;
   accent?: string;
+  onPress?: () => void;
 }
 
-export const StatCard = memo<StatCardProps>(({ label, value, accent = colors.primary }) => (
-  <View style={[styles.card, shadows.sm]}>
-    <Text style={[styles.value, { color: accent }]}>{value}</Text>
-    <Text style={styles.label}>{label}</Text>
-  </View>
-));
+export const StatCard = memo<StatCardProps>(({ label, value, accent = colors.primary, onPress }) => {
+  const content = (
+    <>
+      <Text style={[styles.value, { color: accent }]}>{value}</Text>
+      <Text style={styles.label} numberOfLines={3}>
+        {label}
+      </Text>
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={[styles.card, shadows.sm]}>{content}</View>;
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.card, shadows.sm, pressed && styles.pressed]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      {content}
+    </Pressable>
+  );
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -27,4 +47,5 @@ const styles = StyleSheet.create({
   },
   value: { ...typography.h2, marginBottom: spacing.xs },
   label: { ...typography.bodySmall },
+  pressed: { opacity: 0.85 },
 });

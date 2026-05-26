@@ -25,10 +25,6 @@ class AsyncStorageRentalRepository
     return (await this.getAll()).filter(r => r.carId === carId);
   }
 
-  async getRentalsByCustomerId(customerId: string): Promise<Rental[]> {
-    return (await this.getAll()).filter(r => r.customerId === customerId);
-  }
-
   async addRental(payload: CreateRentalPayload): Promise<Rental> {
     const now = todayISO();
     const rental: Rental = {

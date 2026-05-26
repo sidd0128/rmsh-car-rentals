@@ -1,8 +1,11 @@
 import { useMemo } from 'react';
-import { useDebounce } from '@core/hooks/useDebounce';
+import { carHasUpcomingBookingOnly } from '@core/services/availabilityService';
+import { useDebouncedValue } from '@reusable';
+import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { useCarStore } from '../store/useCarStore';
 import { useCarFilterStore, type CarFilter } from '../store/useCarFilterStore';
 import type { Car } from '@core/types/domain';
+import type { Rental } from '@core/types/domain';
 
 const matchesSearch = (car: Car, query: string): boolean => {
   const q = query.toLowerCase().trim();
@@ -15,19 +18,26 @@ const matchesSearch = (car: Car, query: string): boolean => {
   );
 };
 
-const matchesFilter = (car: Car, filter: CarFilter): boolean => {
+const matchesFilter = (car: Car, filter: CarFilter, rentals: Rental[]): boolean => {
   if (filter === 'ALL') return true;
+  if (filter === 'UPCOMING_BOOKING') {
+    return carHasUpcomingBookingOnly(car, rentals);
+  }
   return car.status === filter;
 };
 
 export const useFilteredCars = () => {
   const cars = useCarStore(s => s.cars);
+  const rentals = useRentalStore(s => s.rentals);
   const filter = useCarFilterStore(s => s.filter);
   const searchQuery = useCarFilterStore(s => s.searchQuery);
-  const debouncedSearch = useDebounce(searchQuery);
+  const debouncedSearch = useDebouncedValue(searchQuery);
 
   return useMemo(
-    () => cars.filter(c => matchesFilter(c, filter) && matchesSearch(c, debouncedSearch)),
-    [cars, filter, debouncedSearch],
+    () =>
+      cars.filter(
+        c => matchesFilter(c, filter, rentals) && matchesSearch(c, debouncedSearch),
+      ),
+    [cars, rentals, filter, debouncedSearch],
   );
 };

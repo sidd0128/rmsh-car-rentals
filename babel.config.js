@@ -1,20 +1,24 @@
+const path = require('path');
+
+const src = path.resolve(__dirname, 'src');
+
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
   plugins: [
-    'react-native-reanimated/plugin',
     [
       'module-resolver',
       {
-        root: ['./src'],
+        root: [src],
         extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
         alias: {
-          '@app': './src/app',
-          '@core': './src/core',
-          '@shared': './src/shared',
-          '@features': './src/features',
-          '@assets': './src/assets',
+          '@app': path.join(src, 'app'),
+          '@core': path.join(src, 'core'),
+          '@shared': path.join(src, 'shared'),
+          '@features': path.join(src, 'features'),
+          '@reusable': path.join(src, 'reusable'),
         },
       },
     ],
+    'react-native-reanimated/plugin',
   ],
 };

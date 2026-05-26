@@ -30,6 +30,25 @@ describe('bookingConflictService', () => {
     expect(conflict).toBe(true);
   });
 
+  it('allows extension period starting on previous rental end date', () => {
+    const rentals = [
+      baseRental({
+        id: 'original',
+        startDate: '2026-02-01T00:00:00.000Z',
+        endDate: '2026-02-10T00:00:00.000Z',
+      }),
+    ];
+    const conflict = hasBookingConflict(
+      rentals,
+      {
+        startDate: '2026-02-10T00:00:00.000Z',
+        endDate: '2026-02-20T00:00:00.000Z',
+      },
+      'original',
+    );
+    expect(conflict).toBe(false);
+  });
+
   it('allows non-overlapping rentals', () => {
     const rentals = [
       baseRental({

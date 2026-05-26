@@ -4,3 +4,4 @@ export { typography } from './typography';
 export { radius } from './radius';
 export { shadows } from './shadows';
 export { paperTheme } from './paperTheme';
+export { buttonMetrics, buttonContentStyle, buttonLabelStyle } from './buttonMetrics';

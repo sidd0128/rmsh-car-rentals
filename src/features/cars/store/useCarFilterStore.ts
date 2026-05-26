@@ -14,14 +14,22 @@ interface CarFilterState {
 export const useCarFilterStore = create<CarFilterState>()(
   persist(
     set => ({
-      filter: 'AVAILABLE',
+      filter: 'ALL',
       searchQuery: '',
       setFilter: filter => set({ filter }),
       setSearchQuery: searchQuery => set({ searchQuery }),
     }),
     {
       name: '@rmsh/car-filter-prefs',
+      version: 1,
       storage: createJSONStorage(() => zustandPersistStorage),
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<CarFilterState>;
+        if (version < 1) {
+          return { filter: 'ALL', searchQuery: state.searchQuery ?? '' };
+        }
+        return state as CarFilterState;
+      },
     },
   ),
 );

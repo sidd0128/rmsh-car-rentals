@@ -9,6 +9,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+src/core/config/env.generated.ts
 
 # Node
 node_modules/
@@ -33,7 +34,8 @@ coverage/
 *.log
 logs/
 
-# Ruby / CocoaPods / Bundler
+# Ruby / CocoaPods / Bundler (never commit Pods — run `cd ios && bundle exec pod install`)
+ios/Pods/
 **/Pods/
 /vendor/bundle/
 .bundle/
@@ -88,9 +90,10 @@ captures/
 !.yarn/sdks
 !.yarn/versions
 
-# Optional local asset linking (do not commit; use RNVectorIcons pod instead)
+# Vector icon fonts (RNVectorIcons pod / fonts.gradle — do not use react-native-asset)
 ios/link-assets-manifest.json
 android/link-assets-manifest.json
+android/app/src/main/assets/fonts/
 
 # Editors (optional — uncomment if you prefer not to share)
 # .vscode/

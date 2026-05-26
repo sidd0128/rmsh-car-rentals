@@ -3,28 +3,60 @@ import { RefreshControl, ScrollView, StyleSheet, View, ViewStyle } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@app/theme';
 import { spacing } from '@app/theme/spacing';
+import { getScreenBottomClearance } from '@core/helpers/screenBottomInset';
+import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
+import { useOptionalBottomTabBarHeight } from '@core/hooks/useOptionalBottomTabBarHeight';
+import { ResponsiveContainer } from './ResponsiveContainer';
+import { CONTENT_GAP } from './screenStyles';
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
+  /** Full-width block above padded content (e.g. car photo carousel). */
+  bleedTop?: React.ReactNode;
   scrollable?: boolean;
   padded?: boolean;
   style?: ViewStyle;
+  contentStyle?: ViewStyle;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
 
 export const ScreenLayout = memo<ScreenLayoutProps>(
-  ({ children, scrollable = true, padded = true, style, onRefresh, refreshing }) => {
+  ({
+    children,
+    bleedTop,
+    scrollable = true,
+    padded = true,
+    style,
+    contentStyle,
+    onRefresh,
+    refreshing,
+  }) => {
     const insets = useSafeAreaInsets();
+    const { horizontalPadding } = useDeviceLayout();
+    const tabBarHeight = useOptionalBottomTabBarHeight();
 
-    const content = (
-      <View style={[padded && styles.padded, style]}>{children}</View>
+    const paddedContent = (
+      <ResponsiveContainer>
+        <View
+          style={[
+            padded && styles.padded,
+            padded && { paddingHorizontal: horizontalPadding },
+            padded && styles.contentGap,
+            style,
+            contentStyle,
+          ]}
+        >
+          {children}
+        </View>
+      </ResponsiveContainer>
     );
 
     if (!scrollable) {
       return (
-        <View style={[styles.container, { paddingTop: spacing.sm }]}>
-          {content}
+        <View style={styles.container}>
+          {bleedTop}
+          {paddedContent}
         </View>
       );
     }
@@ -32,7 +64,9 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
     return (
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}
+        contentContainerStyle={{
+          paddingBottom: getScreenBottomClearance(tabBarHeight, insets.bottom),
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           onRefresh ? (
@@ -40,7 +74,8 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
           ) : undefined
         }
       >
-        {content}
+        {bleedTop}
+        {paddedContent}
       </ScrollView>
     );
   },
@@ -48,5 +83,6 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  padded: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  padded: { paddingTop: spacing.lg },
+  contentGap: { gap: CONTENT_GAP },
 });

@@ -11,6 +11,7 @@ type BadgeVariant =
   | 'upcoming'
   | 'pending'
   | 'done'
+  | 'not_paid'
   | 'default';
 
 const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
@@ -19,6 +20,7 @@ const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
   upcoming: { bg: colors.warningBg, text: colors.warning },
   pending: { bg: colors.warningBg, text: colors.warning },
   done: { bg: colors.successBg, text: colors.success },
+  not_paid: { bg: colors.errorBg, text: colors.error },
   default: { bg: colors.borderLight, text: colors.textSecondary },
 };
 

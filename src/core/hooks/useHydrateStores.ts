@@ -1,3 +1,6 @@
+/**
+ * Loads all domain Zustand stores from repositories in parallel (call after cloud sync).
+ */
 import { useCallback } from 'react';
 import { useAccidentStore } from '@features/accidents/store/useAccidentStore';
 import { useCarStore } from '@features/cars/store/useCarStore';

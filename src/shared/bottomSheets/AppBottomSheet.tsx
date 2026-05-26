@@ -1,13 +1,18 @@
-import BottomSheet, {
+import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet, ViewStyle } from 'react-native';
+import React, { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
+import { StyleSheet } from 'react-native';
 import { colors } from '@app/theme';
 import { spacing } from '@app/theme/spacing';
 import { radius } from '@app/theme/radius';
+import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
+import { useBottomSheetLayoutMetrics } from '@core/hooks/useBottomSheetLayoutMetrics';
+import { useBottomSheetModal } from '@core/hooks/useBottomSheetModal';
 
 export interface AppBottomSheetRef {
   open: () => void;
@@ -17,32 +22,29 @@ export interface AppBottomSheetRef {
 interface AppBottomSheetProps {
   children: React.ReactNode;
   snapPoints?: (string | number)[];
-  enablePanDownToClose?: boolean;
-  onClose?: () => void;
-  contentStyle?: ViewStyle;
+  onDismiss?: () => void;
+  /** Long forms: full height below status bar + scroll with tab-bar clearance. */
+  scrollable?: boolean;
 }
 
 export const AppBottomSheet = forwardRef<AppBottomSheetRef, AppBottomSheetProps>(
-  (
-    {
-      children,
-      snapPoints: snapPointsProp,
-      enablePanDownToClose = true,
-      onClose,
-      contentStyle,
-    },
-    ref,
-  ) => {
-    const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(
-      () => snapPointsProp ?? ['40%', '70%', '90%'],
-      [snapPointsProp],
-    );
+  ({ children, snapPoints: snapPointsProp, onDismiss, scrollable = false }, ref) => {
+    const { ref: sheetRef, open, close } = useBottomSheetModal();
+    const { horizontalPadding } = useDeviceLayout();
+    const { topInset, bottomInset, maxSnapPoint, contentBottomPadding } =
+      useBottomSheetLayoutMetrics();
 
-    useImperativeHandle(ref, () => ({
-      open: () => sheetRef.current?.snapToIndex(0),
-      close: () => sheetRef.current?.close(),
-    }));
+    const snapPoints = useMemo(() => {
+      if (snapPointsProp?.length) {
+        return snapPointsProp;
+      }
+      if (scrollable) {
+        return [maxSnapPoint];
+      }
+      return [Math.round(maxSnapPoint * 0.5)];
+    }, [snapPointsProp, scrollable, maxSnapPoint]);
+
+    useImperativeHandle(ref, () => ({ open, close }), [open, close]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
@@ -51,24 +53,51 @@ export const AppBottomSheet = forwardRef<AppBottomSheetRef, AppBottomSheetProps>
           disappearsOnIndex={-1}
           appearsOnIndex={0}
           opacity={0.5}
+          pressBehavior="close"
         />
       ),
       [],
     );
 
+    const contentStyle = useMemo(
+      () => ({
+        paddingHorizontal: horizontalPadding,
+        paddingTop: spacing.md,
+        paddingBottom: contentBottomPadding,
+        gap: spacing.md,
+      }),
+      [horizontalPadding, contentBottomPadding],
+    );
+
     return (
-      <BottomSheet
+      <BottomSheetModal
         ref={sheetRef}
-        index={-1}
+        index={0}
         snapPoints={snapPoints}
-        enablePanDownToClose={enablePanDownToClose}
+        enableDynamicSizing={false}
+        enablePanDownToClose
         backdropComponent={renderBackdrop}
-        onClose={onClose}
+        onDismiss={onDismiss}
+        topInset={topInset}
+        bottomInset={bottomInset}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
         backgroundStyle={styles.background}
         handleIndicatorStyle={styles.handle}
       >
-        <BottomSheetView style={[styles.content, contentStyle]}>{children}</BottomSheetView>
-      </BottomSheet>
+        {scrollable ? (
+          <BottomSheetScrollView
+            contentContainerStyle={contentStyle}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </BottomSheetScrollView>
+        ) : (
+          <BottomSheetView style={contentStyle}>{children}</BottomSheetView>
+        )}
+      </BottomSheetModal>
     );
   },
 );
@@ -82,10 +111,6 @@ const styles = StyleSheet.create({
   handle: {
     backgroundColor: colors.border,
     width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
+    marginTop: spacing.sm,
   },
 });

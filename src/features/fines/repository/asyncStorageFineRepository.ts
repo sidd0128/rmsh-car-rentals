@@ -14,26 +14,15 @@ class AsyncStorageFineRepository extends BaseLocalRepository<Fine> implements IF
     return this.getAll();
   }
 
-  getFineById(id: string): Promise<Fine | undefined> {
-    return this.getById(id);
-  }
-
-  async getFinesByCustomerId(customerId: string): Promise<Fine[]> {
-    return (await this.getAll()).filter(f => f.customerId === customerId);
-  }
-
-  async getFinesByCarId(carId: string): Promise<Fine[]> {
-    return (await this.getAll()).filter(f => f.carId === carId);
-  }
-
   async addFine(payload: CreateFinePayload): Promise<Fine> {
-    const fine: Fine = { ...payload, id: createId(), createdAt: todayISO() };
+    const now = todayISO();
+    const fine: Fine = { ...payload, id: createId(), createdAt: now, updatedAt: now };
     await this.save(fine);
     return fine;
   }
 
   async updateFine(fine: Fine): Promise<void> {
-    await this.save(fine);
+    await this.save({ ...fine, updatedAt: todayISO() });
   }
 
   deleteFine(id: string): Promise<void> {

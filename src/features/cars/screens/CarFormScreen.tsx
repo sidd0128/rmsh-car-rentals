@@ -10,6 +10,7 @@ import { currencyFieldLabel } from '@core/constants/app';
 import { createId } from '@core/helpers/id';
 import type { CreateCarPayload } from '@core/types/domain';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
+import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, ControlledAppInput } from '@shared/ui';
 import { useCarStore } from '../store/useCarStore';
 import { useCarFormData } from '../hooks/useCarFormData';
@@ -108,9 +109,9 @@ export const CarFormScreen = () => {
   }
 
   return (
-    <ScreenLayout>
+    <ScreenLayout contentStyle={screenStyles.formStack}>
       <CarPhotosSection images={images} onChange={setImages} />
-      <View style={styles.form}>
+      <View>
         <ControlledAppInput name="name" control={control} label="Car name" />
         <ControlledAppInput name="brand" control={control} label="Brand" />
         <ControlledAppInput name="model" control={control} label="Model" />
@@ -135,7 +136,6 @@ export const CarFormScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  form: { marginTop: spacing.lg },
   loading: {
     flex: 1,
     alignItems: 'center',

@@ -17,26 +17,16 @@ class AsyncStorageAccidentRepository
     return this.getAll();
   }
 
-  getAccidentById(id: string): Promise<AccidentRecord | undefined> {
-    return this.getById(id);
-  }
-
-  async getAccidentsByCustomerId(customerId: string): Promise<AccidentRecord[]> {
-    return (await this.getAll()).filter(a => a.customerId === customerId);
-  }
-
-  async getAccidentsByCarId(carId: string): Promise<AccidentRecord[]> {
-    return (await this.getAll()).filter(a => a.carId === carId);
-  }
-
   async addAccident(payload: CreateAccidentPayload): Promise<AccidentRecord> {
-    const record: AccidentRecord = { ...payload, id: createId(), createdAt: todayISO() };
+    const now = todayISO();
+    const record: AccidentRecord = {
+      ...payload,
+      id: createId(),
+      createdAt: now,
+      updatedAt: now,
+    };
     await this.save(record);
     return record;
-  }
-
-  async updateAccident(record: AccidentRecord): Promise<void> {
-    await this.save(record);
   }
 
   deleteAccident(id: string): Promise<void> {

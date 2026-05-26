@@ -1,0 +1,118 @@
+import dayjs from 'dayjs';
+import { repositories } from '@core/database/repositoryRegistry';
+import { deriveRentalPaymentStatus } from '@core/helpers/rentalPayments';
+import type { AssignRentalInput } from '@features/rentals/types/assignRental';
+import type { Rental } from '@core/types/domain';
+import { hasBookingConflict } from './bookingConflictService';
+import { calculateRentalBillingPreview } from './rentalBillingService';
+import {
+  deriveCarStatus,
+  resolveCurrentBookingForCar,
+  resolveFutureBookingsForCar,
+} from './availabilityService';
+
+export type ScheduledRentalResult =
+  | { success: true; rental: Rental }
+  | { success: false; error: string };
+
+/**
+ * Creates a rental contract and installment payments from assignment-style input.
+ */
+export const createScheduledRental = async (
+  input: AssignRentalInput,
+  options?: { excludeConflictRentalId?: string },
+): Promise<ScheduledRentalResult> => {
+  const start = dayjs(input.startDate);
+  const end = dayjs(input.endDate);
+  if (end.isBefore(start, 'day')) {
+    return { success: false, error: 'End date must be on or after start date' };
+  }
+
+  const preview = calculateRentalBillingPreview({
+    startDate: input.startDate,
+    endDate: input.endDate,
+    frequency: input.billingFrequency,
+    rateAmount: input.rateAmount,
+    rentDueWeekday: input.rentDueWeekday,
+    rentDueDayOfMonth: input.rentDueDayOfMonth,
+  });
+
+  if (preview.installments.length === 0) {
+    return {
+      success: false,
+      error: 'Enter a valid rate and date range to generate a payment schedule',
+    };
+  }
+
+  const rentals = await repositories.rentals.getRentals();
+  const carRentals = rentals.filter(r => r.carId === input.carId);
+
+  if (
+    hasBookingConflict(
+      carRentals,
+      { startDate: input.startDate, endDate: input.endDate },
+      options?.excludeConflictRentalId,
+    )
+  ) {
+    return { success: false, error: 'Booking dates conflict with an existing rental' };
+  }
+
+  const now = dayjs();
+  const status = now.isBefore(start, 'day') ? 'UPCOMING' : 'ACTIVE';
+
+  const rental = await repositories.rentals.addRental({
+    carId: input.carId,
+    customerId: input.customerId,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    agreedPrice: preview.totalAmount,
+    paymentStatus: 'PENDING',
+    status,
+    billingFrequency: input.billingFrequency,
+    rateAmount: input.rateAmount,
+    collectFirstPaymentOnAssignment: input.collectFirstPaymentOnAssignment,
+    rentDueWeekday: input.rentDueWeekday,
+    rentDueDayOfMonth: input.rentDueDayOfMonth,
+    notes: input.notes,
+  });
+
+  const createdPayments = [];
+  for (let i = 0; i < preview.installments.length; i++) {
+    const installment = preview.installments[i];
+    const collectNow = i === 0 && input.collectFirstPaymentOnAssignment;
+    const payment = await repositories.payments.addPayment({
+      rentalId: rental.id,
+      customerId: input.customerId,
+      carId: input.carId,
+      amount: installment.amount,
+      status: collectNow ? 'DONE' : 'PENDING',
+      dueDate: installment.dueDate,
+      installmentIndex: installment.index,
+      label: installment.label,
+      periodStart: installment.periodStart,
+      periodEnd: installment.periodEnd,
+      paidAt: collectNow ? new Date().toISOString() : undefined,
+    });
+    createdPayments.push(payment);
+  }
+
+  const paymentStatus = deriveRentalPaymentStatus(createdPayments);
+  let finalRental = rental;
+  if (paymentStatus !== rental.paymentStatus) {
+    finalRental = { ...rental, paymentStatus };
+    await repositories.rentals.updateRental(finalRental);
+  }
+
+  const car = await repositories.cars.getCarById(input.carId);
+  if (car) {
+    const updatedRentals = await repositories.rentals.getRentalsByCarId(input.carId);
+    await repositories.cars.updateCar({
+      ...car,
+      status: deriveCarStatus(car, updatedRentals),
+      currentBooking: resolveCurrentBookingForCar(input.carId, updatedRentals),
+      futureBookings: resolveFutureBookingsForCar(input.carId, updatedRentals),
+    });
+  }
+
+  return { success: true, rental: finalRental };
+};

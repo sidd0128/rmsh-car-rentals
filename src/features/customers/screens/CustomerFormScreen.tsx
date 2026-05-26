@@ -9,6 +9,7 @@ import type { CustomersStackParamList } from '@app/navigation/types';
 import { spacing } from '@app/theme';
 import type { CreateCustomerPayload } from '@core/types/domain';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
+import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, ControlledAppInput } from '@shared/ui';
 import { MediaUploader } from '@shared/media';
 import { useCustomerStore } from '../store/useCustomerStore';
@@ -72,7 +73,7 @@ export const CustomerFormScreen = () => {
   });
 
   return (
-    <ScreenLayout>
+    <ScreenLayout contentStyle={screenStyles.formStack}>
       <Text variant="titleMedium">Driving License</Text>
       <MediaUploader images={licenseImages} onChange={setLicenseImages} maxImages={2} />
       <Text variant="titleMedium">Documents</Text>

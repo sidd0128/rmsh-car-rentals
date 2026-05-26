@@ -1,3 +1,6 @@
+/**
+ * Detects overlapping rental date ranges for a single car (pure function).
+ */
 import dayjs from 'dayjs';
 import type { Rental } from '../types/domain';
 
@@ -14,6 +17,7 @@ const rangesOverlap = (a: DateRange, b: DateRange): boolean => {
   return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
 };
 
+/** Returns true if `range` overlaps any active/upcoming rental for the car. */
 export const hasBookingConflict = (
   rentals: Rental[],
   range: DateRange,
@@ -22,5 +26,3 @@ export const hasBookingConflict = (
   rentals
     .filter(r => r.status !== 'COMPLETED' && r.id !== excludeRentalId)
     .some(r => rangesOverlap(range, { startDate: r.startDate, endDate: r.endDate }));
-
-export const bookingConflictService = { hasBookingConflict, rangesOverlap };

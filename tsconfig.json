@@ -9,7 +9,8 @@
       "@core/*": ["src/core/*"],
       "@shared/*": ["src/shared/*"],
       "@features/*": ["src/features/*"],
-      "@assets/*": ["src/assets/*"]
+      "@reusable": ["src/reusable/index.ts"],
+      "@reusable/*": ["src/reusable/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "App.tsx", "index.js"],

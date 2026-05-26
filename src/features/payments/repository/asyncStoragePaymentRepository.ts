@@ -17,32 +17,22 @@ class AsyncStoragePaymentRepository
     return this.getAll();
   }
 
-  getPaymentById(id: string): Promise<PaymentRecord | undefined> {
-    return this.getById(id);
-  }
-
-  async getPaymentsByCustomerId(customerId: string): Promise<PaymentRecord[]> {
-    return (await this.getAll()).filter(p => p.customerId === customerId);
-  }
-
-  async getPaymentsByRentalId(rentalId: string): Promise<PaymentRecord[]> {
-    return (await this.getAll()).filter(p => p.rentalId === rentalId);
-  }
-
   async addPayment(
-    payment: Omit<PaymentRecord, 'id' | 'createdAt'>,
+    payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<PaymentRecord> {
+    const now = todayISO();
     const record: PaymentRecord = {
       ...payment,
       id: createId(),
-      createdAt: todayISO(),
+      createdAt: now,
+      updatedAt: now,
     };
     await this.save(record);
     return record;
   }
 
   async updatePayment(payment: PaymentRecord): Promise<void> {
-    await this.save(payment);
+    await this.save({ ...payment, updatedAt: todayISO() });
   }
 
   deletePayment(id: string): Promise<void> {

@@ -1,7 +1,8 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { CarFilter } from '@features/cars/store/useCarFilterStore';
 
 export type CarsStackParamList = {
-  CarsList: undefined;
+  CarsList: { filter?: CarFilter } | undefined;
   CarDetails: { carId: string };
   CarForm: { carId?: string };
 };
@@ -19,6 +20,8 @@ export type RentalsStackParamList = {
 
 export type DashboardStackParamList = {
   DashboardHome: undefined;
+  EarningsBreakdown: undefined;
+  UpcomingEarnings: undefined;
 };
 
 export type SettingsStackParamList = {
@@ -26,7 +29,7 @@ export type SettingsStackParamList = {
   FinesList: undefined;
   FineForm: { fineId?: string };
   AccidentsList: undefined;
-  AccidentForm: { accidentId?: string };
+  AccidentForm: undefined;
 };
 
 export type BottomTabParamList = {
@@ -37,7 +40,13 @@ export type BottomTabParamList = {
   SettingsTab: NavigatorScreenParams<SettingsStackParamList>;
 };
 
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
 export type RootStackParamList = {
+  Auth: NavigatorScreenParams<AuthStackParamList>;
   MainTabs: NavigatorScreenParams<BottomTabParamList>;
 };
 

@@ -1,8 +1,13 @@
+/**
+ * Domain entity types shared across features, repositories, Firestore, and stores.
+ */
 import type { MediaUri } from './media';
 
 export type CarStatus = 'AVAILABLE' | 'ON_RENT' | 'UPCOMING_BOOKING';
 export type RentalStatus = 'ACTIVE' | 'COMPLETED' | 'UPCOMING';
-export type PaymentStatus = 'PENDING' | 'DONE';
+export type PaymentStatus = 'PENDING' | 'DONE' | 'NOT_PAID';
+/** How recurring rent is charged for a rental contract. */
+export type BillingFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 export interface PriceConfiguration {
   id: string;
@@ -18,9 +23,20 @@ export interface Rental {
   customerId: string;
   startDate: string;
   endDate: string;
+  /** Total contract value (sum of all installments). */
   agreedPrice: number;
   paymentStatus: PaymentStatus;
   status: RentalStatus;
+  /** Recurring billing; omitted on legacy rentals (single payment). */
+  billingFrequency?: BillingFrequency;
+  /** Per-day / per-week / per-month rate at assignment. */
+  rateAmount?: number;
+  /** First installment collected on assignment day when true. */
+  collectFirstPaymentOnAssignment?: boolean;
+  /** 0–6 (Sun–Sat) rent due weekday when billingFrequency is WEEKLY. */
+  rentDueWeekday?: number;
+  /** 1–28 rent due day of month when billingFrequency is MONTHLY. */
+  rentDueDayOfMonth?: number;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -74,6 +90,7 @@ export interface Fine {
   proofImages: MediaUri[];
   notes?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AccidentRecord {
@@ -86,6 +103,7 @@ export interface AccidentRecord {
   proofImages: MediaUri[];
   notes?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaymentRecord {
@@ -95,8 +113,16 @@ export interface PaymentRecord {
   carId: string;
   amount: number;
   status: PaymentStatus;
+  /** When this installment is due (start of period). */
+  dueDate?: string;
+  installmentIndex?: number;
+  /** e.g. "Week 2", "Day 3" */
+  label?: string;
+  periodStart?: string;
+  periodEnd?: string;
   paidAt?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export type CreateCarPayload = Omit<
@@ -111,6 +137,6 @@ export type CreateCustomerPayload = Omit<
 
 export type CreateRentalPayload = Omit<Rental, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type CreateFinePayload = Omit<Fine, 'id' | 'createdAt'>;
+export type CreateFinePayload = Omit<Fine, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type CreateAccidentPayload = Omit<AccidentRecord, 'id' | 'createdAt'>;
+export type CreateAccidentPayload = Omit<AccidentRecord, 'id' | 'createdAt' | 'updatedAt'>;

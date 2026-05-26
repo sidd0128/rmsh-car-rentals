@@ -1,3 +1,7 @@
+/**
+ * Generic CRUD for entities stored as a JSON array under one AsyncStorage key.
+ * Feature repos extend this class and implement their `I*Repository` interface.
+ */
 import { storageService } from '../storage/storageService';
 
 export abstract class BaseLocalRepository<T extends { id: string }> {
@@ -34,5 +38,10 @@ export abstract class BaseLocalRepository<T extends { id: string }> {
   async delete(id: string): Promise<void> {
     const items = await this.readAll();
     await this.writeAll(items.filter(i => i.id !== id));
+  }
+
+  /** Replaces the full collection — used when merging cloud data into local storage. */
+  async replaceAll(items: T[]): Promise<void> {
+    await this.writeAll(items);
   }
 }
