@@ -29,6 +29,11 @@ export type RentalsStackParamList = {
   RentalDetails: { rentalId: string };
 };
 
+export type HistoryStackParamList = {
+  HistoryCarsList: undefined;
+  CarRentalHistory: { carId: string };
+};
+
 export type DashboardStackParamList = {
   DashboardHome: undefined;
   EarningsBreakdown: undefined;
@@ -47,7 +52,7 @@ export type BottomTabParamList = {
   DashboardTab: NavigatorScreenParams<DashboardStackParamList>;
   CarsTab: NavigatorScreenParams<CarsStackParamList>;
   CustomersTab: NavigatorScreenParams<CustomersStackParamList>;
-  RentalsTab: NavigatorScreenParams<RentalsStackParamList>;
+  HistoryTab: NavigatorScreenParams<HistoryStackParamList>;
   SettingsTab: NavigatorScreenParams<SettingsStackParamList>;
 };
 

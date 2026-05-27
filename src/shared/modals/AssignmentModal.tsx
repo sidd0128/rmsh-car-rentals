@@ -1,25 +1,25 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import { Menu, SegmentedButtons, Switch, Text } from 'react-native-paper';
+import { Menu, SegmentedButtons, Text } from 'react-native-paper';
 import { AppBottomSheet, AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
 import { AppButton, AppInput, AppDatePickerModal, WeekdayPicker } from '@shared/ui';
 import { colors, spacing, typography } from '@app/theme';
 import { modalFormStyles } from '@shared/modals/modalFormStyles';
+import { OPEN_ENDED_RENTAL_END_ISO } from '@core/constants/rental';
 import type { BillingFrequency } from '@core/types/domain';
 import {
-  calculateRentalBillingPreview,
   formatRentDueDaySummary,
   rateFieldLabel,
 } from '@core/services/rentalBillingService';
-import { formatCurrency } from '@core/utils/currency';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
-import { RentalBillingBreakdown } from '@features/rentals/components/RentalBillingBreakdown';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import {
   getEarliestSelectableHistoryDate,
   getLatestSelectableHistoryDate,
 } from '@core/helpers/historyDates';
+import { mergeDateAndTime } from '@core/helpers/rentalDisplay';
+import { formatDateTimeAmPm } from '@core/helpers/date';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
 
@@ -67,15 +67,19 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
     const [customerId, setCustomerId] = useState('');
     const [frequency, setFrequency] = useState<BillingFrequency>('WEEKLY');
     const [rate, setRate] = useState('');
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(dayjs().add(7, 'day').toDate());
+    const [startDatePart, setStartDatePart] = useState(new Date());
+    const [startTimePart, setStartTimePart] = useState(new Date());
+    const [endDatePart, setEndDatePart] = useState(dayjs().add(7, 'day').toDate());
+    const [endTimePart, setEndTimePart] = useState(dayjs().add(7, 'day').toDate());
+    const [endDateUnset, setEndDateUnset] = useState(false);
     const [rentDueWeekday, setRentDueWeekday] = useState<number>(() => dayjs().day());
     const [rentDueDayOfMonth, setRentDueDayOfMonth] = useState(() =>
       Math.min(dayjs().date(), 28),
     );
-    const [collectFirstOnAssignment, setCollectFirstOnAssignment] = useState(false);
-    const [showStart, setShowStart] = useState(false);
-    const [showEnd, setShowEnd] = useState(false);
+    const [showStartDate, setShowStartDate] = useState(false);
+    const [showStartTime, setShowStartTime] = useState(false);
+    const [showEndDate, setShowEndDate] = useState(false);
+    const [showEndTime, setShowEndTime] = useState(false);
     const [showRentDueDay, setShowRentDueDay] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -85,16 +89,28 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
     const assignRental = useRentalStore(s => s.assignRental);
     const selectedCustomer = customers.find(c => c.id === customerId);
 
+    const startDateTime = useMemo(
+      () => mergeDateAndTime(startDatePart, startTimePart),
+      [startDatePart, startTimePart],
+    );
+    const endDateTime = useMemo(
+      () => mergeDateAndTime(endDatePart, endTimePart),
+      [endDatePart, endTimePart],
+    );
+
     useImperativeHandle(ref, () => ({
       open: id => {
         setCarId(id);
         setCustomerId('');
-        setCollectFirstOnAssignment(false);
-        const today = new Date();
-        setStartDate(today);
-        setEndDate(dayjs().add(7, 'day').toDate());
-        setRentDueWeekday(dayjs(today).day());
-        setRentDueDayOfMonth(Math.min(dayjs(today).date(), 28));
+        const now = new Date();
+        setStartDatePart(now);
+        setStartTimePart(now);
+        const weekLater = dayjs().add(7, 'day').toDate();
+        setEndDatePart(weekLater);
+        setEndTimePart(weekLater);
+        setEndDateUnset(false);
+        setRentDueWeekday(dayjs(now).day());
+        setRentDueDayOfMonth(Math.min(dayjs(now).date(), 28));
         setFrequency('WEEKLY');
         sheetRef.current?.open();
       },
@@ -116,21 +132,6 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
       );
     }, [car, frequency]);
 
-    const billingPreview = useMemo(() => {
-      const rateAmount = Number(rate);
-      if (!Number.isFinite(rateAmount) || rateAmount <= 0) {
-        return { installments: [], totalAmount: 0, rentalDayCount: 0 };
-      }
-      return calculateRentalBillingPreview({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        frequency,
-        rateAmount,
-        rentDueWeekday: frequency === 'WEEKLY' ? rentDueWeekday : undefined,
-        rentDueDayOfMonth: frequency === 'MONTHLY' ? rentDueDayOfMonth : undefined,
-      });
-    }, [startDate, endDate, frequency, rate, rentDueWeekday, rentDueDayOfMonth]);
-
     const handleAssign = async () => {
       if (!customerId) {
         Alert.alert(t('assignment.selectCustomerAlert'));
@@ -141,8 +142,8 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
         Alert.alert(t('assignment.invalidRate'));
         return;
       }
-      if (billingPreview.installments.length === 0) {
-        Alert.alert(t('assignment.invalidScheduleTitle'), t('assignment.invalidScheduleMessage'));
+      if (!endDateUnset && dayjs(endDateTime).isBefore(dayjs(startDateTime))) {
+        Alert.alert(t('assignment.invalidScheduleTitle'), t('assignment.endBeforeStart'));
         return;
       }
 
@@ -150,11 +151,12 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
       const result = await assignRental({
         carId,
         customerId,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate: startDateTime.toISOString(),
+        endDate: endDateUnset ? OPEN_ENDED_RENTAL_END_ISO : endDateTime.toISOString(),
+        openEnded: endDateUnset,
         billingFrequency: frequency,
         rateAmount,
-        collectFirstPaymentOnAssignment: collectFirstOnAssignment,
+        collectFirstPaymentOnAssignment: false,
         rentDueWeekday: frequency === 'WEEKLY' ? rentDueWeekday : undefined,
         rentDueDayOfMonth: frequency === 'MONTHLY' ? rentDueDayOfMonth : undefined,
       });
@@ -225,24 +227,61 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
           keyboardType="numeric"
         />
 
+        <Text style={modalFormStyles.fieldLabel}>{t('assignment.startDateTime')}</Text>
         <View style={styles.dateRow}>
           <AppButton
-            label={t('common.startDateButton', {
-              date: dayjs(startDate).format('DD MMM YYYY'),
+            label={t('assignment.startDateButton', {
+              date: dayjs(startDatePart).format('DD MMM YYYY'),
             })}
             variant="outline"
-            onPress={() => setShowStart(true)}
+            onPress={() => setShowStartDate(true)}
             fullWidth
           />
           <AppButton
-            label={t('common.endDateButton', {
-              date: dayjs(endDate).format('DD MMM YYYY'),
+            label={t('assignment.startTimeButton', {
+              time: dayjs(startTimePart).format('h:mm A'),
             })}
             variant="outline"
-            onPress={() => setShowEnd(true)}
+            onPress={() => setShowStartTime(true)}
             fullWidth
           />
         </View>
+        <Text style={styles.hint}>{formatDateTimeAmPm(startDateTime.toISOString())}</Text>
+
+        <Text style={modalFormStyles.fieldLabel}>{t('assignment.endDateTime')}</Text>
+        {endDateUnset ? (
+          <Text style={styles.openEndedHint}>{t('assignment.endLeftBlank')}</Text>
+        ) : (
+          <>
+            <View style={styles.dateRow}>
+              <AppButton
+                label={t('assignment.endDateButton', {
+                  date: dayjs(endDatePart).format('DD MMM YYYY'),
+                })}
+                variant="outline"
+                onPress={() => setShowEndDate(true)}
+                fullWidth
+              />
+              <AppButton
+                label={t('assignment.endTimeButton', {
+                  time: dayjs(endTimePart).format('h:mm A'),
+                })}
+                variant="outline"
+                onPress={() => setShowEndTime(true)}
+                fullWidth
+              />
+            </View>
+            <Text style={styles.hint}>{formatDateTimeAmPm(endDateTime.toISOString())}</Text>
+          </>
+        )}
+        <AppButton
+          label={
+            endDateUnset ? t('assignment.setEndDateTime') : t('assignment.leaveEndBlank')
+          }
+          variant="outline"
+          onPress={() => setEndDateUnset(prev => !prev)}
+          fullWidth
+        />
 
         {frequency === 'WEEKLY' ? (
           <View>
@@ -273,59 +312,54 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
           <Text style={styles.dueHint}>{formatRentDueDaySummary('DAILY')}</Text>
         ) : null}
 
-        <View style={modalFormStyles.switchRow}>
-          <View style={modalFormStyles.switchText}>
-            <Text style={typography.body}>{t('assignment.collectFirstToday')}</Text>
-            <Text style={modalFormStyles.switchHint}>{t('assignment.collectFirstHint')}</Text>
-          </View>
-          <Switch value={collectFirstOnAssignment} onValueChange={setCollectFirstOnAssignment} />
-        </View>
-
-        <RentalBillingBreakdown
-          installments={billingPreview.installments}
-          totalAmount={billingPreview.totalAmount}
-          rentalDayCount={billingPreview.rentalDayCount}
-          collectFirstOnAssignment={collectFirstOnAssignment}
-        />
-
         <AppButton
-          label={
-            billingPreview.totalAmount > 0
-              ? t('assignment.confirmTotal', {
-                  amount: formatCurrency(billingPreview.totalAmount),
-                })
-              : t('assignment.confirmAssignment')
-          }
+          label={t('assignment.confirmAssignment')}
           onPress={handleAssign}
           loading={submitting}
           fullWidth
-          disabled={billingPreview.installments.length === 0}
         />
 
         <AppDatePickerModal
-          open={showStart}
-          date={startDate}
+          open={showStartDate}
+          date={startDatePart}
           minimumDate={getEarliestSelectableHistoryDate()}
           maximumDate={getLatestSelectableHistoryDate()}
           onConfirm={d => {
-            setShowStart(false);
-            setStartDate(d);
-            if (dayjs(endDate).isBefore(dayjs(d), 'day')) {
-              setEndDate(d);
-            }
+            setShowStartDate(false);
+            setStartDatePart(d);
           }}
-          onCancel={() => setShowStart(false)}
+          onCancel={() => setShowStartDate(false)}
         />
         <AppDatePickerModal
-          open={showEnd}
-          date={endDate}
-          minimumDate={startDate}
+          open={showStartTime}
+          date={startTimePart}
+          mode="time"
+          onConfirm={d => {
+            setShowStartTime(false);
+            setStartTimePart(d);
+          }}
+          onCancel={() => setShowStartTime(false)}
+        />
+        <AppDatePickerModal
+          open={showEndDate}
+          date={endDatePart}
+          minimumDate={startDatePart}
           maximumDate={getLatestSelectableHistoryDate()}
           onConfirm={d => {
-            setShowEnd(false);
-            setEndDate(d);
+            setShowEndDate(false);
+            setEndDatePart(d);
           }}
-          onCancel={() => setShowEnd(false)}
+          onCancel={() => setShowEndDate(false)}
+        />
+        <AppDatePickerModal
+          open={showEndTime}
+          date={endTimePart}
+          mode="time"
+          onConfirm={d => {
+            setShowEndTime(false);
+            setEndTimePart(d);
+          }}
+          onCancel={() => setShowEndTime(false)}
         />
         <AppDatePickerModal
           open={showRentDueDay}
@@ -354,5 +388,15 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     marginTop: spacing.xs,
+  },
+  hint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
+  },
+  openEndedHint: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
   },
 });

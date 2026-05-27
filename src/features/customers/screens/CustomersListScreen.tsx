@@ -13,11 +13,13 @@ import { screenStyles } from '@shared/layouts/screenStyles';
 import { EmptyState, StatusBadge } from '@shared/ui';
 import { SearchHeader } from '@reusable';
 import { useCustomerStore } from '../store/useCustomerStore';
+import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { customerHasNotPaidInstallment } from '@core/helpers/customerPaymentStatus';
 import {
   formatInstallmentDueLabel,
   nextPendingInstallmentForCustomer,
 } from '@core/helpers/paymentInstallment';
+import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useFilteredCustomers } from '../hooks/useFilteredCustomers';
 import { useCustomerRentalInfo } from '../hooks/useCustomerRentalInfo';
@@ -36,29 +38,37 @@ const CustomerRow = ({
   const { activeRental, car } = useCustomerRentalInfo(customerId);
   if (!customer) return null;
 
-  const missedRent = customerHasNotPaidInstallment(customerId, payments);
-  const nextDue = nextPendingInstallmentForCustomer(customerId, payments);
+  const missedRent = SHOW_PAYMENTS_UI
+    ? customerHasNotPaidInstallment(customerId, payments)
+    : false;
+  const nextDue = SHOW_PAYMENTS_UI
+    ? nextPendingInstallmentForCustomer(customerId, payments)
+    : undefined;
 
   return (
     <Pressable onPress={onPress} style={[styles.card, shadows.sm]}>
       <View style={styles.cardHeader}>
         <Text style={typography.h4}>{customer.name}</Text>
-        {missedRent ? (
-          <StatusBadge label={t('customers.notPaid')} variant="not_paid" />
-        ) : (
-          <StatusBadge
-            label={activeRental?.paymentStatus ?? t('common.notAvailable')}
-            variant={activeRental?.paymentStatus === 'DONE' ? 'done' : 'pending'}
-          />
-        )}
+        {SHOW_PAYMENTS_UI ? (
+          missedRent ? (
+            <StatusBadge label={t('customers.notPaid')} variant="not_paid" />
+          ) : (
+            <StatusBadge
+              label={activeRental?.paymentStatus ?? t('common.notAvailable')}
+              variant={activeRental?.paymentStatus === 'DONE' ? 'done' : 'pending'}
+            />
+          )
+        ) : activeRental ? (
+          <StatusBadge label={t('customers.onRent')} variant="on_rent" />
+        ) : null}
       </View>
       {car ? (
         <Text style={typography.bodySmall}>
           {car.name}
-          {nextDue
+          {SHOW_PAYMENTS_UI && nextDue
             ? ` · ${formatInstallmentDueLabel(nextDue)}`
             : activeRental
-              ? ` · Until ${formatDate(activeRental.endDate)}`
+              ? ` · ${t('customers.until', { date: formatRentalEndDisplay(activeRental.endDate) })}`
               : ''}
         </Text>
       ) : (

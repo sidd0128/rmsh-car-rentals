@@ -25,6 +25,7 @@ import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { StatCard } from '../components/StatCard';
+import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { computeFleetTotalPaid } from '@core/helpers/rentalPayments';
 import { computeUpcomingEarningsTotalForYear } from '@core/helpers/upcomingEarnings';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
@@ -96,18 +97,22 @@ export const DashboardScreen = () => {
           onPress={() => openCarsListWithFilter(navigation, 'UPCOMING_BOOKING')}
         />
         <StatCard label={t('dashboard.customers')} value={customers.length} />
-        <StatCard
-          label={t('dashboard.totalEarnings')}
-          value={formatCurrency(stats.totalEarnings)}
-          accent={colors.primary}
-          onPress={() => navigation.navigate('EarningsBreakdown')}
-        />
-        <StatCard
-          label={t('dashboard.upcomingEarningsThisYear')}
-          value={formatCurrency(stats.upcomingEarnings)}
-          accent={colors.secondary}
-          onPress={() => navigation.navigate('UpcomingEarnings')}
-        />
+        {SHOW_PAYMENTS_UI ? (
+          <>
+            <StatCard
+              label={t('dashboard.totalEarnings')}
+              value={formatCurrency(stats.totalEarnings)}
+              accent={colors.primary}
+              onPress={() => navigation.navigate('EarningsBreakdown')}
+            />
+            <StatCard
+              label={t('dashboard.upcomingEarningsThisYear')}
+              value={formatCurrency(stats.upcomingEarnings)}
+              accent={colors.secondary}
+              onPress={() => navigation.navigate('UpcomingEarnings')}
+            />
+          </>
+        ) : null}
       </View>
 
       <Text style={[typography.h3, styles.recentHeading]}>{t('dashboard.recentBookings')}</Text>

@@ -14,10 +14,12 @@ interface CarCardProps {
   customer?: Customer;
   totalPaid: number;
   nextRentDue?: NextRentDue | null;
+  hidePaymentInfo?: boolean;
   onPress: () => void;
 }
 
-export const CarCard = memo<CarCardProps>(({ car, customer, totalPaid, nextRentDue, onPress }) => {
+export const CarCard = memo<CarCardProps>(
+  ({ car, customer, totalPaid, nextRentDue, hidePaymentInfo, onPress }) => {
   const { t } = useTranslation();
   const badge = carStatusToBadge(car.status);
   const imageUri = car.images[0];
@@ -37,7 +39,7 @@ export const CarCard = memo<CarCardProps>(({ car, customer, totalPaid, nextRentD
         <Text style={typography.bodySmall}>
           {car.brand} {car.model} · {car.numberPlate}
         </Text>
-        {nextRentDue ? (
+        {!hidePaymentInfo && nextRentDue ? (
           <Text style={styles.nextRent}>
             {t('cars.nextRent', {
               amount: formatCurrency(nextRentDue.amount),
@@ -58,13 +60,16 @@ export const CarCard = memo<CarCardProps>(({ car, customer, totalPaid, nextRentD
         ) : (
           <Text style={styles.customer}>{t('cars.availableNow')}</Text>
         )}
-        <Text style={styles.earnings}>
-          {t('cars.earned', { amount: formatCurrency(totalPaid) })}
-        </Text>
+        {!hidePaymentInfo ? (
+          <Text style={styles.earnings}>
+            {t('cars.earned', { amount: formatCurrency(totalPaid) })}
+          </Text>
+        ) : null}
       </View>
     </Pressable>
   );
-});
+  },
+);
 
 const styles = StyleSheet.create({
   card: {

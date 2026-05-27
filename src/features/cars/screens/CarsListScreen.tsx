@@ -8,6 +8,7 @@ import { FAB, Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
 import { colors, spacing, typography } from '@app/theme';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
+import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { computeCarTotalPaid, getNextRentDueForCar } from '@core/helpers/rentalPayments';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
@@ -66,6 +67,9 @@ export const CarsListScreen = () => {
 
   const paidByCarId = useMemo(() => {
     const map = new Map<string, number>();
+    if (!SHOW_PAYMENTS_UI) {
+      return map;
+    }
     for (const car of filteredCars) {
       map.set(car.id, computeCarTotalPaid(car.id, rentals, payments));
     }
@@ -74,6 +78,9 @@ export const CarsListScreen = () => {
 
   const nextRentByCarId = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getNextRentDueForCar>>();
+    if (!SHOW_PAYMENTS_UI) {
+      return map;
+    }
     for (const car of filteredCars) {
       const next = getNextRentDueForCar(car, payments);
       if (next) {
@@ -93,6 +100,7 @@ export const CarsListScreen = () => {
           customer={customer}
           totalPaid={paidByCarId.get(item.id) ?? 0}
           nextRentDue={nextRentByCarId.get(item.id)}
+          hidePaymentInfo={!SHOW_PAYMENTS_UI}
           onPress={() => navigation.navigate('CarDetails', { carId: item.id })}
         />
       );

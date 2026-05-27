@@ -7,6 +7,7 @@ import {
 } from '@core/services/extensionBookingService';
 import { buildExtensionAssignInput } from '../helpers/buildExtensionAssignInput';
 import { createScheduledRental } from '@core/services/rentalScheduleService';
+import { updateRentalEndDate as updateRentalEndDateService } from '@core/services/updateRentalEndDateService';
 import type { Rental } from '@core/types/domain';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
@@ -18,6 +19,10 @@ interface RentalState {
   hydrate: () => Promise<void>;
   assignRental: (input: AssignRentalInput) => Promise<{ success: boolean; error?: string }>;
   extendRental: (input: ExtendRentalInput) => Promise<{ success: boolean; error?: string }>;
+  setRentalEndDate: (
+    rentalId: string,
+    endDate: string,
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const refreshAfterRentalChange = async (
@@ -86,6 +91,15 @@ export const useRentalStore = create<RentalState>((set, get) => ({
       return { success: false, error: result.error };
     }
 
+    await refreshAfterRentalChange(set);
+    return { success: true };
+  },
+
+  setRentalEndDate: async (rentalId, endDate) => {
+    const result = await updateRentalEndDateService(rentalId, endDate);
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
     await refreshAfterRentalChange(set);
     return { success: true };
   },

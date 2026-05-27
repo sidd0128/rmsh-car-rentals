@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { OPEN_ENDED_RENTAL_END_ISO } from '@core/constants/rental';
 import { repositories } from '@core/database/repositoryRegistry';
 import { deriveRentalPaymentStatus } from '@core/helpers/rentalPayments';
 import type { AssignRentalInput } from '@features/rentals/types/assignRental';
@@ -23,21 +24,24 @@ export const createScheduledRental = async (
   options?: { excludeConflictRentalId?: string },
 ): Promise<ScheduledRentalResult> => {
   const start = dayjs(input.startDate);
-  const end = dayjs(input.endDate);
-  if (end.isBefore(start, 'day')) {
+  const endIso = input.openEnded ? OPEN_ENDED_RENTAL_END_ISO : input.endDate;
+  const end = dayjs(endIso);
+  if (!input.openEnded && end.isBefore(start)) {
     return { success: false, error: 'End date must be on or after start date' };
   }
 
-  const preview = calculateRentalBillingPreview({
-    startDate: input.startDate,
-    endDate: input.endDate,
-    frequency: input.billingFrequency,
-    rateAmount: input.rateAmount,
-    rentDueWeekday: input.rentDueWeekday,
-    rentDueDayOfMonth: input.rentDueDayOfMonth,
-  });
+  const preview = input.openEnded
+    ? { installments: [], totalAmount: 0, rentalDayCount: 0 }
+    : calculateRentalBillingPreview({
+        startDate: input.startDate,
+        endDate: input.endDate,
+        frequency: input.billingFrequency,
+        rateAmount: input.rateAmount,
+        rentDueWeekday: input.rentDueWeekday,
+        rentDueDayOfMonth: input.rentDueDayOfMonth,
+      });
 
-  if (preview.installments.length === 0) {
+  if (!input.openEnded && preview.installments.length === 0) {
     return {
       success: false,
       error: 'Enter a valid rate and date range to generate a payment schedule',
@@ -50,7 +54,7 @@ export const createScheduledRental = async (
   if (
     hasBookingConflict(
       carRentals,
-      { startDate: input.startDate, endDate: input.endDate },
+      { startDate: input.startDate, endDate: endIso },
       options?.excludeConflictRentalId,
     )
   ) {
@@ -64,8 +68,8 @@ export const createScheduledRental = async (
     carId: input.carId,
     customerId: input.customerId,
     startDate: input.startDate,
-    endDate: input.endDate,
-    agreedPrice: preview.totalAmount,
+    endDate: endIso,
+    agreedPrice: input.openEnded ? 0 : preview.totalAmount,
     paymentStatus: 'PENDING',
     status,
     billingFrequency: input.billingFrequency,
@@ -77,6 +81,7 @@ export const createScheduledRental = async (
   });
 
   const createdPayments = [];
+  if (!input.openEnded) {
   for (let i = 0; i < preview.installments.length; i++) {
     const installment = preview.installments[i];
     const collectNow = i === 0 && input.collectFirstPaymentOnAssignment;
@@ -94,6 +99,7 @@ export const createScheduledRental = async (
       paidAt: collectNow ? new Date().toISOString() : undefined,
     });
     createdPayments.push(payment);
+  }
   }
 
   const paymentStatus = deriveRentalPaymentStatus(createdPayments);

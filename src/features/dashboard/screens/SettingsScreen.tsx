@@ -6,6 +6,7 @@ import { List, Text } from 'react-native-paper';
 import type { SettingsStackParamList } from '@app/navigation/types';
 import { colors, radius, spacing, typography } from '@app/theme';
 import { showDevDataTools } from '@core/config/env';
+import { loadDemoSeedData } from '@core/data/loadDemoSeedData';
 import { wipeAllAppData } from '@core/data/wipeAllAppData';
 import { formatDateTime } from '@core/helpers/date';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
@@ -34,6 +35,7 @@ export const SettingsScreen = () => {
   const showSyncButton =
     firebaseConfigured && authStatus === 'authenticated' && hasPendingSync;
   const [wipingAll, setWipingAll] = useState(false);
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
   const formatCloudWipeSummary = (
     cloudSkipped: boolean,
@@ -59,6 +61,24 @@ export const SettingsScreen = () => {
     const message = await syncNow();
     await hydrateAll();
     Alert.alert(t('settings.syncAlertTitle'), message);
+  };
+
+  const handleLoadDemo = () => {
+    Alert.alert(t('settings.loadDemoTitle'), t('settings.loadDemoMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.loadDemoConfirm'),
+        onPress: () => {
+          void (async () => {
+            setLoadingDemo(true);
+            await loadDemoSeedData();
+            await hydrateAll();
+            setLoadingDemo(false);
+            Alert.alert(t('settings.loadDemoDoneTitle'), t('settings.loadDemoDoneMessage'));
+          })();
+        },
+      },
+    ]);
   };
 
   const handleWipeAllData = () => {
@@ -126,13 +146,22 @@ export const SettingsScreen = () => {
         <View style={screenStyles.syncCard}>
           <Text style={typography.h3}>{t('settings.devDataTitle')}</Text>
           <Text style={styles.syncHint}>{t('settings.devDataHint')}</Text>
-          <AppButton
-            label={t('settings.wipeAllData')}
-            variant="danger"
-            onPress={handleWipeAllData}
-            loading={wipingAll}
-            fullWidth
-          />
+          <View style={styles.devActions}>
+            <AppButton
+              label={t('settings.loadDemo')}
+              variant="outline"
+              onPress={handleLoadDemo}
+              loading={loadingDemo}
+              fullWidth
+            />
+            <AppButton
+              label={t('settings.wipeAllData')}
+              variant="danger"
+              onPress={handleWipeAllData}
+              loading={wipingAll}
+              fullWidth
+            />
+          </View>
         </View>
       ) : null}
 
@@ -190,6 +219,10 @@ const styles = StyleSheet.create({
   },
   syncLine: { ...typography.bodySmall, lineHeight: 20 },
   syncHint: { ...typography.caption, color: colors.textMuted, lineHeight: 18 },
+  devActions: {
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
   menuCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,

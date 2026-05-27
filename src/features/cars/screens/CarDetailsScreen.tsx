@@ -7,7 +7,9 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
 import { colors, spacing, typography } from '@app/theme';
-import { formatDate } from '@core/helpers/date';
+import { SHOW_PAYMENTS_UI } from '@core/constants/features';
+import { formatDateTimeAmPm } from '@core/helpers/date';
+import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { computeCarTotalPaid, getNextRentDueForCar } from '@core/helpers/rentalPayments';
 import { formatCurrency } from '@core/utils/currency';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
@@ -15,14 +17,13 @@ import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useAccidentStore } from '@features/accidents/store/useAccidentStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { useFineStore } from '@features/fines/store/useFineStore';
-import { useCanExtendRental } from '@features/rentals/hooks/useCanExtendRental';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AssignmentModal, AssignmentModalRef } from '@shared/modals/AssignmentModal';
-import { ExtendBookingModal, ExtendBookingModalRef } from '@shared/modals/ExtendBookingModal';
-import { AppButton, StatusBadge, carStatusToBadge, TimelineView } from '@shared/ui';
+import { SetRentalEndModal, SetRentalEndModalRef } from '@shared/modals/SetRentalEndModal';
+import { AppButton, StatusBadge, carStatusToBadge } from '@shared/ui';
 import { ImageSlider } from '@shared/media';
 import { CustomerAccidentHistory } from '@features/customers/components/CustomerAccidentHistory';
 import { CustomerFineHistory } from '@features/customers/components/CustomerFineHistory';
@@ -41,16 +42,8 @@ export const CarDetailsScreen = () => {
   const accidents = useAccidentStore(s => s.accidents);
   const cars = useCarStore(s => s.cars);
   const assignmentRef = useRef<AssignmentModalRef>(null);
-  const extendRef = useRef<ExtendBookingModalRef>(null);
+  const setEndRef = useRef<SetRentalEndModalRef>(null);
   const { hydrateAll } = useHydrateStores();
-
-  const carRentals = useMemo(
-    () =>
-      rentals
-        .filter(r => r.carId === route.params.carId)
-        .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
-    [rentals, route.params.carId],
-  );
 
   const carsById = useMemo(() => new Map(cars.map(c => [c.id, c])), [cars]);
 
@@ -70,6 +63,8 @@ export const CarDetailsScreen = () => {
     [accidents, route.params.carId],
   );
 
+  const activeRental = car?.currentBooking;
+
   const onFinePress = useCallback(
     (fineId: string) => navigation.navigate('FineDetails', { fineId }),
     [navigation],
@@ -85,10 +80,9 @@ export const CarDetailsScreen = () => {
     return cid ? customers.find(c => c.id === cid) : undefined;
   }, [car, customers]);
 
-  const activeBooking = car?.currentBooking;
-  const canExtendBooking = useCanExtendRental(activeBooking);
   const nextRentDue = useMemo(
-    () => (car ? getNextRentDueForCar(car, payments) : null),
+    () =>
+      SHOW_PAYMENTS_UI && car ? getNextRentDueForCar(car, payments) : null,
     [car, payments],
   );
 
@@ -101,19 +95,8 @@ export const CarDetailsScreen = () => {
   }
 
   const badge = carStatusToBadge(car.status);
-  const totalPaid = computeCarTotalPaid(car.id, rentals, payments);
+  const totalPaid = SHOW_PAYMENTS_UI ? computeCarTotalPaid(car.id, rentals, payments) : 0;
   const isCarAvailable = car.status === 'AVAILABLE';
-
-  const timeline = carRentals.map(r => {
-    const customer = customers.find(c => c.id === r.customerId);
-    return {
-      id: r.id,
-      title: customer?.name ?? t('common.customer'),
-      subtitle: `${formatCurrency(r.agreedPrice)} · ${r.paymentStatus}`,
-      date: `${formatDate(r.startDate)} – ${formatDate(r.endDate)}`,
-      meta: r.status,
-    };
-  });
 
   return (
     <View style={styles.screen}>
@@ -133,34 +116,37 @@ export const CarDetailsScreen = () => {
           <>
             <Text style={typography.body}>{currentCustomer.name}</Text>
             <Text style={typography.bodySmall}>
-              {t('cars.sinceUntil', {
-                start: formatDate(car.currentBooking.startDate),
-                end: formatDate(car.currentBooking.endDate),
+              {t('cars.sinceUntilDateTime', {
+                start: formatDateTimeAmPm(car.currentBooking.startDate),
+                end: formatRentalEndDisplay(car.currentBooking.endDate),
               })}
             </Text>
-            {nextRentDue ? (
+            {SHOW_PAYMENTS_UI && nextRentDue ? (
               <Text style={styles.nextRent}>
                 {t('cars.nextRentPaymentDue', {
                   amount: formatCurrency(nextRentDue.amount),
-                  date: formatDate(nextRentDue.dueDate),
+                  date: formatDateTimeAmPm(nextRentDue.dueDate),
                 })}
               </Text>
-            ) : (
+            ) : null}
+            {SHOW_PAYMENTS_UI && !nextRentDue ? (
               <Text style={typography.bodySmall}>{t('cars.allInstallmentsReceived')}</Text>
-            )}
+            ) : null}
           </>
         ) : (
           <Text style={typography.bodySmall}>
             {t('cars.availableNextBooking', {
               date: car.futureBookings[0]
-                ? formatDate(car.futureBookings[0].startDate)
+                ? formatDateTimeAmPm(car.futureBookings[0].startDate)
                 : t('cars.noneScheduled'),
             })}
           </Text>
         )}
-        <Text style={styles.earnings}>
-          {t('cars.totalReceived', { amount: formatCurrency(totalPaid) })}
-        </Text>
+        {SHOW_PAYMENTS_UI ? (
+          <Text style={styles.earnings}>
+            {t('cars.totalReceived', { amount: formatCurrency(totalPaid) })}
+          </Text>
+        ) : null}
       </ScreenSection>
 
       <View style={screenStyles.actions}>
@@ -171,11 +157,11 @@ export const CarDetailsScreen = () => {
             fullWidth
           />
         ) : null}
-        {canExtendBooking && activeBooking ? (
+        {activeRental ? (
           <AppButton
-            label={t('cars.extendBooking')}
+            label={t('cars.setEndDateTime')}
             variant="outline"
-            onPress={() => extendRef.current?.open(activeBooking)}
+            onPress={() => setEndRef.current?.open(activeRental)}
             fullWidth
           />
         ) : null}
@@ -186,10 +172,6 @@ export const CarDetailsScreen = () => {
           fullWidth
         />
       </View>
-
-      <ScreenSection title={t('cars.rentalHistory')} showDivider>
-        <TimelineView items={timeline} />
-      </ScreenSection>
 
       <ScreenSection
         title={t('common.sectionCount', { title: t('cars.fines'), count: carFines.length })}
@@ -225,7 +207,7 @@ export const CarDetailsScreen = () => {
         }}
         onAddCustomer={() => navigation.getParent()?.navigate('CustomersTab')}
       />
-      <ExtendBookingModal ref={extendRef} onSuccess={hydrateAll} />
+      <SetRentalEndModal ref={setEndRef} onSuccess={hydrateAll} />
     </View>
   );
 };

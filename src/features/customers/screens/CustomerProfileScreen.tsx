@@ -9,7 +9,9 @@ import { colors, spacing, typography } from '@app/theme';
 import { formatDate } from '@core/helpers/date';
 import { sortPaymentsByDueDate } from '@core/helpers/paymentInstallment';
 import { computeCustomerTotalPaid } from '@core/helpers/rentalPayments';
+import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { formatCurrency } from '@core/utils/currency';
+import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { useAccidentStore } from '@features/accidents/store/useAccidentStore';
 import { useFineStore } from '@features/fines/store/useFineStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
@@ -93,7 +95,7 @@ export const CustomerProfileScreen = () => {
     return {
       id: r.id,
       title: rentalCar?.name ?? t('common.car'),
-      subtitle: formatCurrency(r.agreedPrice),
+      subtitle: SHOW_PAYMENTS_UI ? formatCurrency(r.agreedPrice) : r.status,
       date: `${formatDate(r.startDate)} – ${formatDate(r.endDate)}`,
       meta: r.status,
     };
@@ -133,10 +135,12 @@ export const CustomerProfileScreen = () => {
           <Text style={screenStyles.statValue}>{totalRentals}</Text>
           <Text style={screenStyles.statLabel}>{t('customers.rentals')}</Text>
         </View>
-        <View style={screenStyles.statCard}>
-          <Text style={screenStyles.statValue}>{formatCurrency(totalSpent)}</Text>
-          <Text style={screenStyles.statLabel}>{t('customers.totalSpent')}</Text>
-        </View>
+        {SHOW_PAYMENTS_UI ? (
+          <View style={screenStyles.statCard}>
+            <Text style={screenStyles.statValue}>{formatCurrency(totalSpent)}</Text>
+            <Text style={screenStyles.statLabel}>{t('customers.totalSpent')}</Text>
+          </View>
+        ) : null}
       </View>
 
       <ScreenSection title={t('customers.currentRental')} showDivider>
@@ -144,7 +148,7 @@ export const CustomerProfileScreen = () => {
           <Text style={typography.body}>
             {t('customers.rentalUntil', {
               car: car.name,
-              date: formatDate(activeRental.endDate),
+              date: formatRentalEndDisplay(activeRental.endDate),
             })}
           </Text>
         ) : (
@@ -164,9 +168,11 @@ export const CustomerProfileScreen = () => {
         <TimelineView items={timeline} />
       </ScreenSection>
 
-      <ScreenSection title={t('customers.paymentHistory')}>
-        <CustomerPaymentHistory payments={customerPayments} />
-      </ScreenSection>
+      {SHOW_PAYMENTS_UI ? (
+        <ScreenSection title={t('customers.paymentHistory')}>
+          <CustomerPaymentHistory payments={customerPayments} />
+        </ScreenSection>
+      ) : null}
 
       <ScreenSection
         title={t('common.sectionCount', {

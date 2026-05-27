@@ -12,7 +12,7 @@ import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { CarsStack } from './CarsStack';
 import { CustomersStack } from './CustomersStack';
 import { DashboardStack } from './DashboardStack';
-import { RentalsStack } from './RentalsStack';
+import { HistoryStack } from './HistoryStack';
 import { SettingsStack } from './SettingsStack';
 import type { BottomTabParamList } from './types';
 
@@ -75,12 +75,12 @@ export const BottomTabs = () => {
         }}
       />
       <Tab.Screen
-        name="RentalsTab"
-        component={RentalsStack}
+        name="HistoryTab"
+        component={HistoryStack}
         options={{
-          title: i18n.t('navigation.rentals'),
+          title: i18n.t('navigation.history'),
           tabBarIcon: ({ color, size }) => (
-            <Icon name="calendar-clock" color={color} size={size} />
+            <Icon name="history" color={color} size={size} />
           ),
         }}
       />
