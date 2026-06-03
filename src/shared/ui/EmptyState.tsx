@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors } from '@app/theme';
 import { spacing } from '@app/theme/spacing';
 import { typography } from '@app/theme/typography';
 import { AppButton } from './AppButton';
