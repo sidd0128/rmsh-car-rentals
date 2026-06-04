@@ -8,7 +8,7 @@ import type { PaymentRecord, Rental } from '@core/types/domain';
 import { billingFrequencyLabel, formatRentDueDaySummary } from '@core/services/rentalBillingService';
 import { formatCurrency } from '@core/utils/currency';
 import type { PaymentInstallmentAction } from '@core/helpers/paymentInstallment';
-import { PaymentInstallmentActions } from '@shared/ui/PaymentInstallmentActions';
+import { PaymentInstallmentActions } from '@shared/ui';
 
 interface RentalPaymentScheduleProps {
   rental: Rental;

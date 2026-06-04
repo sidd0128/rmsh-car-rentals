@@ -31,9 +31,6 @@ export const DEMO_SEED_IDS = {
   },
 } as const;
 
-/** @deprecated Use DEMO_SEED_IDS */
-export const HISTORY_DEMO_IDS = DEMO_SEED_IDS;
-
 const iso = (y: number, m: number, d: number, h: number, min: number): string =>
   dayjs().year(y).month(m - 1).date(d).hour(h).minute(min).second(0).millisecond(0).toISOString();
 
@@ -53,6 +50,7 @@ const baseCustomer = (
   age: 32,
   phone,
   address: '42 Demo Street, Sydney NSW',
+  licenseNumber: `LIC-${id.slice(-4).toUpperCase()}`,
   drivingLicenseImages: [],
   documents: [],
   totalSpent: 0,
@@ -355,13 +353,4 @@ export const buildFullDemoSeed = (): FullDemoSeedBundle => {
   const payments = buildPaymentsForRentals(rentals);
 
   return { cars, customers, rentals, fines, accidents, payments };
-};
-
-/** @deprecated Use buildFullDemoSeed */
-export const buildHistoryDemoSeed = (): Pick<
-  FullDemoSeedBundle,
-  'cars' | 'customers' | 'rentals'
-> => {
-  const full = buildFullDemoSeed();
-  return { cars: full.cars, customers: full.customers, rentals: full.rentals };
 };

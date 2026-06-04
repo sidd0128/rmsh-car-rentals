@@ -1,8 +1,8 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 import { Switch, Text } from 'react-native-paper';
 import { useForm } from 'react-hook-form';
 import type { CustomersStackParamList } from '@app/navigation/types';
@@ -14,12 +14,15 @@ import { AppButton, ControlledAppInput } from '@shared/ui';
 import { MediaUploader } from '@shared/media';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useTranslation } from '@core/i18n';
+import { readCustomerLicenseImage } from '../services/customerLicenseOcrService';
+import type { CustomerLicenseExtraction } from '../services/customerLicenseAutofillService';
 
 interface CustomerFormValues {
   name: string;
   age: string;
   phone: string;
   address: string;
+  licenseNumber: string;
 }
 
 export const CustomerFormScreen = () => {
@@ -32,13 +35,14 @@ export const CustomerFormScreen = () => {
   const updateCustomer = useCustomerStore(s => s.updateCustomer);
   const existing = customerId ? getCustomerById(customerId) : undefined;
 
-  const { control, handleSubmit, reset } = useForm<CustomerFormValues>({
-    defaultValues: { name: '', age: '', phone: '', address: '' },
+  const { control, getValues, handleSubmit, reset, setValue } = useForm<CustomerFormValues>({
+    defaultValues: { name: '', age: '', phone: '', address: '', licenseNumber: '' },
   });
 
   const [licenseImages, setLicenseImages] = useState<string[]>([]);
   const [documents, setDocuments] = useState<string[]>([]);
   const [isBlacklisted, setBlacklisted] = useState(false);
+  const [isReadingLicense, setReadingLicense] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -47,6 +51,7 @@ export const CustomerFormScreen = () => {
         age: String(existing.age),
         phone: existing.phone,
         address: existing.address,
+        licenseNumber: existing.licenseNumber ?? '',
       });
       setLicenseImages(existing.drivingLicenseImages);
       setDocuments(existing.documents);
@@ -54,12 +59,81 @@ export const CustomerFormScreen = () => {
     }
   }, [existing, reset]);
 
+  const applyLicenseAutofill = useCallback(
+    (extraction: CustomerLicenseExtraction): boolean => {
+      const currentValues = getValues();
+      let applied = false;
+
+      if (extraction.name && !currentValues.name.trim()) {
+        setValue('name', extraction.name, { shouldDirty: true, shouldValidate: true });
+        applied = true;
+      }
+
+      if (extraction.age && !currentValues.age.trim()) {
+        setValue('age', String(extraction.age), { shouldDirty: true, shouldValidate: true });
+        applied = true;
+      }
+
+      if (extraction.address && !currentValues.address.trim()) {
+        setValue('address', extraction.address, { shouldDirty: true, shouldValidate: true });
+        applied = true;
+      }
+
+      if (extraction.licenseNumber && !currentValues.licenseNumber.trim()) {
+        setValue('licenseNumber', extraction.licenseNumber, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        applied = true;
+      }
+
+      return applied;
+    },
+    [getValues, setValue],
+  );
+
+  const handleLicenseImagesAdded = useCallback(
+    async (images: string[]) => {
+      setReadingLicense(true);
+      try {
+        let hasExtractedFields = false;
+        let hasAppliedFields = false;
+
+        for (const imageUri of images) {
+          const extraction = await readCustomerLicenseImage({ imageUri });
+          const extractedFields = Boolean(
+            extraction.name || extraction.age || extraction.address || extraction.licenseNumber,
+          );
+          hasExtractedFields = hasExtractedFields || extractedFields;
+          hasAppliedFields = applyLicenseAutofill(extraction) || hasAppliedFields;
+        }
+
+        if (hasAppliedFields) {
+          Alert.alert(t('customers.licenseAutofillApplied'));
+        } else if (hasExtractedFields) {
+          Alert.alert(t('customers.licenseAutofillSkipped'));
+        } else {
+          Alert.alert(t('customers.licenseAutofillNoFieldsFound'));
+        }
+      } catch {
+        Alert.alert(
+          t('customers.licenseAutofillFailed'),
+          t('customers.licenseAutofillFailedMessage'),
+        );
+      } finally {
+        setReadingLicense(false);
+      }
+    },
+    [applyLicenseAutofill, t],
+  );
+
   const onSubmit = handleSubmit(async values => {
     const payload: CreateCustomerPayload = {
       name: values.name.trim(),
       age: Number(values.age),
       phone: values.phone.trim(),
       address: values.address.trim(),
+      licenseNumber: values.licenseNumber.trim() || undefined,
       drivingLicenseImages: licenseImages,
       documents,
       isBlacklisted,
@@ -77,7 +151,15 @@ export const CustomerFormScreen = () => {
   return (
     <ScreenLayout contentStyle={screenStyles.formStack}>
       <Text variant="titleMedium">{t('customers.drivingLicense')}</Text>
-      <MediaUploader images={licenseImages} onChange={setLicenseImages} maxImages={2} />
+      <MediaUploader
+        images={licenseImages}
+        onChange={setLicenseImages}
+        onImagesAdded={handleLicenseImagesAdded}
+        maxImages={2}
+      />
+      {isReadingLicense ? (
+        <Text style={styles.helperText}>{t('customers.licenseAutofillReading')}</Text>
+      ) : null}
       <Text variant="titleMedium">{t('customers.documents')}</Text>
       <MediaUploader images={documents} onChange={setDocuments} maxImages={4} />
       <View style={styles.form}>
@@ -93,6 +175,12 @@ export const CustomerFormScreen = () => {
           control={control}
           label={t('customers.phone')}
           keyboardType="phone-pad"
+        />
+        <ControlledAppInput
+          name="licenseNumber"
+          control={control}
+          label={t('customers.licenseNumber')}
+          keyboardType="numeric"
         />
         <ControlledAppInput
           name="address"
@@ -116,6 +204,10 @@ export const CustomerFormScreen = () => {
 
 const styles = StyleSheet.create({
   form: { marginTop: spacing.lg },
+  helperText: {
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
+  },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

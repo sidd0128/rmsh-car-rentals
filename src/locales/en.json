@@ -194,6 +194,7 @@
     "fullName": "Full name",
     "age": "Age",
     "phone": "Phone",
+    "licenseNumber": "License number",
     "address": "Address",
     "listEmpty": "No customers found",
     "listEmptyHint": "Add a customer to get started",
@@ -202,7 +203,13 @@
     "yearsOld": "{{age}} yrs",
     "blacklistedLabel": "Blacklisted",
     "addCustomer": "Add Customer",
-    "untilRental": "{{car}} until {{date}}"
+    "untilRental": "{{car}} until {{date}}",
+    "licenseAutofillReading": "Reading driving license...",
+    "licenseAutofillApplied": "License read. Customer details were auto-filled where possible.",
+    "licenseAutofillSkipped": "License read, but existing customer details were kept.",
+    "licenseAutofillNoFieldsFound": "License read, but no name, age, address, or license number was found.",
+    "licenseAutofillFailed": "Could not read license",
+    "licenseAutofillFailedMessage": "Try a clearer photo or enter the details manually."
   },
   "rentals": {
     "notFound": "Rental not found",
@@ -283,7 +290,12 @@
     "noCarLinkedMessage": "This customer has no active or past rental. Assign a car first.",
     "fillRequired": "Fill all required fields",
     "dateLabel": "Date: {{date}}",
-    "notesLabel": "Notes: {{notes}}"
+    "notesLabel": "Notes: {{notes}}",
+    "autofillReading": "Reading fine document...",
+    "autofillApplied": "Document read. Fields were auto-filled where possible.",
+    "autofillNoFieldsFound": "Document read, but no matching amount, date, car, or customer was found.",
+    "autofillFailed": "Could not read document",
+    "autofillFailedMessage": "Try a clearer photo or enter the details manually."
   },
   "accidents": {
     "notFound": "Accident report not found",

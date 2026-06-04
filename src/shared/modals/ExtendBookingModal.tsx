@@ -4,7 +4,7 @@ import { Switch, Text } from 'react-native-paper';
 import dayjs from 'dayjs';
 import { AppBottomSheet, AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
 import { AppButton, AppDatePickerModal } from '@shared/ui';
-import { colors, spacing, typography } from '@app/theme';
+import { colors, typography } from '@app/theme';
 import { modalFormStyles } from '@shared/modals/modalFormStyles';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { formatDate } from '@core/helpers/date';

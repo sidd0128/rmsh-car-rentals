@@ -14,6 +14,7 @@ import { ImageSlider } from './ImageSlider';
 interface MediaUploaderProps {
   images: MediaUri[];
   onChange: (images: MediaUri[]) => void;
+  onImagesAdded?: (images: MediaUri[]) => void;
   maxImages?: number;
   imageHeight?: number;
 }
@@ -38,7 +39,10 @@ const pickFromLibrary = async (selectionLimit: number): Promise<MediaUri[]> =>
       {
         mediaType: 'photo',
         selectionLimit,
-        quality: 0.8,
+        assetRepresentationMode: 'compatible',
+        maxHeight: 2500,
+        maxWidth: 2500,
+        quality: 1,
       },
       (response: ImagePickerResponse) => {
         if (response.didCancel) {
@@ -64,7 +68,7 @@ const pickFromCamera = async (): Promise<MediaUri | null> => {
   }
 
   return new Promise(resolve => {
-    launchCamera({ mediaType: 'photo', quality: 0.8 }, res => {
+    launchCamera({ mediaType: 'photo', maxHeight: 2500, maxWidth: 2500, quality: 1 }, res => {
       if (res.didCancel) {
         resolve(null);
         return;
@@ -99,7 +103,7 @@ const showImageSourcePicker = (
 };
 
 export const MediaUploader = memo<MediaUploaderProps>(
-  ({ images, onChange, maxImages = MAX_CAR_IMAGES, imageHeight = 160 }) => {
+  ({ images, onChange, onImagesAdded, maxImages = MAX_CAR_IMAGES, imageHeight = 160 }) => {
     const handleAdd = useCallback(() => {
       const remaining = maxImages - images.length;
       if (remaining <= 0) {
@@ -115,16 +119,18 @@ export const MediaUploader = memo<MediaUploaderProps>(
           const picked = await pickFromLibrary(remaining);
           if (picked.length) {
             onChange([...images, ...picked]);
+            onImagesAdded?.(picked);
           }
         },
         async () => {
           const uri = await pickFromCamera();
           if (uri) {
             onChange([...images, uri]);
+            onImagesAdded?.([uri]);
           }
         },
       );
-    }, [images, maxImages, onChange]);
+    }, [images, maxImages, onChange, onImagesAdded]);
 
     const handleDelete = useCallback(
       (index: number) => {
@@ -149,6 +155,7 @@ export const MediaUploader = memo<MediaUploaderProps>(
               const next = [...images];
               next[index] = picked[0];
               onChange(next);
+              onImagesAdded?.([picked[0]]);
             }
           },
           async () => {
@@ -157,11 +164,12 @@ export const MediaUploader = memo<MediaUploaderProps>(
               const next = [...images];
               next[index] = uri;
               onChange(next);
+              onImagesAdded?.([uri]);
             }
           },
         );
       },
-      [images, onChange],
+      [images, onChange, onImagesAdded],
     );
 
     return (

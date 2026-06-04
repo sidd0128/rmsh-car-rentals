@@ -18,16 +18,6 @@ export class AsyncStorageAdapter implements IStorageAdapter {
     await AsyncStorage.removeItem(key);
   }
 
-  async multiGet<T>(keys: string[]): Promise<Record<string, T | null>> {
-    const result: Record<string, T | null> = {};
-    await Promise.all(
-      keys.map(async key => {
-        result[key] = await this.getItem<T>(key);
-      }),
-    );
-    return result;
-  }
-
   async clear(): Promise<void> {
     await AsyncStorage.clear();
   }

@@ -1,24 +1,28 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
 import type { FineFlowParamList } from '@app/navigation/types';
-import { spacing } from '@app/theme';
+import { colors, spacing } from '@app/theme';
 import { currencyFieldLabel } from '@core/constants/app';
 import {
   getEarliestSelectableHistoryDate,
   getLatestSelectableHistoryDate,
 } from '@core/helpers/historyDates';
 import { resolveCustomerCarId } from '@features/customers/helpers/resolveCustomerCarId';
+import { customerLicenseLabel } from '@features/customers/helpers/customerLicenseDisplay';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
+import type { MediaUri } from '@core/types/media';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, AppInput, AppDatePickerModal, ReadOnlyFormField } from '@shared/ui';
 import { MediaUploader } from '@shared/media';
 import { useFineStore } from '../store/useFineStore';
+import { readFineDocumentImage } from '../services/fineDocumentOcrService';
+import { resolveRentalForFineDate } from '../services/fineDocumentAutofillService';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
 
@@ -49,17 +53,48 @@ export const FineFormScreen = () => {
   );
   const [showDate, setShowDate] = useState(false);
   const [customerMenu, setCustomerMenu] = useState(false);
+  const [isReadingDocument, setIsReadingDocument] = useState(false);
+  const [autofillStatus, setAutofillStatus] = useState('');
+  const [detectedNumberPlate, setDetectedNumberPlate] = useState<string | undefined>();
 
   const selectedCustomer = customers.find(c => c.id === customerId);
   const selectedCar = cars.find(c => c.id === carId);
+  const selectedCustomerLicenseLabel = customerLicenseLabel(selectedCustomer);
 
   useEffect(() => {
     if (!customerId) {
       setCarId('');
       return;
     }
-    setCarId(resolveCustomerCarId(customerId, rentals) ?? '');
-  }, [customerId, rentals]);
+    const fineDateValue = dayjs(fineDate).startOf('day').valueOf();
+    const rentalOnFineDate = rentals.find(r => {
+      const rentalStart = dayjs(r.startDate).startOf('day').valueOf();
+      const rentalEnd = dayjs(r.endDate).endOf('day').valueOf();
+      return r.customerId === customerId && fineDateValue >= rentalStart && fineDateValue <= rentalEnd;
+    });
+    setCarId(rentalOnFineDate?.carId ?? resolveCustomerCarId(customerId, rentals) ?? '');
+  }, [customerId, fineDate, rentals]);
+
+  useEffect(() => {
+    if (!detectedNumberPlate) {
+      return;
+    }
+
+    const match = resolveRentalForFineDate({
+      fineDate,
+      cars,
+      customers,
+      rentals,
+      numberPlate: detectedNumberPlate,
+    });
+
+    if (match.customerId) {
+      setCustomerId(match.customerId);
+    }
+    if (match.carId) {
+      setCarId(match.carId);
+    }
+  }, [cars, customers, detectedNumberPlate, fineDate, rentals]);
 
   const onSelectCustomer = (id: string) => {
     const linkedCarId = resolveCustomerCarId(id, rentals);
@@ -71,6 +106,63 @@ export const FineFormScreen = () => {
     setCustomerId(id);
     setCustomerMenu(false);
   };
+
+  const handleDocumentImagesAdded = useCallback(
+    async (images: MediaUri[]) => {
+      const imageUri = images[0];
+      if (!imageUri) {
+        return;
+      }
+
+      setIsReadingDocument(true);
+      setAutofillStatus(t('fines.autofillReading'));
+
+      try {
+        const extraction = await readFineDocumentImage({
+          imageUri,
+          cars,
+          customers,
+          rentals,
+        });
+
+        if (extraction.fineDate) {
+          setFineDate(extraction.fineDate);
+        }
+        if (extraction.amount && !amount) {
+          setAmount(String(extraction.amount));
+        }
+        if (extraction.reason && !reason) {
+          setReason(extraction.reason);
+        }
+        if (extraction.numberPlate) {
+          setDetectedNumberPlate(extraction.numberPlate);
+        }
+        if (extraction.customerId) {
+          setCustomerId(extraction.customerId);
+        }
+        if (extraction.carId) {
+          setCarId(extraction.carId);
+        }
+
+        const didAutofill =
+          extraction.amount ||
+          extraction.fineDate ||
+          extraction.customerId ||
+          extraction.carId ||
+          extraction.reason;
+        setAutofillStatus(
+          didAutofill ? t('fines.autofillApplied') : t('fines.autofillNoFieldsFound'),
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : t('fines.autofillFailedMessage');
+        setAutofillStatus(t('fines.autofillFailed'));
+        Alert.alert(t('fines.autofillFailed'), message);
+      } finally {
+        setIsReadingDocument(false);
+      }
+    },
+    [amount, cars, customers, reason, rentals, t],
+  );
 
   const onSubmit = async () => {
     if (!customerId || !carId || !amount || !reason) {
@@ -107,20 +199,48 @@ export const FineFormScreen = () => {
 
   return (
     <ScreenLayout contentStyle={screenStyles.formStack}>
-      <MediaUploader images={proofImages} onChange={setProofImages} maxImages={3} />
+      <MediaUploader
+        images={proofImages}
+        onChange={setProofImages}
+        onImagesAdded={handleDocumentImagesAdded}
+        maxImages={3}
+      />
+      {(isReadingDocument || autofillStatus) ? (
+        <View style={styles.autofillStatus}>
+          {isReadingDocument ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+          <Text style={styles.autofillStatusText}>{autofillStatus}</Text>
+        </View>
+      ) : null}
       <Menu
         visible={customerMenu}
         onDismiss={() => setCustomerMenu(false)}
         anchor={
-          <AppButton
-            label={selectedCustomer?.name ?? t('fines.selectCustomer')}
-            variant="outline"
-            onPress={() => setCustomerMenu(true)}
-          />
+          <View>
+            <AppButton
+              label={selectedCustomer?.name ?? t('fines.selectCustomer')}
+              variant="outline"
+              onPress={() => setCustomerMenu(true)}
+            />
+            {selectedCustomerLicenseLabel ? (
+              <Text style={styles.customerLicenseText}>{selectedCustomerLicenseLabel}</Text>
+            ) : null}
+          </View>
         }
       >
         {customers.map(c => (
-          <Menu.Item key={c.id} title={c.name} onPress={() => onSelectCustomer(c.id)} />
+          <Menu.Item
+            key={c.id}
+            title={
+              <View>
+                <Text>{c.name}</Text>
+                {customerLicenseLabel(c) ? (
+                  <Text style={styles.menuLicenseText}>{customerLicenseLabel(c)}</Text>
+                ) : null}
+              </View>
+            }
+            style={styles.customerMenuItem}
+            onPress={() => onSelectCustomer(c.id)}
+          />
         ))}
       </Menu>
 
@@ -175,5 +295,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.sm,
+  },
+  autofillStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  autofillStatusText: {
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  customerLicenseText: {
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  customerMenuItem: {
+    minHeight: 56,
+  },
+  menuLicenseText: {
+    color: colors.textSecondary,
+    marginTop: 2,
   },
 });

@@ -31,8 +31,7 @@ import { computeUpcomingEarningsTotalForYear } from '@core/helpers/upcomingEarni
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import dayjs from 'dayjs';
 
-/** Max rentals shown in the dashboard “Recent Bookings” section. */
-export const RECENT_BOOKINGS_LIMIT = 5;
+const RECENT_BOOKINGS_LIMIT = 5;
 
 type DashboardNav = CompositeNavigationProp<
   NativeStackNavigationProp<DashboardStackParamList>,
@@ -54,8 +53,12 @@ export const DashboardScreen = () => {
     const onRent = cars.filter(c => c.status === 'ON_RENT').length;
     const upcomingBookings = cars.filter(c => carHasUpcomingBookingOnly(c, rentals)).length;
     const returningSoon = cars.filter(c => carIsReturningSoon(c, rentals)).length;
-    const totalEarnings = computeFleetTotalPaid(rentals, payments);
-    const upcomingEarnings = computeUpcomingEarningsTotalForYear(payments, dayjs().year());
+    const totalEarnings = SHOW_PAYMENTS_UI
+      ? computeFleetTotalPaid(rentals, payments)
+      : 0;
+    const upcomingEarnings = SHOW_PAYMENTS_UI
+      ? computeUpcomingEarningsTotalForYear(payments, dayjs().year())
+      : 0;
     const recent = [...rentals]
       .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
       .slice(0, RECENT_BOOKINGS_LIMIT);

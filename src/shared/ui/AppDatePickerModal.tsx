@@ -24,6 +24,8 @@ export interface AppDatePickerModalProps {
 export const AppDatePickerModal = memo<AppDatePickerModalProps>(
   ({ open, date, mode = 'date', minimumDate, maximumDate, onConfirm, onCancel }) => {
     const [tempDate, setTempDate] = useState(date);
+    const pickerMode = mode === 'datetime' ? 'date' : mode;
+    const title = pickerMode === 'time' ? 'Select time' : 'Select date';
 
     useEffect(() => {
       if (open) {
@@ -59,11 +61,14 @@ export const AppDatePickerModal = memo<AppDatePickerModalProps>(
       <Modal visible transparent animationType="slide" onRequestClose={onCancel}>
         <View style={styles.overlay}>
           <View style={styles.sheet}>
-            <Text style={typography.h3}>Select date</Text>
+            <Text style={typography.h3}>{title}</Text>
             <DateTimePicker
               value={tempDate}
-              mode={mode === 'datetime' ? 'date' : mode}
+              mode={pickerMode}
               display="spinner"
+              textColor={colors.text}
+              accentColor={colors.primary}
+              themeVariant="light"
               minimumDate={minimumDate}
               maximumDate={maximumDate}
               onChange={(_, selected) => {
@@ -101,7 +106,11 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxxl,
   },
-  picker: { height: 200 },
+  picker: {
+    alignSelf: 'center',
+    height: 216,
+    width: '100%',
+  },
   actions: {
     flexDirection: 'row',
     gap: spacing.md,

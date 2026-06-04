@@ -26,7 +26,6 @@ import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { ExtendBookingModal, ExtendBookingModalRef } from '@shared/modals/ExtendBookingModal';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
-import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, StatusBadge } from '@shared/ui';
 import { useRentalStore } from '../store/useRentalStore';
 import { useTranslation } from '@core/i18n';

@@ -3,12 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
+import { colors } from '@app/theme';
 import { currencyFieldLabel } from '@core/constants/app';
 import {
   getEarliestSelectableHistoryDate,
   getLatestSelectableHistoryDate,
 } from '@core/helpers/historyDates';
 import { resolveCustomerCarId } from '@features/customers/helpers/resolveCustomerCarId';
+import { customerLicenseLabel } from '@features/customers/helpers/customerLicenseDisplay';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
@@ -42,6 +44,7 @@ export const AccidentFormScreen = () => {
 
   const selectedCustomer = customers.find(c => c.id === customerId);
   const selectedCar = cars.find(c => c.id === carId);
+  const selectedCustomerLicenseLabel = customerLicenseLabel(selectedCustomer);
 
   useEffect(() => {
     if (!customerId) {
@@ -95,15 +98,32 @@ export const AccidentFormScreen = () => {
         visible={customerMenu}
         onDismiss={() => setCustomerMenu(false)}
         anchor={
-          <AppButton
-            label={selectedCustomer?.name ?? t('fines.selectCustomer')}
-            variant="outline"
-            onPress={() => setCustomerMenu(true)}
-          />
+          <View>
+            <AppButton
+              label={selectedCustomer?.name ?? t('fines.selectCustomer')}
+              variant="outline"
+              onPress={() => setCustomerMenu(true)}
+            />
+            {selectedCustomerLicenseLabel ? (
+              <Text style={styles.customerLicenseText}>{selectedCustomerLicenseLabel}</Text>
+            ) : null}
+          </View>
         }
       >
         {customers.map(c => (
-          <Menu.Item key={c.id} title={c.name} onPress={() => onSelectCustomer(c.id)} />
+          <Menu.Item
+            key={c.id}
+            title={
+              <View>
+                <Text>{c.name}</Text>
+                {customerLicenseLabel(c) ? (
+                  <Text style={styles.menuLicenseText}>{customerLicenseLabel(c)}</Text>
+                ) : null}
+              </View>
+            }
+            style={styles.customerMenuItem}
+            onPress={() => onSelectCustomer(c.id)}
+          />
         ))}
       </Menu>
 
@@ -160,4 +180,15 @@ export const AccidentFormScreen = () => {
 
 const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  customerLicenseText: {
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  customerMenuItem: {
+    minHeight: 56,
+  },
+  menuLicenseText: {
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
 });

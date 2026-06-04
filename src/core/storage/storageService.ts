@@ -20,10 +20,6 @@ class StorageService {
     return this.adapter.removeItem(key);
   }
 
-  multiGet<T>(keys: string[]): Promise<Record<string, T | null>> {
-    return this.adapter.multiGet<T>(keys);
-  }
-
   clear(): Promise<void> {
     return this.adapter.clear();
   }

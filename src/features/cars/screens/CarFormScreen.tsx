@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useForm } from 'react-hook-form';
 import type { CarsStackParamList } from '@app/navigation/types';
-import { colors, spacing } from '@app/theme';
+import { colors } from '@app/theme';
 import { currencyFieldLabel } from '@core/constants/app';
 import { createId } from '@core/helpers/id';
 import type { CreateCarPayload } from '@core/types/domain';

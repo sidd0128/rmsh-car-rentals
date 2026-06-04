@@ -95,7 +95,6 @@ describe('availabilityService', () => {
   });
 
   it('flags returning soon when active rental ends within three days', () => {
-    const today = dayjs().format('YYYY-MM-DD');
     const rentals = [
       rental({
         id: 'r1',

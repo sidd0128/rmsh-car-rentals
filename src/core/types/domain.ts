@@ -67,6 +67,7 @@ export interface Customer {
   age: number;
   phone: string;
   address: string;
+  licenseNumber?: string;
   photo?: MediaUri;
   drivingLicenseImages: MediaUri[];
   documents: MediaUri[];

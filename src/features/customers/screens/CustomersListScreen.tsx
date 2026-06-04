@@ -6,7 +6,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import type { CustomersStackParamList } from '@app/navigation/types';
 import { colors, spacing, typography, shadows, radius } from '@app/theme';
-import { formatDate } from '@core/helpers/date';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { screenStyles } from '@shared/layouts/screenStyles';
