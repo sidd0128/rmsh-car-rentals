@@ -9,6 +9,7 @@ import { spacing, typography } from '@app/theme';
 import { formatDate } from '@core/helpers/date';
 import { formatCurrency } from '@core/utils/currency';
 import { useCarStore } from '@features/cars/store/useCarStore';
+import { customerLicenseLabel } from '@features/customers/helpers/customerLicenseDisplay';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { ImageSlider } from '@shared/media';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
@@ -70,6 +71,7 @@ export const FineDetailsScreen = () => {
         <ReadOnlyFormField
           label={t('common.customer')}
           value={customer?.name ?? t('common.emDash')}
+          meta={customerLicenseLabel(customer)}
         />
         <ReadOnlyFormField
           label={t('common.car')}
@@ -78,6 +80,12 @@ export const FineDetailsScreen = () => {
             car ? `${car.brand} ${car.model} · ${car.numberPlate}` : undefined
           }
         />
+        {customer?.drivingLicenseImages.length ? (
+          <View style={styles.licensePreview}>
+            <Text variant="titleMedium">{t('customers.drivingLicense')}</Text>
+            <ImageSlider images={customer.drivingLicenseImages} imageHeight={140} />
+          </View>
+        ) : null}
       </ScreenSection>
 
       {fine.proofImages.length > 0 ? (
@@ -116,5 +124,9 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     marginTop: spacing.xl,
+  },
+  licensePreview: {
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
 });

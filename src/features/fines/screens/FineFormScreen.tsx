@@ -19,7 +19,7 @@ import type { MediaUri } from '@core/types/media';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, AppInput, AppDatePickerModal, ReadOnlyFormField } from '@shared/ui';
-import { MediaUploader } from '@shared/media';
+import { ImageSlider, MediaUploader } from '@shared/media';
 import { useFineStore } from '../store/useFineStore';
 import { readFineDocumentImage } from '../services/fineDocumentOcrService';
 import { resolveRentalForFineDate } from '../services/fineDocumentAutofillService';
@@ -243,6 +243,12 @@ export const FineFormScreen = () => {
           />
         ))}
       </Menu>
+      {selectedCustomer?.drivingLicenseImages.length ? (
+        <View style={styles.licensePreview}>
+          <Text variant="titleMedium">{t('customers.drivingLicense')}</Text>
+          <ImageSlider images={selectedCustomer.drivingLicenseImages} imageHeight={140} />
+        </View>
+      ) : null}
 
       <ReadOnlyFormField
         label={t('fines.carFromRental')}
@@ -316,5 +322,8 @@ const styles = StyleSheet.create({
   menuLicenseText: {
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  licensePreview: {
+    gap: spacing.sm,
   },
 });
