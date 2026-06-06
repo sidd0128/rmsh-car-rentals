@@ -7,8 +7,11 @@
     "paths": {
       "@app/*": ["src/app/*"],
       "@core/*": ["src/core/*"],
+      "@contextApis/*": ["src/contextApis/*"],
+      "@error/*": ["src/error/*"],
       "@shared/*": ["src/shared/*"],
       "@features/*": ["src/features/*"],
+      "@network/*": ["src/network/*"],
       "@reusable": ["src/reusable/index.ts"],
       "@reusable/*": ["src/reusable/*"],
       "@locales/*": ["src/locales/*"]

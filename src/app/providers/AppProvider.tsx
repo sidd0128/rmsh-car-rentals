@@ -5,7 +5,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { paperTheme, colors } from '@app/theme';
+import { colors } from '@app/theme';
+import { LanguageProvider } from '@contextApis/language/LanguageProvider';
+import { ThemeProvider } from '@contextApis/theme/ThemeProvider';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { offlineFirstSyncOrchestratorService } from '@core/sync/services/offlineFirstSyncOrchestratorService';
@@ -13,9 +16,37 @@ import {
   startCloudSyncConnectivityListener,
   useCloudSyncStore,
 } from '@core/store/useCloudSyncStore';
+import { handleError } from '@error/errorHandler';
 import { useFirebaseAuthBootstrap } from '@features/auth/hooks/useFirebaseAuthBootstrap';
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
-import { RootNavigator } from '../navigation/RootNavigator';
+import { NetworkGate } from '@network/NetworkGate';
+import { NetworkProvider } from '@network/NetworkProvider';
+import { AuthGate } from './AuthGate';
+
+const renderPaperIcon = (props: React.ComponentProps<typeof MaterialCommunityIcons>) => (
+  <MaterialCommunityIcons {...props} />
+);
+
+const AppRuntime = () => {
+  const { paperTheme } = useThemeContext();
+
+  return (
+    <PaperProvider
+      theme={paperTheme}
+      settings={{
+        icon: renderPaperIcon,
+      }}
+    >
+      <BottomSheetModalProvider>
+        <NetworkProvider>
+          <NetworkGate>
+            <AuthGate />
+          </NetworkGate>
+        </NetworkProvider>
+      </BottomSheetModalProvider>
+    </PaperProvider>
+  );
+};
 
 export const AppProvider = () => {
   const [dataReady, setDataReady] = useState(false);
@@ -26,32 +57,47 @@ export const AppProvider = () => {
 
   useEffect(() => {
     const loadAppData = async () => {
-      const firebaseConfigured = isFirebaseConfigured();
-      const isAuthenticated = authStatus === 'authenticated';
+      try {
+        const firebaseConfigured = isFirebaseConfigured();
+        const isAuthenticated = authStatus === 'authenticated';
 
-      if (firebaseConfigured && !isAuthenticated) {
+        if (firebaseConfigured && !isAuthenticated) {
+          setDataReady(true);
+          return;
+        }
+
+        if (authStatus === 'initializing' && firebaseConfigured) {
+          return;
+        }
+
+        setDataReady(false);
+
+        if (firebaseConfigured && isAuthenticated) {
+          const syncResult = await offlineFirstSyncOrchestratorService.syncWithCloud();
+          useCloudSyncStore.setState({ lastMessage: syncResult.message });
+          await useCloudSyncStore.getState().refreshMetadata();
+        }
+
+        await hydrateAll();
+        await useCloudSyncStore.getState().refreshPendingSync();
         setDataReady(true);
-        return;
+      } catch (error) {
+        const message = handleError(error, 'AppProvider.loadAppData');
+        useCloudSyncStore.setState({ lastMessage: message });
+
+        try {
+          await hydrateAll();
+        } finally {
+          setDataReady(true);
+        }
       }
-
-      if (authStatus === 'initializing' && firebaseConfigured) {
-        return;
-      }
-
-      setDataReady(false);
-
-      if (firebaseConfigured && isAuthenticated) {
-        const syncResult = await offlineFirstSyncOrchestratorService.syncWithCloud();
-        useCloudSyncStore.setState({ lastMessage: syncResult.message });
-        await useCloudSyncStore.getState().refreshMetadata();
-      }
-
-      await hydrateAll();
-      await useCloudSyncStore.getState().refreshPendingSync();
-      setDataReady(true);
     };
 
-    void loadAppData();
+    loadAppData().catch(error => {
+      const message = handleError(error, 'AppProvider.loadAppData.effect');
+      useCloudSyncStore.setState({ lastMessage: message });
+      setDataReady(true);
+    });
   }, [authStatus, hydrateAll]);
 
   useEffect(() => {
@@ -77,16 +123,11 @@ export const AppProvider = () => {
   return (
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
-        <PaperProvider
-          theme={paperTheme}
-          settings={{
-            icon: props => <MaterialCommunityIcons {...props} />,
-          }}
-        >
-          <BottomSheetModalProvider>
-            <RootNavigator />
-          </BottomSheetModalProvider>
-        </PaperProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AppRuntime />
+          </LanguageProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

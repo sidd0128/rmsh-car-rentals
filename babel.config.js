@@ -13,8 +13,11 @@ module.exports = {
         alias: {
           '@app': path.join(src, 'app'),
           '@core': path.join(src, 'core'),
+          '@contextApis': path.join(src, 'contextApis'),
+          '@error': path.join(src, 'error'),
           '@shared': path.join(src, 'shared'),
           '@features': path.join(src, 'features'),
+          '@network': path.join(src, 'network'),
           '@reusable': path.join(src, 'reusable'),
           '@locales': path.join(src, 'locales'),
         },
