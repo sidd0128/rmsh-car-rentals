@@ -28,7 +28,11 @@ const renderPaperIcon = (props: React.ComponentProps<typeof MaterialCommunityIco
   <MaterialCommunityIcons {...props} />
 );
 
-const AppRuntime = () => {
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+const AppShell = ({ children }: AppShellProps) => {
   const { paperTheme } = useThemeContext();
 
   return (
@@ -40,15 +44,21 @@ const AppRuntime = () => {
     >
       <BottomSheetModalProvider>
         <GlobalUiHost />
-        <NetworkProvider>
-          <NetworkGate>
-            <AuthGate />
-          </NetworkGate>
-        </NetworkProvider>
+        {children}
       </BottomSheetModalProvider>
     </PaperProvider>
   );
 };
+
+const AppRuntime = () => (
+  <AppShell>
+    <NetworkProvider>
+      <NetworkGate>
+        <AuthGate />
+      </NetworkGate>
+    </NetworkProvider>
+  </AppShell>
+);
 
 export const AppProvider = () => {
   const [dataReady, setDataReady] = useState(false);
@@ -116,9 +126,19 @@ export const AppProvider = () => {
 
   if (waitingForAuth || waitingForData) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <GestureHandlerRootView style={styles.flex}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <AppShell>
+                <View style={styles.loading}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              </AppShell>
+            </LanguageProvider>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     );
   }
 

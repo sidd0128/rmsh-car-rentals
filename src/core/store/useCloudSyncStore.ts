@@ -6,6 +6,7 @@ import { offlineFirstSyncOrchestratorService } from '@core/sync/services/offline
 import { networkConnectivityService } from '@core/sync/services/networkConnectivityService';
 import { syncMetadataRepository } from '@core/sync/repositories/syncMetadataRepository';
 import { syncOutboxRepository } from '@core/sync/repositories/syncOutboxRepository';
+import { handleError } from '@error/errorHandler';
 
 interface CloudSyncState {
   isOnline: boolean;
@@ -42,11 +43,19 @@ export const useCloudSyncStore = create<CloudSyncState>((set, get) => ({
 
   syncNow: async () => {
     set({ isSyncing: true });
-    const result = await offlineFirstSyncOrchestratorService.syncWithCloud();
-    await get().refreshMetadata();
-    await get().refreshPendingSync();
-    set({ isSyncing: false, lastMessage: result.message });
-    return result.message;
+    try {
+      const result = await offlineFirstSyncOrchestratorService.syncWithCloud();
+      await get().refreshMetadata();
+      await get().refreshPendingSync();
+      set({ lastMessage: result.message });
+      return result.message;
+    } catch (error) {
+      const message = handleError(error, 'useCloudSyncStore.syncNow');
+      set({ lastMessage: message });
+      return message;
+    } finally {
+      set({ isSyncing: false });
+    }
   },
 }));
 
@@ -58,7 +67,7 @@ export const startCloudSyncConnectivityListener = (): (() => void) => {
       useFirebaseAuthStore.getState().status === 'authenticated' &&
       Boolean(getCurrentFirebaseUser());
     if (online && isFirebaseConfigured() && isAuthenticated) {
-      useCloudSyncStore.getState().syncNow().catch(() => undefined);
+      useCloudSyncStore.getState().syncNow();
     }
   });
 };

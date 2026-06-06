@@ -27,7 +27,10 @@ export const cloudEntityWriteService = {
         collectionName,
         entity,
       );
-      await firestoreDocumentSyncService.upsertDocument(collectionName, cloudReadyEntity);
+      await firestoreDocumentSyncService.upsertDocument(
+        collectionName,
+        cloudMediaSyncService.stripLocalMediaUrisForCloud(collectionName, cloudReadyEntity),
+      );
       return cloudReadyEntity;
     }
 

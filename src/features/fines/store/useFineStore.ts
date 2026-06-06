@@ -25,6 +25,7 @@ export const useFineStore = create<FineState>((set, get) => ({
 
   updateFine: async fine => {
     await repositories.fines.updateFine(fine);
-    set({ fines: get().fines.map(f => (f.id === fine.id ? fine : f)) });
+    const savedFine = (await repositories.fines.getFines()).find(f => f.id === fine.id);
+    set({ fines: get().fines.map(f => (f.id === fine.id ? savedFine ?? fine : f)) });
   },
 }));

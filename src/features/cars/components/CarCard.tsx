@@ -8,6 +8,7 @@ import type { NextRentDue } from '@core/helpers/rentalPayments';
 import type { Car, Customer } from '@core/types/domain';
 import { StatusBadge, carStatusToBadge } from '@shared/ui';
 import { useTranslation } from '@core/i18n';
+import { reportImageLoadError } from '@shared/media/reportImageLoadError';
 
 interface CarCardProps {
   car: Car;
@@ -27,7 +28,11 @@ export const CarCard = memo<CarCardProps>(
   return (
     <Pressable onPress={onPress} style={[styles.card, shadows.md]}>
       {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} />
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.image}
+          onError={() => reportImageLoadError(imageUri, 'CarCard')}
+        />
       ) : (
         <View style={[styles.image, styles.placeholder]} />
       )}

@@ -16,6 +16,7 @@ import { spacing } from '@app/theme/spacing';
 import { radius } from '@app/theme/radius';
 import type { MediaUri } from '@core/types/media';
 import { ImageViewerModal } from './ImageViewerModal';
+import { reportImageLoadError } from './reportImageLoadError';
 
 export interface ImageSliderProps {
   images: MediaUri[];
@@ -98,6 +99,7 @@ export const ImageSlider = memo<ImageSliderProps>(
                   style={[styles.image, { width: itemWidth, height: imageHeight }]}
                   onLoadStart={() => setLoading(p => ({ ...p, [index]: true }))}
                   onLoadEnd={() => setLoading(p => ({ ...p, [index]: false }))}
+                  onError={() => reportImageLoadError(item, 'ImageSlider')}
                 />
               </Pressable>
               {editable ? (

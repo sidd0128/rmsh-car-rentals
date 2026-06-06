@@ -22,6 +22,7 @@ import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, TimelineView } from '@shared/ui';
 import { ImageSlider } from '@shared/media';
+import { reportImageLoadError } from '@shared/media/reportImageLoadError';
 import { CustomerAccidentHistory } from '../components/CustomerAccidentHistory';
 import { CustomerFineHistory } from '../components/CustomerFineHistory';
 import { CustomerPaymentHistory } from '../components/CustomerPaymentHistory';
@@ -105,7 +106,11 @@ export const CustomerProfileScreen = () => {
     <ScreenLayout onRefresh={hydrateAll}>
       <View style={styles.profileHeader}>
         {customer.photo ? (
-          <Image source={{ uri: customer.photo }} style={styles.avatar} />
+          <Image
+            source={{ uri: customer.photo }}
+            style={styles.avatar}
+            onError={() => reportImageLoadError(customer.photo ?? '', 'CustomerProfileScreen')}
+          />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
             <Text style={styles.avatarInitials}>

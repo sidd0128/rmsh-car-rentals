@@ -40,7 +40,8 @@ export const useCarStore = create<CarState>((set, get) => ({
 
   updateCar: async car => {
     await repositories.cars.updateCar(car);
-    set({ cars: get().cars.map(c => (c.id === car.id ? car : c)) });
+    const savedCar = await repositories.cars.getCarById(car.id);
+    set({ cars: get().cars.map(c => (c.id === car.id ? savedCar ?? car : c)) });
   },
 
   getCarById: id => get().cars.find(c => c.id === id),

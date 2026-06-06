@@ -102,10 +102,14 @@ export const offlineFirstSyncOrchestratorService = {
           const cloudReadyPayload = await cloudMediaSyncService.prepareEntityForCloud(
             entry.collectionName,
             entry.payload as { id: string },
+            { showUploadErrors: false },
           );
           await firestoreDocumentSyncService.upsertDocument(
             entry.collectionName,
-            cloudReadyPayload,
+            cloudMediaSyncService.stripLocalMediaUrisForCloud(
+              entry.collectionName,
+              cloudReadyPayload,
+            ),
           );
         }
       } catch {
@@ -146,21 +150,62 @@ export const offlineFirstSyncOrchestratorService = {
         asyncStoragePaymentRepository.getPayments(),
       ]);
 
+    const remoteCarById = new Map(remoteCars.map(car => [car.id, car]));
+    const remoteCustomerById = new Map(remoteCustomers.map(customer => [customer.id, customer]));
+    const remoteFineById = new Map(remoteFines.map(fine => [fine.id, fine]));
+    const remoteAccidentById = new Map(remoteAccidents.map(accident => [accident.id, accident]));
+
     await Promise.all([
       asyncStorageCarRepository.replaceAll(
-        mergeEntityListsByTimestamp(localCars, remoteCars),
+        mergeEntityListsByTimestamp(localCars, remoteCars).map(car =>
+          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+            FIRESTORE_COLLECTION_NAMES.CARS,
+            cloudMediaSyncService.mergeRemoteMediaUrls(
+              FIRESTORE_COLLECTION_NAMES.CARS,
+              car,
+              remoteCarById.get(car.id),
+            ),
+          ),
+        ),
       ),
       asyncStorageCustomerRepository.replaceAll(
-        mergeEntityListsByTimestamp(localCustomers, remoteCustomers),
+        mergeEntityListsByTimestamp(localCustomers, remoteCustomers).map(customer =>
+          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+            FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+            cloudMediaSyncService.mergeRemoteMediaUrls(
+              FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+              customer,
+              remoteCustomerById.get(customer.id),
+            ),
+          ),
+        ),
       ),
       asyncStorageRentalRepository.replaceAll(
         mergeEntityListsByTimestamp(localRentals, remoteRentals),
       ),
       asyncStorageFineRepository.replaceAll(
-        mergeEntityListsByTimestamp(localFines, remoteFines),
+        mergeEntityListsByTimestamp(localFines, remoteFines).map(fine =>
+          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+            FIRESTORE_COLLECTION_NAMES.FINES,
+            cloudMediaSyncService.mergeRemoteMediaUrls(
+              FIRESTORE_COLLECTION_NAMES.FINES,
+              fine,
+              remoteFineById.get(fine.id),
+            ),
+          ),
+        ),
       ),
       asyncStorageAccidentRepository.replaceAll(
-        mergeEntityListsByTimestamp(localAccidents, remoteAccidents),
+        mergeEntityListsByTimestamp(localAccidents, remoteAccidents).map(accident =>
+          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+            FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+            cloudMediaSyncService.mergeRemoteMediaUrls(
+              FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+              accident,
+              remoteAccidentById.get(accident.id),
+            ),
+          ),
+        ),
       ),
       asyncStoragePaymentRepository.replaceAll(
         mergeEntityListsByTimestamp(localPayments, remotePayments),
@@ -183,18 +228,26 @@ export const offlineFirstSyncOrchestratorService = {
       ...cars.map(async car =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.CARS,
-          await cloudMediaSyncService.prepareEntityForCloud(
+          cloudMediaSyncService.stripLocalMediaUrisForCloud(
             FIRESTORE_COLLECTION_NAMES.CARS,
-            car,
+            await cloudMediaSyncService.prepareEntityForCloud(
+              FIRESTORE_COLLECTION_NAMES.CARS,
+              car,
+              { showUploadErrors: false },
+            ),
           ),
         ),
       ),
       ...customers.map(async customer =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-          await cloudMediaSyncService.prepareEntityForCloud(
+          cloudMediaSyncService.stripLocalMediaUrisForCloud(
             FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-            customer,
+            await cloudMediaSyncService.prepareEntityForCloud(
+              FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+              customer,
+              { showUploadErrors: false },
+            ),
           ),
         ),
       ),
@@ -204,18 +257,26 @@ export const offlineFirstSyncOrchestratorService = {
       ...fines.map(async fine =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.FINES,
-          await cloudMediaSyncService.prepareEntityForCloud(
+          cloudMediaSyncService.stripLocalMediaUrisForCloud(
             FIRESTORE_COLLECTION_NAMES.FINES,
-            fine,
+            await cloudMediaSyncService.prepareEntityForCloud(
+              FIRESTORE_COLLECTION_NAMES.FINES,
+              fine,
+              { showUploadErrors: false },
+            ),
           ),
         ),
       ),
       ...accidents.map(async accident =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-          await cloudMediaSyncService.prepareEntityForCloud(
+          cloudMediaSyncService.stripLocalMediaUrisForCloud(
             FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-            accident,
+            await cloudMediaSyncService.prepareEntityForCloud(
+              FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+              accident,
+              { showUploadErrors: false },
+            ),
           ),
         ),
       ),

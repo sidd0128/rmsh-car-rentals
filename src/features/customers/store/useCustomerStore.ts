@@ -31,8 +31,11 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
   updateCustomer: async customer => {
     await repositories.customers.updateCustomer(customer);
+    const savedCustomer = await repositories.customers.getCustomerById(customer.id);
     set({
-      customers: get().customers.map(c => (c.id === customer.id ? customer : c)),
+      customers: get().customers.map(c =>
+        c.id === customer.id ? savedCustomer ?? customer : c,
+      ),
     });
   },
 
