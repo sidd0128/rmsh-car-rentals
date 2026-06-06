@@ -1,7 +1,7 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
 import type { FineFlowParamList } from '@app/navigation/types';
 import { colors, spacing } from '@app/theme';
@@ -25,6 +25,7 @@ import { readFineDocumentImage } from '../services/fineDocumentOcrService';
 import { resolveRentalForFineDate } from '../services/fineDocumentAutofillService';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
+import { useToastStore } from '@zustand/useToastStore';
 
 export const FineFormScreen = () => {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export const FineFormScreen = () => {
   const addFine = useFineStore(s => s.addFine);
   const updateFine = useFineStore(s => s.updateFine);
   const fines = useFineStore(s => s.fines);
+  const showToast = useToastStore(s => s.showToast);
   const existing = route.params?.fineId
     ? fines.find(f => f.id === route.params.fineId)
     : undefined;
@@ -99,7 +101,7 @@ export const FineFormScreen = () => {
   const onSelectCustomer = (id: string) => {
     const linkedCarId = resolveCustomerCarId(id, rentals);
     if (!linkedCarId) {
-      Alert.alert(t('fines.noCarLinkedTitle'), t('fines.noCarLinkedMessage'));
+      showToast(t('fines.noCarLinkedMessage'), { type: 'warning' });
       setCustomerMenu(false);
       return;
     }
@@ -156,17 +158,17 @@ export const FineFormScreen = () => {
       } catch (error) {
         const message = error instanceof Error ? error.message : t('fines.autofillFailedMessage');
         setAutofillStatus(t('fines.autofillFailed'));
-        Alert.alert(t('fines.autofillFailed'), message);
+        showToast(message, { type: 'error' });
       } finally {
         setIsReadingDocument(false);
       }
     },
-    [amount, cars, customers, reason, rentals, t],
+    [amount, cars, customers, reason, rentals, showToast, t],
   );
 
   const onSubmit = async () => {
     if (!customerId || !carId || !amount || !reason) {
-      Alert.alert(t('fines.fillRequired'));
+      showToast(t('fines.fillRequired'), { type: 'warning' });
       return;
     }
 

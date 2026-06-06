@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
 import { colors } from '@app/theme';
@@ -21,12 +21,14 @@ import { MediaUploader } from '@shared/media';
 import { useAccidentStore } from '../store/useAccidentStore';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
+import { useToastStore } from '@zustand/useToastStore';
 
 export const AccidentFormScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const addAccident = useAccidentStore(s => s.addAccident);
   const updateCustomer = useCustomerStore(s => s.updateCustomer);
+  const showToast = useToastStore(s => s.showToast);
   const customers = useCustomerStore(s => s.customers);
   const cars = useCarStore(s => s.cars);
   const rentals = useRentalStore(s => s.rentals);
@@ -57,7 +59,7 @@ export const AccidentFormScreen = () => {
   const onSelectCustomer = (id: string) => {
     const linkedCarId = resolveCustomerCarId(id, rentals);
     if (!linkedCarId) {
-      Alert.alert(t('fines.noCarLinkedTitle'), t('fines.noCarLinkedMessage'));
+      showToast(t('fines.noCarLinkedMessage'), { type: 'warning' });
       setCustomerMenu(false);
       return;
     }
@@ -67,7 +69,7 @@ export const AccidentFormScreen = () => {
 
   const onSubmit = async () => {
     if (!customerId || !carId || !description || !damageCost) {
-      Alert.alert(t('accidents.fillRequired'));
+      showToast(t('accidents.fillRequired'), { type: 'warning' });
       return;
     }
 

@@ -35,10 +35,15 @@ class OfflineFirstCarRepository implements ICarRepository {
   addCar = (payload: CreateCarPayload) =>
     saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CARS, () =>
       asyncStorageCarRepository.addCar(payload),
+      car => asyncStorageCarRepository.updateCar(car),
     );
   updateCar = async (car: Car) => {
     await asyncStorageCarRepository.updateCar(car);
-    await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CARS, async () => car);
+    await saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.CARS,
+      async () => car,
+      syncedCar => asyncStorageCarRepository.updateCar(syncedCar),
+    );
   };
 }
 
@@ -48,10 +53,15 @@ class OfflineFirstCustomerRepository implements ICustomerRepository {
   addCustomer = (payload: CreateCustomerPayload) =>
     saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CUSTOMERS, () =>
       asyncStorageCustomerRepository.addCustomer(payload),
+      customer => asyncStorageCustomerRepository.updateCustomer(customer),
     );
   updateCustomer = async (customer: Customer) => {
     await asyncStorageCustomerRepository.updateCustomer(customer);
-    await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CUSTOMERS, async () => customer);
+    await saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+      async () => customer,
+      syncedCustomer => asyncStorageCustomerRepository.updateCustomer(syncedCustomer),
+    );
   };
 }
 
@@ -74,10 +84,15 @@ class OfflineFirstFineRepository implements IFineRepository {
   addFine = (payload: CreateFinePayload) =>
     saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.FINES, () =>
       asyncStorageFineRepository.addFine(payload),
+      fine => asyncStorageFineRepository.updateFine(fine),
     );
   updateFine = async (fine: Fine) => {
     await asyncStorageFineRepository.updateFine(fine);
-    await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.FINES, async () => fine);
+    await saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.FINES,
+      async () => fine,
+      syncedFine => asyncStorageFineRepository.updateFine(syncedFine),
+    );
   };
 }
 
@@ -86,6 +101,7 @@ class OfflineFirstAccidentRepository implements IAccidentRepository {
   addAccident = (payload: CreateAccidentPayload) =>
     saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.ACCIDENTS, () =>
       asyncStorageAccidentRepository.addAccident(payload),
+      accident => asyncStorageAccidentRepository.save(accident),
     );
 }
 

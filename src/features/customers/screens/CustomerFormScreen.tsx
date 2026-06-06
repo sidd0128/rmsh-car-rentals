@@ -2,7 +2,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Switch, Text } from 'react-native-paper';
 import { useForm } from 'react-hook-form';
 import type { CustomersStackParamList } from '@app/navigation/types';
@@ -14,6 +14,7 @@ import { AppButton, ControlledAppInput } from '@shared/ui';
 import { MediaUploader } from '@shared/media';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useTranslation } from '@core/i18n';
+import { useToastStore } from '@zustand/useToastStore';
 import { readCustomerLicenseImage } from '../services/customerLicenseOcrService';
 import type { CustomerLicenseExtraction } from '../services/customerLicenseAutofillService';
 
@@ -33,6 +34,7 @@ export const CustomerFormScreen = () => {
   const getCustomerById = useCustomerStore(s => s.getCustomerById);
   const addCustomer = useCustomerStore(s => s.addCustomer);
   const updateCustomer = useCustomerStore(s => s.updateCustomer);
+  const showToast = useToastStore(s => s.showToast);
   const existing = customerId ? getCustomerById(customerId) : undefined;
 
   const { control, getValues, handleSubmit, reset, setValue } = useForm<CustomerFormValues>({
@@ -53,7 +55,7 @@ export const CustomerFormScreen = () => {
         address: existing.address,
         licenseNumber: existing.licenseNumber ?? '',
       });
-      setLicenseImages(existing.drivingLicenseImages);
+      setLicenseImages(existing.drivingLicenseImages.slice(0, 1));
       setDocuments(existing.documents);
       setBlacklisted(existing.isBlacklisted);
     }
@@ -109,22 +111,19 @@ export const CustomerFormScreen = () => {
         }
 
         if (hasAppliedFields) {
-          Alert.alert(t('customers.licenseAutofillApplied'));
+          showToast(t('customers.licenseAutofillApplied'), { type: 'success' });
         } else if (hasExtractedFields) {
-          Alert.alert(t('customers.licenseAutofillSkipped'));
+          showToast(t('customers.licenseAutofillSkipped'), { type: 'info' });
         } else {
-          Alert.alert(t('customers.licenseAutofillNoFieldsFound'));
+          showToast(t('customers.licenseAutofillNoFieldsFound'), { type: 'warning' });
         }
       } catch {
-        Alert.alert(
-          t('customers.licenseAutofillFailed'),
-          t('customers.licenseAutofillFailedMessage'),
-        );
+        showToast(t('customers.licenseAutofillFailedMessage'), { type: 'error' });
       } finally {
         setReadingLicense(false);
       }
     },
-    [applyLicenseAutofill, t],
+    [applyLicenseAutofill, showToast, t],
   );
 
   const onSubmit = handleSubmit(async values => {
@@ -134,7 +133,7 @@ export const CustomerFormScreen = () => {
       phone: values.phone.trim(),
       address: values.address.trim(),
       licenseNumber: values.licenseNumber.trim() || undefined,
-      drivingLicenseImages: licenseImages,
+      drivingLicenseImages: licenseImages.slice(0, 1),
       documents,
       isBlacklisted,
       photo: existing?.photo,
@@ -155,7 +154,7 @@ export const CustomerFormScreen = () => {
         images={licenseImages}
         onChange={setLicenseImages}
         onImagesAdded={handleLicenseImagesAdded}
-        maxImages={2}
+        maxImages={1}
       />
       {isReadingLicense ? (
         <Text style={styles.helperText}>{t('customers.licenseAutofillReading')}</Text>

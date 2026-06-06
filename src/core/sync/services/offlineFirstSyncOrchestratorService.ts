@@ -18,6 +18,7 @@ import type {
   Rental,
 } from '@core/types/domain';
 import { mergeEntityListsByTimestamp } from './entityTimestampMergeService';
+import { cloudMediaSyncService } from './cloudMediaSyncService';
 import { networkConnectivityService } from './networkConnectivityService';
 import { syncMetadataRepository } from '../repositories/syncMetadataRepository';
 import { syncOutboxRepository } from '../repositories/syncOutboxRepository';
@@ -98,9 +99,13 @@ export const offlineFirstSyncOrchestratorService = {
           const id = String(entry.payload.id);
           await firestoreDocumentSyncService.deleteDocument(entry.collectionName, id);
         } else {
-          await firestoreDocumentSyncService.upsertDocument(
+          const cloudReadyPayload = await cloudMediaSyncService.prepareEntityForCloud(
             entry.collectionName,
             entry.payload as { id: string },
+          );
+          await firestoreDocumentSyncService.upsertDocument(
+            entry.collectionName,
+            cloudReadyPayload,
           );
         }
       } catch {
@@ -175,25 +180,43 @@ export const offlineFirstSyncOrchestratorService = {
     ]);
 
     await Promise.all([
-      ...cars.map(car =>
-        firestoreDocumentSyncService.upsertDocument(FIRESTORE_COLLECTION_NAMES.CARS, car),
+      ...cars.map(async car =>
+        firestoreDocumentSyncService.upsertDocument(
+          FIRESTORE_COLLECTION_NAMES.CARS,
+          await cloudMediaSyncService.prepareEntityForCloud(
+            FIRESTORE_COLLECTION_NAMES.CARS,
+            car,
+          ),
+        ),
       ),
-      ...customers.map(customer =>
+      ...customers.map(async customer =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-          customer,
+          await cloudMediaSyncService.prepareEntityForCloud(
+            FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+            customer,
+          ),
         ),
       ),
       ...rentals.map(rental =>
         firestoreDocumentSyncService.upsertDocument(FIRESTORE_COLLECTION_NAMES.RENTALS, rental),
       ),
-      ...fines.map(fine =>
-        firestoreDocumentSyncService.upsertDocument(FIRESTORE_COLLECTION_NAMES.FINES, fine),
+      ...fines.map(async fine =>
+        firestoreDocumentSyncService.upsertDocument(
+          FIRESTORE_COLLECTION_NAMES.FINES,
+          await cloudMediaSyncService.prepareEntityForCloud(
+            FIRESTORE_COLLECTION_NAMES.FINES,
+            fine,
+          ),
+        ),
       ),
-      ...accidents.map(accident =>
+      ...accidents.map(async accident =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-          accident,
+          await cloudMediaSyncService.prepareEntityForCloud(
+            FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+            accident,
+          ),
         ),
       ),
       ...payments.map(payment =>

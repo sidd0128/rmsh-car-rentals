@@ -4,6 +4,7 @@ import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { getCurrentFirebaseUser } from '@core/firebase/auth/services/firebaseAuthService';
 import { useCloudSyncStore } from '@core/store/useCloudSyncStore';
 import { syncOutboxRepository } from '../repositories/syncOutboxRepository';
+import { cloudMediaSyncService } from './cloudMediaSyncService';
 import { networkConnectivityService } from './networkConnectivityService';
 
 type IdentifiableEntity = { id: string };
@@ -15,15 +16,19 @@ export const cloudEntityWriteService = {
   async upsertEntity<T extends IdentifiableEntity>(
     collectionName: FirestoreCollectionName,
     entity: T,
-  ): Promise<void> {
+  ): Promise<T> {
     if (!isFirebaseConfigured() || !getCurrentFirebaseUser()) {
-      return;
+      return entity;
     }
 
     const online = await networkConnectivityService.isOnline();
     if (online) {
-      await firestoreDocumentSyncService.upsertDocument(collectionName, entity);
-      return;
+      const cloudReadyEntity = await cloudMediaSyncService.prepareEntityForCloud(
+        collectionName,
+        entity,
+      );
+      await firestoreDocumentSyncService.upsertDocument(collectionName, cloudReadyEntity);
+      return cloudReadyEntity;
     }
 
     await syncOutboxRepository.enqueue({
@@ -32,5 +37,6 @@ export const cloudEntityWriteService = {
       payload: entity as unknown as Record<string, unknown>,
     });
     await useCloudSyncStore.getState().refreshPendingSync();
+    return entity;
   },
 };

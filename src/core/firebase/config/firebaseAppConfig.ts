@@ -12,3 +12,6 @@ export const FIREBASE_WEB_CONFIG = {
 };
 
 export const isFirebaseConfigured = isFirebaseEnvConfigured;
+
+export const isFirebaseStorageConfigured = (): boolean =>
+  isFirebaseConfigured() && Boolean(env.firebase.storageBucket);
