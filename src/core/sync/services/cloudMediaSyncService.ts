@@ -1,6 +1,7 @@
 import { FIRESTORE_COLLECTION_NAMES } from '@core/firebase/constants/firestoreCollectionNames';
 import type { FirestoreCollectionName } from '@core/firebase/constants/firestoreCollectionNames';
 import { firebaseStorageMediaService } from '@core/firebase/services/firebaseStorageMediaService';
+import { env } from '@core/config/env';
 import { logError } from '@error/errorLogger';
 
 type SyncableEntity = { id: string };
@@ -24,6 +25,20 @@ const isRemoteUri = (uri: string): boolean =>
 
 const isUploadableLocalUri = (uri: string): boolean =>
   uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('ph://');
+
+const getFirebaseStorageObjectPath = (uri: string): string | undefined => {
+  if (!uri.includes(env.firebase.storageBucket)) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(uri);
+    const encodedPath = parsed.pathname.match(/\/o\/(.+)$/)?.[1];
+    return encodedPath ? decodeURIComponent(encodedPath) : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 const getExtension = (uri: string): string => {
   const match = uri.match(/\.(jpe?g|png|webp|heic|heif)(?:\?|$)/i);
@@ -157,6 +172,25 @@ const uploadMediaValue = async (
   return value;
 };
 
+const collectRemoteMediaUris = (entity: SyncableEntity | undefined): string[] => {
+  if (!entity) {
+    return [];
+  }
+
+  const values = Object.values(entity as Record<string, unknown>);
+  return values.flatMap(value => {
+    if (typeof value === 'string' && isRemoteUri(value)) {
+      return [value];
+    }
+
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === 'string' && isRemoteUri(item));
+    }
+
+    return [];
+  });
+};
+
 /**
  * Converts local image file URIs in syncable entities into Firebase Storage URLs
  * before those entities are written to Firestore.
@@ -263,5 +297,43 @@ export const cloudMediaSyncService = {
     }
 
     return hasChanges ? (localSafeEntity as T) : entity;
+  },
+
+  getRemovedRemoteMediaUris(
+    previousEntity: SyncableEntity | undefined,
+    nextEntity: SyncableEntity,
+  ): string[] {
+    const previousUris = collectRemoteMediaUris(previousEntity);
+    if (previousUris.length === 0) {
+      return [];
+    }
+
+    const nextStoragePaths = new Set(
+      collectRemoteMediaUris(nextEntity)
+        .map(getFirebaseStorageObjectPath)
+        .filter((path): path is string => Boolean(path)),
+    );
+
+    return previousUris.filter(uri => {
+      const previousPath = getFirebaseStorageObjectPath(uri);
+      return previousPath ? !nextStoragePaths.has(previousPath) : false;
+    });
+  },
+
+  async deleteRemovedRemoteMedia(
+    previousEntity: SyncableEntity | undefined,
+    nextEntity: SyncableEntity,
+  ): Promise<void> {
+    const removedUris = this.getRemovedRemoteMediaUris(previousEntity, nextEntity);
+
+    await Promise.all(
+      removedUris.map(async uri => {
+        try {
+          await firebaseStorageMediaService.deleteRemoteImage({ downloadUrl: uri });
+        } catch (error) {
+          logError(error, { source: 'cloudMediaSyncService.deleteRemovedRemoteMedia' });
+        }
+      }),
+    );
   },
 };

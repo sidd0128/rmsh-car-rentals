@@ -16,6 +16,7 @@ export const cloudEntityWriteService = {
   async upsertEntity<T extends IdentifiableEntity>(
     collectionName: FirestoreCollectionName,
     entity: T,
+    previousEntity?: T,
   ): Promise<T> {
     if (!isFirebaseConfigured() || !getCurrentFirebaseUser()) {
       return entity;
@@ -31,6 +32,7 @@ export const cloudEntityWriteService = {
         collectionName,
         cloudMediaSyncService.stripLocalMediaUrisForCloud(collectionName, cloudReadyEntity),
       );
+      await cloudMediaSyncService.deleteRemovedRemoteMedia(previousEntity, cloudReadyEntity);
       return cloudReadyEntity;
     }
 

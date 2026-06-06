@@ -11,9 +11,14 @@ export const saveEntityWithCloudSync = async <T extends Identifiable>(
   collectionName: FirestoreCollectionName,
   saveLocal: () => Promise<T>,
   replaceLocal?: ReplaceLocalEntity<T>,
+  previousEntity?: T,
 ): Promise<T> => {
   const entity = await saveLocal();
-  const cloudReadyEntity = await cloudEntityWriteService.upsertEntity(collectionName, entity);
+  const cloudReadyEntity = await cloudEntityWriteService.upsertEntity(
+    collectionName,
+    entity,
+    previousEntity,
+  );
 
   if (cloudReadyEntity !== entity && replaceLocal) {
     await replaceLocal(cloudReadyEntity);

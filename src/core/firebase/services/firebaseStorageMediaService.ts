@@ -1,4 +1,4 @@
-import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { executeWithFreshFirebaseSession } from '@core/firebase/auth/services/firebaseAuthSessionService';
 import { env } from '@core/config/env';
 import { isFirebaseStorageConfigured } from '@core/firebase/config/firebaseAppConfig';
@@ -7,6 +7,10 @@ import { getFirebaseAppOrNull } from './firebaseAppInitializationService';
 interface UploadMediaParams {
   uri: string;
   storagePath: string;
+}
+
+interface DeleteMediaParams {
+  downloadUrl: string;
 }
 
 const getContentTypeFromUri = (uri: string): string => {
@@ -117,6 +121,33 @@ export const firebaseStorageMediaService = {
         return await getDownloadURL(mediaRef);
       } catch (error) {
         throw buildStorageError(error, storagePath, 'download URL');
+      }
+    });
+  },
+
+  async deleteRemoteImage({ downloadUrl }: DeleteMediaParams): Promise<void> {
+    if (!isFirebaseStorageConfigured()) {
+      return;
+    }
+
+    const app = getFirebaseAppOrNull();
+    if (!app) {
+      return;
+    }
+
+    await executeWithFreshFirebaseSession(async () => {
+      const storage = getStorage(app);
+      const mediaRef = ref(storage, downloadUrl);
+
+      try {
+        await deleteObject(mediaRef);
+      } catch (error) {
+        const code = readErrorValue(error, 'code');
+        if (code === 'storage/object-not-found') {
+          return;
+        }
+
+        throw buildStorageError(error, downloadUrl, 'delete');
       }
     });
   },
