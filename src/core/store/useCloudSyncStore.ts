@@ -58,7 +58,7 @@ export const startCloudSyncConnectivityListener = (): (() => void) => {
       useFirebaseAuthStore.getState().status === 'authenticated' &&
       Boolean(getCurrentFirebaseUser());
     if (online && isFirebaseConfigured() && isAuthenticated) {
-      void useCloudSyncStore.getState().syncNow();
+      useCloudSyncStore.getState().syncNow().catch(() => undefined);
     }
   });
 };

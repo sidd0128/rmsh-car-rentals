@@ -18,6 +18,26 @@ import type { BottomTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
+const dashboardTabIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="view-dashboard" color={color} size={size} />
+);
+
+const carsTabIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="car" color={color} size={size} />
+);
+
+const customersTabIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="account-group" color={color} size={size} />
+);
+
+const historyTabIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="history" color={color} size={size} />
+);
+
+const settingsTabIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="dots-horizontal" color={color} size={size} />
+);
+
 const TabBar = (props: BottomTabBarProps) => (
   <View style={styles.tabBarContainer}>
     <BottomTabBar {...props} />
@@ -51,9 +71,7 @@ export const BottomTabs = () => {
         component={DashboardStack}
         options={{
           title: i18n.t('navigation.dashboard'),
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="view-dashboard" color={color} size={size} />
-          ),
+          tabBarIcon: dashboardTabIcon,
         }}
       />
       <Tab.Screen
@@ -61,7 +79,7 @@ export const BottomTabs = () => {
         component={CarsStack}
         options={{
           title: i18n.t('navigation.cars'),
-          tabBarIcon: ({ color, size }) => <Icon name="car" color={color} size={size} />,
+          tabBarIcon: carsTabIcon,
         }}
       />
       <Tab.Screen
@@ -69,9 +87,7 @@ export const BottomTabs = () => {
         component={CustomersStack}
         options={{
           title: i18n.t('navigation.customers'),
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="account-group" color={color} size={size} />
-          ),
+          tabBarIcon: customersTabIcon,
         }}
       />
       <Tab.Screen
@@ -79,9 +95,7 @@ export const BottomTabs = () => {
         component={HistoryStack}
         options={{
           title: i18n.t('navigation.history'),
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="history" color={color} size={size} />
-          ),
+          tabBarIcon: historyTabIcon,
         }}
       />
       <Tab.Screen
@@ -89,9 +103,7 @@ export const BottomTabs = () => {
         component={SettingsStack}
         options={{
           title: i18n.t('navigation.more'),
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="dots-horizontal" color={color} size={size} />
-          ),
+          tabBarIcon: settingsTabIcon,
         }}
       />
     </Tab.Navigator>

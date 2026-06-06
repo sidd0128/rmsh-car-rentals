@@ -44,14 +44,14 @@ export const RentalDetailsScreen = () => {
 
   const onMarkReceived = useCallback(
     (paymentId: string) => {
-      void runAction(paymentId, 'received');
+      runAction(paymentId, 'received').catch(() => undefined);
     },
     [runAction],
   );
 
   const onMarkNotPaid = useCallback(
     (paymentId: string) => {
-      void runAction(paymentId, 'not_paid');
+      runAction(paymentId, 'not_paid').catch(() => undefined);
     },
     [runAction],
   );

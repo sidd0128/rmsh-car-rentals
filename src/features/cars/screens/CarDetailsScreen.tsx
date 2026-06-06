@@ -203,7 +203,7 @@ export const CarDetailsScreen = () => {
       <AssignmentModal
         ref={assignmentRef}
         onSuccess={() => {
-          void hydrateAll();
+          hydrateAll().catch(() => undefined);
         }}
         onAddCustomer={() => navigation.getParent()?.navigate('CustomersTab')}
       />

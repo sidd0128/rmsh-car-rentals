@@ -30,6 +30,8 @@ type MonthSection = {
   data: PaymentRecord[];
 };
 
+const SectionSpacer = () => <View style={styles.sectionSpacer} />;
+
 export const UpcomingEarningsScreen = () => {
   const { t } = useTranslation();
   const payments = usePaymentStore(s => s.payments);
@@ -76,14 +78,14 @@ export const UpcomingEarningsScreen = () => {
 
   const onReceived = useCallback(
     (paymentId: string) => {
-      void runAction(paymentId, 'received');
+      runAction(paymentId, 'received').catch(() => undefined);
     },
     [runAction],
   );
 
   const onNotPaid = useCallback(
     (paymentId: string) => {
-      void runAction(paymentId, 'not_paid');
+      runAction(paymentId, 'not_paid').catch(() => undefined);
     },
     [runAction],
   );
@@ -174,7 +176,7 @@ export const UpcomingEarningsScreen = () => {
         renderItem={renderItem}
         renderSectionHeader={renderSectionHeader}
         stickySectionHeadersEnabled
-        SectionSeparatorComponent={() => <View style={styles.sectionSpacer} />}
+        SectionSeparatorComponent={SectionSpacer}
         contentContainerStyle={[
           styles.listContent,
           { paddingHorizontal: horizontalPadding },

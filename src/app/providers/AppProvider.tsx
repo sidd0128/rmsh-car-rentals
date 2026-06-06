@@ -21,6 +21,7 @@ import { useFirebaseAuthBootstrap } from '@features/auth/hooks/useFirebaseAuthBo
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
 import { NetworkGate } from '@network/NetworkGate';
 import { NetworkProvider } from '@network/NetworkProvider';
+import { GlobalUiHost } from '@shared/ui/GlobalUiHost';
 import { AuthGate } from './AuthGate';
 
 const renderPaperIcon = (props: React.ComponentProps<typeof MaterialCommunityIcons>) => (
@@ -38,6 +39,7 @@ const AppRuntime = () => {
       }}
     >
       <BottomSheetModalProvider>
+        <GlobalUiHost />
         <NetworkProvider>
           <NetworkGate>
             <AuthGate />

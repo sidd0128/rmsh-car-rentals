@@ -13,6 +13,7 @@ module.exports = {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',
     '^@network/(.*)$': '<rootDir>/src/network/$1',
+    '^@zustand/(.*)$': '<rootDir>/src/zustand/$1',
     '^@reusable$': '<rootDir>/src/reusable/index.ts',
     '^@reusable/(.*)$': '<rootDir>/src/reusable/$1',
     '^@locales/(.*)$': '<rootDir>/src/locales/$1',

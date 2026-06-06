@@ -59,10 +59,10 @@ export const AppButton = memo<AppButtonProps>(
         setPressBusy(true);
         onBusyChange?.(true);
 
-        void Promise.resolve(result).finally(() => {
+        Promise.resolve(result).finally(() => {
           setPressBusy(false);
           onBusyChange?.(false);
-        });
+        }).catch(() => undefined);
       },
       [isDisabled, onPress, onBusyChange],
     );

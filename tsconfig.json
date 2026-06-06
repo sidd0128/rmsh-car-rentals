@@ -12,6 +12,7 @@
       "@shared/*": ["src/shared/*"],
       "@features/*": ["src/features/*"],
       "@network/*": ["src/network/*"],
+      "@zustand/*": ["src/zustand/*"],
       "@reusable": ["src/reusable/index.ts"],
       "@reusable/*": ["src/reusable/*"],
       "@locales/*": ["src/locales/*"]

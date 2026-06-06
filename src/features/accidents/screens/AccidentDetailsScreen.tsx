@@ -1,7 +1,7 @@
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { AccidentFlowParamList } from '@app/navigation/types';
 import { typography } from '@app/theme';
@@ -42,7 +42,7 @@ export const AccidentDetailsScreen = () => {
     <ScreenLayout>
       <View>
         <Text style={typography.h2}>{accident.description}</Text>
-        <Text style={[typography.h3, { marginTop: 8 }]}>
+        <Text style={[typography.h3, styles.damageCost]}>
           {formatCurrency(accident.damageCost)}
         </Text>
         <Text style={typography.bodySmall}>
@@ -80,3 +80,9 @@ export const AccidentDetailsScreen = () => {
     </ScreenLayout>
   );
 };
+
+const styles = StyleSheet.create({
+  damageCost: {
+    marginTop: 8,
+  },
+});

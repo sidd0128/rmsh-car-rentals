@@ -18,6 +18,16 @@ import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton } from '@shared/ui';
 
+type ListIconProps = Omit<React.ComponentProps<typeof List.Icon>, 'icon'>;
+
+const fineManagementIcon = (props: ListIconProps) => (
+  <List.Icon {...props} icon="cash-multiple" />
+);
+
+const accidentRecordsIcon = (props: ListIconProps) => (
+  <List.Icon {...props} icon="car-emergency" />
+);
+
 export const SettingsScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
@@ -53,7 +63,7 @@ export const SettingsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      void refreshPendingSync();
+      refreshPendingSync().catch(() => undefined);
     }, [refreshPendingSync]),
   );
 
@@ -63,22 +73,41 @@ export const SettingsScreen = () => {
     Alert.alert(t('settings.syncAlertTitle'), message);
   };
 
+  const confirmLoadDemo = async () => {
+    setLoadingDemo(true);
+    await loadDemoSeedData();
+    await hydrateAll();
+    setLoadingDemo(false);
+    Alert.alert(t('settings.loadDemoDoneTitle'), t('settings.loadDemoDoneMessage'));
+  };
+
   const handleLoadDemo = () => {
     Alert.alert(t('settings.loadDemoTitle'), t('settings.loadDemoMessage'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('settings.loadDemoConfirm'),
         onPress: () => {
-          void (async () => {
-            setLoadingDemo(true);
-            await loadDemoSeedData();
-            await hydrateAll();
-            setLoadingDemo(false);
-            Alert.alert(t('settings.loadDemoDoneTitle'), t('settings.loadDemoDoneMessage'));
-          })();
+          confirmLoadDemo().catch(() => setLoadingDemo(false));
         },
       },
     ]);
+  };
+
+  const confirmWipeAllData = async () => {
+    setWipingAll(true);
+    const result = await wipeAllAppData();
+    await hydrateAll();
+    await refreshPendingSync();
+    setWipingAll(false);
+    Alert.alert(
+      t('settings.wipeAllDoneTitle'),
+      t('settings.wipeAllDoneMessage', {
+        cloudSummary: formatCloudWipeSummary(
+          result.cloudSkipped,
+          result.cloudDeletedByCollection,
+        ),
+      }),
+    );
   };
 
   const handleWipeAllData = () => {
@@ -88,22 +117,7 @@ export const SettingsScreen = () => {
         text: t('settings.wipeAllConfirm'),
         style: 'destructive',
         onPress: () => {
-          void (async () => {
-            setWipingAll(true);
-            const result = await wipeAllAppData();
-            await hydrateAll();
-            await refreshPendingSync();
-            setWipingAll(false);
-            Alert.alert(
-              t('settings.wipeAllDoneTitle'),
-              t('settings.wipeAllDoneMessage', {
-                cloudSummary: formatCloudWipeSummary(
-                  result.cloudSkipped,
-                  result.cloudDeletedByCollection,
-                ),
-              }),
-            );
-          })();
+          confirmWipeAllData().catch(() => setWipingAll(false));
         },
       },
     ]);
@@ -116,7 +130,7 @@ export const SettingsScreen = () => {
         text: t('settings.signOut'),
         style: 'destructive',
         onPress: () => {
-          void performAppLogout();
+          performAppLogout().catch(() => undefined);
         },
       },
     ]);
@@ -197,13 +211,13 @@ export const SettingsScreen = () => {
         <List.Item
           title={t('settings.fineManagement')}
           description={t('settings.fineManagementDesc')}
-          left={props => <List.Icon {...props} icon="cash-multiple" />}
+          left={fineManagementIcon}
           onPress={() => navigation.navigate('FinesList')}
         />
         <List.Item
           title={t('settings.accidentRecords')}
           description={t('settings.accidentRecordsDesc')}
-          left={props => <List.Icon {...props} icon="car-emergency" />}
+          left={accidentRecordsIcon}
           onPress={() => navigation.navigate('AccidentsList')}
         />
       </View>

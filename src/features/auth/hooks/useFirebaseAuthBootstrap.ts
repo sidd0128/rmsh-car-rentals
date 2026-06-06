@@ -32,7 +32,7 @@ export const useFirebaseAuthBootstrap = (): void => {
       }
     });
 
-    void waitForFirebaseAuthReady();
+    waitForFirebaseAuthReady().catch(() => undefined);
 
     return unsubscribe;
   }, [setAuthenticated, setInitializing, setUnauthenticated]);

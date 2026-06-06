@@ -46,7 +46,7 @@ export const CustomerProfileScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      void hydrateAll();
+      hydrateAll().catch(() => undefined);
     }, [hydrateAll]),
   );
 

@@ -4,7 +4,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import dayjs from 'dayjs';
 import type { HistoryStackParamList } from '@app/navigation/types';
 import { colors, spacing, typography } from '@app/theme';
@@ -182,13 +181,9 @@ export const CarRentalHistoryScreen = () => {
     <ScreenLayout onRefresh={hydrateAll}>
       <View style={styles.yearRow}>
         <IconButton
-          icon={() => (
-            <Icon
-              name="chevron-left"
-              size={28}
-              color={canGoToOlderYear ? colors.primary : colors.textMuted}
-            />
-          )}
+          icon="chevron-left"
+          iconColor={canGoToOlderYear ? colors.primary : colors.textMuted}
+          size={28}
           disabled={!canGoToOlderYear}
           onPress={() => setSelectedYear(y => y - 1)}
           accessibilityLabel={t('history.previousYear')}
@@ -202,13 +197,9 @@ export const CarRentalHistoryScreen = () => {
           <Text style={styles.yearHint}>{t('history.tapToChangeYear')}</Text>
         </View>
         <IconButton
-          icon={() => (
-            <Icon
-              name="chevron-right"
-              size={28}
-              color={canGoToNewerYear ? colors.primary : colors.textMuted}
-            />
-          )}
+          icon="chevron-right"
+          iconColor={canGoToNewerYear ? colors.primary : colors.textMuted}
+          size={28}
           disabled={!canGoToNewerYear}
           onPress={() => setSelectedYear(y => y + 1)}
           accessibilityLabel={t('history.nextYear')}
