@@ -1,23 +1,34 @@
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Text, RadioButton } from 'react-native-paper';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import { Text } from 'react-native-paper';
 import { calculateFilterSheetSnapHeight } from '@core/helpers/bottomSheetSnapHeight';
 import { useBottomSheetLayoutMetrics } from '@core/hooks/useBottomSheetLayoutMetrics';
+import { SelectableList, type SelectableListOption } from '@reusable';
+import { AppButton } from '@shared/ui/AppButton';
 import { AppBottomSheet, AppBottomSheetRef } from './AppBottomSheet';
 import { spacing } from '@app/theme/spacing';
 import { typography } from '@app/theme/typography';
 
-type FilterOption<T extends string> = {
-  label: string;
-  value: T;
-};
-
-interface FilterBottomSheetProps<T extends string> {
+type SingleFilterBottomSheetProps<T extends string> = {
   title: string;
-  options: FilterOption<T>[];
+  options: SelectableListOption<T>[];
+  selectionMode?: 'single';
   selected: T;
   onSelect: (value: T) => void;
-}
+};
+
+type MultipleFilterBottomSheetProps<T extends string> = {
+  title: string;
+  options: SelectableListOption<T>[];
+  selectionMode: 'multiple';
+  selected: T[];
+  onSelect: (value: T[]) => void;
+  applyLabel?: string;
+};
+
+type FilterBottomSheetProps<T extends string> =
+  | SingleFilterBottomSheetProps<T>
+  | MultipleFilterBottomSheetProps<T>;
 
 export interface FilterBottomSheetRef {
   open: () => void;
@@ -25,9 +36,10 @@ export interface FilterBottomSheetRef {
 }
 
 function FilterBottomSheetInner<T extends string>(
-  { title, options, selected, onSelect }: FilterBottomSheetProps<T>,
+  props: FilterBottomSheetProps<T>,
   ref: React.Ref<FilterBottomSheetRef>,
 ) {
+  const { title, options } = props;
   const sheetRef = useRef<AppBottomSheetRef>(null);
   const { height: screenHeight } = useWindowDimensions();
   const { topInset } = useBottomSheetLayoutMetrics();
@@ -50,19 +62,31 @@ function FilterBottomSheetInner<T extends string>(
   return (
     <AppBottomSheet ref={sheetRef} snapPoints={[snapHeight]}>
       <Text style={typography.h3}>{title}</Text>
-      <View style={styles.options}>
-        <RadioButton.Group
-          onValueChange={v => {
-            onSelect(v as T);
+      {props.selectionMode === 'multiple' ? (
+        <>
+          <SelectableList
+            mode="multiple"
+            options={options}
+            selected={props.selected}
+            onChange={props.onSelect}
+          />
+          <AppButton
+            label={props.applyLabel ?? 'Apply'}
+            onPress={() => sheetRef.current?.close()}
+            fullWidth
+            style={styles.applyButton}
+          />
+        </>
+      ) : (
+        <SelectableList
+          options={options}
+          selected={props.selected}
+          onChange={value => {
+            props.onSelect(value);
             sheetRef.current?.close();
           }}
-          value={selected}
-        >
-          {options.map(opt => (
-            <RadioButton.Item key={opt.value} label={opt.label} value={opt.value} />
-          ))}
-        </RadioButton.Group>
-      </View>
+        />
+      )}
     </AppBottomSheet>
   );
 }
@@ -72,5 +96,7 @@ export const FilterBottomSheet = forwardRef(FilterBottomSheetInner) as <T extend
 ) => React.ReactElement;
 
 const styles = StyleSheet.create({
-  options: { marginTop: spacing.sm },
+  applyButton: {
+    marginTop: spacing.sm,
+  },
 });

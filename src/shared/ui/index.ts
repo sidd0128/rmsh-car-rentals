@@ -1,4 +1,6 @@
 export { AppButton } from './AppButton';
+export { AppDropdown } from '@reusable';
+export type { AppDropdownProps, DropdownAction, DropdownOption } from '@reusable';
 export { PaymentInstallmentActions } from './PaymentInstallmentActions';
 export { AppInput, ControlledAppInput } from './AppInput';
 export { StatusBadge, carStatusToBadge } from './StatusBadge';

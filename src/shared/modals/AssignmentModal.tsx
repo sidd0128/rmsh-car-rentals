@@ -1,8 +1,8 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import { Menu, SegmentedButtons, Text } from 'react-native-paper';
+import { SegmentedButtons, Text } from 'react-native-paper';
 import { AppBottomSheet, AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
-import { AppButton, AppInput, AppDatePickerModal, WeekdayPicker } from '@shared/ui';
+import { AppButton, AppDropdown, AppInput, AppDatePickerModal, WeekdayPicker } from '@shared/ui';
 import { colors, spacing, typography } from '@app/theme';
 import { modalFormStyles } from '@shared/modals/modalFormStyles';
 import { OPEN_ENDED_RENTAL_END_ISO } from '@core/constants/rental';
@@ -81,13 +81,16 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
     const [showEndDate, setShowEndDate] = useState(false);
     const [showEndTime, setShowEndTime] = useState(false);
     const [showRentDueDay, setShowRentDueDay] = useState(false);
-    const [menuVisible, setMenuVisible] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const customers = useCustomerStore(s => s.customers);
     const car = useCarStore(s => (carId ? s.getCarById(carId) : undefined));
     const assignRental = useRentalStore(s => s.assignRental);
     const selectedCustomer = customers.find(c => c.id === customerId);
+    const customerOptions = useMemo(
+      () => customers.map(c => ({ label: c.name, value: c.id })),
+      [customers],
+    );
 
     const startDateTime = useMemo(
       () => mergeDateAndTime(startDatePart, startTimePart),
@@ -180,37 +183,21 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
         <Text style={typography.h3}>{t('assignment.title')}</Text>
         <Text style={modalFormStyles.subtitle}>{t('assignment.subtitle')}</Text>
 
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <AppButton
-              label={selectedCustomer?.name ?? t('assignment.selectCustomer')}
-              variant="outline"
-              onPress={() => setMenuVisible(true)}
-              fullWidth
-            />
-          }
-        >
-          {customers.map(c => (
-            <Menu.Item
-              key={c.id}
-              title={c.name}
-              onPress={() => {
-                setCustomerId(c.id);
-                setMenuVisible(false);
-              }}
-            />
-          ))}
-          <Menu.Item
-            title={t('assignment.addNewCustomer')}
-            onPress={() => {
-              setMenuVisible(false);
-              sheetRef.current?.close();
-              onAddCustomer?.();
-            }}
-          />
-        </Menu>
+        <AppDropdown
+          label={selectedCustomer?.name ?? t('assignment.selectCustomer')}
+          options={customerOptions}
+          onSelect={setCustomerId}
+          fullWidth
+          actions={[
+            {
+              label: t('assignment.addNewCustomer'),
+              onPress: () => {
+                sheetRef.current?.close();
+                onAddCustomer?.();
+              },
+            },
+          ]}
+        />
 
         <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentFrequency')}</Text>
         <SegmentedButtons
