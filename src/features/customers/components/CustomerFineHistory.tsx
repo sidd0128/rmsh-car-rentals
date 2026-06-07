@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDate } from '@core/helpers/date';
 import type { Car, Fine } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
@@ -22,6 +23,7 @@ interface CustomerFineHistoryProps {
 export const CustomerFineHistory = memo<CustomerFineHistoryProps>(
   ({ fines, carsById, onFinePress, emptyScope = 'customer' }) => {
     const { t } = useTranslation();
+    const { colors } = useThemeContext();
     if (fines.length === 0) {
       const emptyKey =
         emptyScope === 'car' ? 'cars.noFinesForCar' : 'customers.noFines';
@@ -35,22 +37,31 @@ export const CustomerFineHistory = memo<CustomerFineHistoryProps>(
           return (
             <Pressable
               key={fine.id}
-              style={styles.card}
+              style={[
+                styles.card,
+                { backgroundColor: colors.surface, borderColor: colors.borderLight },
+              ]}
               onPress={() => onFinePress(fine.id)}
               accessibilityRole="button"
             >
               <View style={styles.header}>
-                <Text style={styles.amount}>{formatCurrency(fine.amount)}</Text>
+                <Text style={[styles.amount, { color: colors.primary }]}>
+                  {formatCurrency(fine.amount)}
+                </Text>
                 <StatusBadge
                   label={fine.paidStatus ? t('common.paid') : t('common.unpaid')}
                   variant={fine.paidStatus ? 'done' : 'pending'}
                 />
               </View>
               <Text style={styles.reason}>{fine.reason}</Text>
-              <Text style={styles.meta}>
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 {car?.name ?? t('common.car')} · {formatDate(fine.fineDate)}
               </Text>
-              {fine.notes ? <Text style={styles.notes}>{fine.notes}</Text> : null}
+              {fine.notes ? (
+                <Text style={[styles.notes, { color: colors.textMuted }]}>
+                  {fine.notes}
+                </Text>
+              ) : null}
               {fine.proofImages.length > 0 ? (
                 <ImageSlider images={fine.proofImages} imageHeight={100} />
               ) : null}
@@ -67,10 +78,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -82,17 +91,14 @@ const styles = StyleSheet.create({
   },
   amount: {
     ...typography.h4,
-    color: colors.primary,
   },
   reason: {
     ...typography.body,
   },
   meta: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
   },
   notes: {
     ...typography.caption,
-    color: colors.textMuted,
   },
 });

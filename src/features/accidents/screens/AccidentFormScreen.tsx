@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { currencyFieldLabel } from '@core/constants/app';
 import {
   getEarliestSelectableHistoryDate,
@@ -25,6 +25,7 @@ import { useToastStore } from '@zustand/useToastStore';
 
 export const AccidentFormScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation();
   const addAccident = useAccidentStore(s => s.addAccident);
   const updateCustomer = useCustomerStore(s => s.updateCustomer);
@@ -107,7 +108,9 @@ export const AccidentFormScreen = () => {
               onPress={() => setCustomerMenu(true)}
             />
             {selectedCustomerLicenseLabel ? (
-              <Text style={styles.customerLicenseText}>{selectedCustomerLicenseLabel}</Text>
+              <Text style={[styles.customerLicenseText, { color: colors.textSecondary }]}>
+                {selectedCustomerLicenseLabel}
+              </Text>
             ) : null}
           </View>
         }
@@ -119,7 +122,9 @@ export const AccidentFormScreen = () => {
               <View>
                 <Text>{c.name}</Text>
                 {customerLicenseLabel(c) ? (
-                  <Text style={styles.menuLicenseText}>{customerLicenseLabel(c)}</Text>
+                  <Text style={[styles.menuLicenseText, { color: colors.textSecondary }]}>
+                    {customerLicenseLabel(c)}
+                  </Text>
                 ) : null}
               </View>
             }
@@ -183,14 +188,12 @@ export const AccidentFormScreen = () => {
 const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
   customerLicenseText: {
-    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   customerMenuItem: {
     minHeight: 56,
   },
   menuLicenseText: {
-    color: colors.textSecondary,
     marginTop: 2,
   },
 });

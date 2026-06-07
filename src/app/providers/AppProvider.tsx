@@ -1,11 +1,10 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { colors } from '@app/theme';
 import { LanguageProvider } from '@contextApis/language/LanguageProvider';
 import { ThemeProvider } from '@contextApis/theme/ThemeProvider';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
@@ -33,7 +32,7 @@ interface AppShellProps {
 }
 
 const AppShell = ({ children }: AppShellProps) => {
-  const { paperTheme } = useThemeContext();
+  const { colors: themeColors, isDark, paperTheme } = useThemeContext();
 
   return (
     <PaperProvider
@@ -42,6 +41,10 @@ const AppShell = ({ children }: AppShellProps) => {
         icon: renderPaperIcon,
       }}
     >
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.surface}
+      />
       <BottomSheetModalProvider>
         <GlobalUiHost />
         {children}
@@ -59,6 +62,16 @@ const AppRuntime = () => (
     </NetworkProvider>
   </AppShell>
 );
+
+const LoadingScreen = () => {
+  const { colors: themeColors } = useThemeContext();
+
+  return (
+    <View style={[styles.loading, { backgroundColor: themeColors.background }]}>
+      <ActivityIndicator size="large" color={themeColors.primary} />
+    </View>
+  );
+};
 
 export const AppProvider = () => {
   const [dataReady, setDataReady] = useState(false);
@@ -131,9 +144,7 @@ export const AppProvider = () => {
           <ThemeProvider>
             <LanguageProvider>
               <AppShell>
-                <View style={styles.loading}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                </View>
+                <LoadingScreen />
               </AppShell>
             </LanguageProvider>
           </ThemeProvider>
@@ -161,6 +172,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
 });

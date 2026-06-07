@@ -5,7 +5,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Button, ButtonProps } from 'react-native-paper';
-import { buttonContentStyle, buttonLabelStyle, colors } from '@app/theme';
+import { buttonContentStyle, buttonLabelStyle } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'danger';
 
@@ -41,6 +42,7 @@ export const AppButton = memo<AppButtonProps>(
     onBusyChange,
     ...rest
   }) => {
+    const { colors } = useThemeContext();
     const [pressBusy, setPressBusy] = useState(false);
     const isBusy = loading || pressBusy;
     const isDisabled = Boolean(disabled) || isBusy;

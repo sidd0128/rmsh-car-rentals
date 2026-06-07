@@ -5,7 +5,8 @@ import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import type { CustomersStackParamList } from '@app/navigation/types';
-import { colors, spacing, typography, shadows, radius } from '@app/theme';
+import { spacing, typography, shadows, radius } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { screenStyles } from '@shared/layouts/screenStyles';
@@ -32,6 +33,7 @@ const CustomerRow = ({
   onPress: () => void;
 }) => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const customer = useCustomerStore(s => s.getCustomerById(customerId));
   const payments = usePaymentStore(s => s.payments);
   const { activeRental, car } = useCustomerRentalInfo(customerId);
@@ -45,7 +47,10 @@ const CustomerRow = ({
     : undefined;
 
   return (
-    <Pressable onPress={onPress} style={[styles.card, shadows.sm]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.card, shadows.sm, { backgroundColor: colors.surface }]}
+    >
       <View style={styles.cardHeader}>
         <Text style={typography.h4}>{customer.name}</Text>
         {SHOW_PAYMENTS_UI ? (
@@ -79,6 +84,7 @@ const CustomerRow = ({
 
 export const CustomersListScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
   const filtered = useFilteredCustomers();
   const searchQuery = useCustomerStore(s => s.searchQuery);
@@ -97,7 +103,7 @@ export const CustomersListScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.toolbar, { paddingHorizontal: horizontalPadding }]}>
         <SearchHeader
           value={searchQuery}
@@ -123,7 +129,7 @@ export const CustomersListScreen = () => {
       </View>
       <FAB
         icon="plus"
-        style={[styles.fab, { right: horizontalPadding }]}
+        style={[styles.fab, { right: horizontalPadding, backgroundColor: colors.primary }]}
         onPress={() => navigation.navigate('CustomerForm', {})}
         color={colors.textInverse}
       />
@@ -132,14 +138,13 @@ export const CustomersListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   toolbar: {
     paddingTop: spacing.md,
   },
   list: { flex: 1 },
   card: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -154,6 +159,5 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });

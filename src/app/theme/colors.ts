@@ -39,4 +39,46 @@ export const colors = {
   transparent: 'transparent',
 } as const;
 
-export type AppColors = typeof colors;
+export type AppColorKey = keyof typeof colors;
+export type AppColors = Record<AppColorKey, string>;
+
+export const darkColors: AppColors = {
+  primary: '#7DB7F0',
+  primaryDark: '#4A90D9',
+  primaryLight: '#B7D8F8',
+  secondary: '#38BDF8',
+  accent: '#FBBF24',
+
+  background: '#0B1220',
+  surface: '#111827',
+  surfaceElevated: '#1F2937',
+
+  text: '#F8FAFC',
+  textSecondary: '#CBD5E1',
+  textInverse: '#0F172A',
+  textMuted: '#94A3B8',
+
+  border: '#334155',
+  borderLight: '#1E293B',
+  divider: '#334155',
+
+  success: '#34D399',
+  successBg: '#064E3B',
+  warning: '#FBBF24',
+  warningBg: '#78350F',
+  error: '#F87171',
+  errorBg: '#7F1D1D',
+  info: '#60A5FA',
+  infoBg: '#1E3A8A',
+
+  statusAvailable: '#34D399',
+  statusOnRent: '#60A5FA',
+  statusUpcoming: '#FBBF24',
+  statusPending: '#FBBF24',
+  statusDone: '#34D399',
+
+  overlay: 'rgba(2, 6, 23, 0.72)',
+  imageViewerBg: '#000000',
+  shadow: '#000000',
+  transparent: 'transparent',
+};

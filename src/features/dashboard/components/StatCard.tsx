@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, shadows, radius, spacing, typography } from '@app/theme';
+import { shadows, radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 interface StatCardProps {
   label: string;
@@ -12,15 +13,17 @@ interface StatCardProps {
 }
 
 export const StatCard = memo<StatCardProps>(
-  ({ label, value, accent = colors.primary, description, onPress }) => {
+  ({ label, value, accent, description, onPress }) => {
+  const { colors } = useThemeContext();
+  const accentColor = accent ?? colors.primary;
   const content = (
     <>
-      <Text style={[styles.value, { color: accent }]}>{value}</Text>
+      <Text style={[styles.value, { color: accentColor }]}>{value}</Text>
       <Text style={styles.label} numberOfLines={3}>
         {label}
       </Text>
       {description ? (
-        <Text style={styles.description} numberOfLines={4}>
+        <Text style={[styles.description, { color: colors.textMuted }]} numberOfLines={4}>
           {description}
         </Text>
       ) : null}
@@ -28,13 +31,22 @@ export const StatCard = memo<StatCardProps>(
   );
 
   if (!onPress) {
-    return <View style={[styles.card, shadows.sm]}>{content}</View>;
+    return (
+      <View style={[styles.card, shadows.sm, { backgroundColor: colors.surface }]}>
+        {content}
+      </View>
+    );
   }
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, shadows.sm, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.card,
+        shadows.sm,
+        { backgroundColor: colors.surface },
+        pressed && styles.pressed,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={description ? `${label}. ${description}` : label}
     >
@@ -48,7 +60,6 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -57,7 +68,6 @@ const styles = StyleSheet.create({
   label: { ...typography.bodySmall },
   description: {
     ...typography.caption,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   pressed: { opacity: 0.85 },

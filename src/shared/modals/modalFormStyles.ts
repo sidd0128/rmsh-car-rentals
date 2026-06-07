@@ -1,10 +1,9 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
 
 export const modalFormStyles = StyleSheet.create({
   subtitle: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
   },
   fieldLabel: {
     ...typography.label,
@@ -23,7 +22,6 @@ export const modalFormStyles = StyleSheet.create({
   },
   switchHint: {
     ...typography.caption,
-    color: colors.textMuted,
     lineHeight: 16,
   },
 });

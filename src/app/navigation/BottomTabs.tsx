@@ -6,7 +6,8 @@ import {
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { colors, spacing } from '@app/theme';
+import { spacing } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import i18n from '@core/i18n';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { CarsStack } from './CarsStack';
@@ -38,13 +39,26 @@ const settingsTabIcon = ({ color, size }: { color: string; size: number }) => (
   <Icon name="dots-horizontal" color={color} size={size} />
 );
 
-const TabBar = (props: BottomTabBarProps) => (
-  <View style={styles.tabBarContainer}>
+const TabBar = (props: BottomTabBarProps) => {
+  const { colors } = useThemeContext();
+
+  return (
+  <View
+    style={[
+      styles.tabBarContainer,
+      {
+        backgroundColor: colors.surface,
+        borderTopColor: colors.border,
+      },
+    ]}
+  >
     <BottomTabBar {...props} />
   </View>
-);
+  );
+};
 
 export const BottomTabs = () => {
+  const { colors } = useThemeContext();
   const { isTablet } = useDeviceLayout();
 
   return (
@@ -112,9 +126,7 @@ export const BottomTabs = () => {
 
 const styles = StyleSheet.create({
   tabBarContainer: {
-    backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
     ...Platform.select({
       ios: {
         zIndex: 1000,

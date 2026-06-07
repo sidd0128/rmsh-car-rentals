@@ -2,7 +2,8 @@ import React, { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatCurrency } from '@core/utils/currency';
 
 const hireLabel = (count: number): string =>
@@ -19,6 +20,7 @@ export interface EarningsCarSectionHeaderProps {
 
 export const EarningsCarSectionHeader = memo<EarningsCarSectionHeaderProps>(
   ({ carName, hireCount, totalPaid, totalPending, expanded, onPress }) => {
+    const { colors } = useThemeContext();
     const summaryParts = [hireLabel(hireCount), `${formatCurrency(totalPaid)} received`];
     if (totalPending > 0) {
       summaryParts.push(`${formatCurrency(totalPending)} pending`);
@@ -27,13 +29,22 @@ export const EarningsCarSectionHeader = memo<EarningsCarSectionHeaderProps>(
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.header, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.header,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+          pressed && styles.pressed,
+        ]}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
       >
         <View style={styles.textCol}>
           <Text style={styles.title}>{carName}</Text>
-          <Text style={styles.summary}>{summaryParts.join(' · ')}</Text>
+          <Text style={[styles.summary, { color: colors.textSecondary }]}>
+            {summaryParts.join(' · ')}
+          </Text>
         </View>
         <Icon
           name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -49,10 +60,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     marginBottom: spacing.sm,
@@ -61,11 +70,9 @@ const styles = StyleSheet.create({
   textCol: { flex: 1, paddingRight: spacing.sm },
   title: {
     ...typography.h4,
-    color: colors.text,
   },
   summary: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: spacing.xxs,
   },
 });

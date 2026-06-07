@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import i18n from '@core/i18n';
 import { AccidentDetailsScreen } from '@features/accidents/screens/AccidentDetailsScreen';
 import { AccidentFormScreen } from '@features/accidents/screens/AccidentFormScreen';
@@ -13,13 +13,16 @@ import type { SettingsStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
 
-export const SettingsStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerStyle: { backgroundColor: colors.surface },
-      headerTintColor: colors.primary,
-    }}
-  >
+export const SettingsStack = () => {
+  const { colors } = useThemeContext();
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.primary,
+      }}
+    >
     <Stack.Screen
       name="SettingsHome"
       component={SettingsScreen}
@@ -59,5 +62,6 @@ export const SettingsStack = () => (
       component={AccidentFormScreen}
       options={{ title: i18n.t('navigation.reportAccident') }}
     />
-  </Stack.Navigator>
-);
+    </Stack.Navigator>
+  );
+};

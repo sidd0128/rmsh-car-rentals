@@ -4,7 +4,8 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import type { SettingsStackParamList } from '@app/navigation/types';
-import { colors, spacing, typography, shadows, radius } from '@app/theme';
+import { spacing, typography, shadows, radius } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatCurrency } from '@core/utils/currency';
 import { formatDate } from '@core/helpers/date';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
@@ -17,6 +18,7 @@ import { useTranslation } from '@core/i18n';
 
 export const FinesListScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const fines = useFineStore(s => s.fines);
   const customers = useCustomerStore(s => s.customers);
@@ -24,7 +26,7 @@ export const FinesListScreen = () => {
   const { horizontalPadding } = useDeviceLayout();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenLayout scrollable>
         {fines.length === 0 ? (
           <EmptyState
@@ -38,7 +40,7 @@ export const FinesListScreen = () => {
             return (
               <Pressable
                 key={fine.id}
-                style={[styles.card, shadows.sm]}
+                style={[styles.card, shadows.sm, { backgroundColor: colors.surface }]}
                 onPress={() => navigation.navigate('FineDetails', { fineId: fine.id })}
               >
                 <View style={styles.row}>
@@ -59,7 +61,7 @@ export const FinesListScreen = () => {
       </ScreenLayout>
       <FAB
         icon="plus"
-        style={[styles.fab, { right: horizontalPadding }]}
+        style={[styles.fab, { right: horizontalPadding, backgroundColor: colors.primary }]}
         onPress={() => navigation.navigate('FineForm', {})}
         color={colors.textInverse}
       />
@@ -68,9 +70,8 @@ export const FinesListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -80,6 +81,5 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });

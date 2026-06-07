@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors } from '@app/theme';
+import type { AppColors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import i18n from '@core/i18n';
 import { radius } from '@app/theme/radius';
 import { spacing } from '@app/theme/spacing';
@@ -15,7 +16,9 @@ type BadgeVariant =
   | 'not_paid'
   | 'default';
 
-const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
+const getVariantStyles = (
+  colors: AppColors,
+): Record<BadgeVariant, { bg: string; text: string }> => ({
   available: { bg: colors.successBg, text: colors.success },
   on_rent: { bg: colors.infoBg, text: colors.info },
   upcoming: { bg: colors.warningBg, text: colors.warning },
@@ -23,7 +26,7 @@ const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
   done: { bg: colors.successBg, text: colors.success },
   not_paid: { bg: colors.errorBg, text: colors.error },
   default: { bg: colors.borderLight, text: colors.textSecondary },
-};
+});
 
 interface StatusBadgeProps {
   label: string;
@@ -31,7 +34,8 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge = memo<StatusBadgeProps>(({ label, variant = 'default' }) => {
-  const s = variantStyles[variant];
+  const { colors } = useThemeContext();
+  const s = getVariantStyles(colors)[variant];
   return (
     <View style={[styles.badge, { backgroundColor: s.bg }]}>
       <Text style={[styles.text, { color: s.text }]}>{label}</Text>

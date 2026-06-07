@@ -13,7 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { APP_LOGO } from '@core/constants/assets';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
-import { colors, radius, shadows, spacing, typography } from '@app/theme';
+import { radius, shadows, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 interface AuthScreenLayoutProps {
   /** Card heading (e.g. "Welcome back", "Create account") */
@@ -34,9 +35,10 @@ export const AuthScreenLayout = memo<AuthScreenLayoutProps>(
   ({ title, subtitle, children, banner, showBack, onBackPress, footer }) => {
     const insets = useSafeAreaInsets();
     const { horizontalPadding, contentMaxWidth } = useDeviceLayout();
+    const { colors } = useThemeContext();
 
     return (
-      <View style={[styles.root, { paddingTop: insets.top }]}>
+      <View style={[styles.root, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -62,7 +64,7 @@ export const AuthScreenLayout = memo<AuthScreenLayoutProps>(
                   accessibilityLabel="Go back"
                 >
                   <Icon name="arrow-left" size={22} color={colors.primary} />
-                  <Text style={styles.backLabel}>Back to sign in</Text>
+                  <Text style={[styles.backLabel, { color: colors.primary }]}>Back to sign in</Text>
                 </Pressable>
               ) : null}
 
@@ -72,14 +74,24 @@ export const AuthScreenLayout = memo<AuthScreenLayoutProps>(
                   style={styles.logoImage}
                   accessibilityLabel="RMSH Rentals logo"
                 />
-                <Text style={styles.brandTagline}>Car rental management</Text>
+                <Text style={[styles.brandTagline, { color: colors.textSecondary }]}>
+                  Car rental management
+                </Text>
               </View>
 
               {banner}
 
-              <View style={[styles.card, shadows.md]}>
+              <View
+                style={[
+                  styles.card,
+                  shadows.md,
+                  { backgroundColor: colors.surface, borderColor: colors.borderLight },
+                ]}
+              >
                 <Text style={styles.cardTitle}>{title}</Text>
-                <Text style={styles.cardSubtitle}>{subtitle}</Text>
+                <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+                  {subtitle}
+                </Text>
                 <View style={styles.formFields}>{children}</View>
               </View>
 
@@ -95,7 +107,6 @@ export const AuthScreenLayout = memo<AuthScreenLayoutProps>(
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   flex: { flex: 1 },
   scrollContent: {
@@ -118,7 +129,6 @@ const styles = StyleSheet.create({
   },
   backLabel: {
     ...typography.body,
-    color: colors.primary,
     fontWeight: '600',
   },
   pressed: { opacity: 0.7 },
@@ -137,14 +147,11 @@ const styles = StyleSheet.create({
   },
   brandTagline: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
@@ -155,7 +162,6 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     ...typography.body,
-    color: colors.textSecondary,
     marginBottom: spacing.lg,
     lineHeight: 22,
   },

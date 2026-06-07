@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import i18n from '@core/i18n';
 import { AccidentDetailsScreen } from '@features/accidents/screens/AccidentDetailsScreen';
 import { CarDetailsScreen } from '@features/cars/screens/CarDetailsScreen';
@@ -11,14 +11,17 @@ import type { CarsStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<CarsStackParamList>();
 
-export const CarsStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerStyle: { backgroundColor: colors.surface },
-      headerTintColor: colors.primary,
-      headerTitleStyle: { fontWeight: '600' },
-    }}
-  >
+export const CarsStack = () => {
+  const { colors } = useThemeContext();
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.primary,
+        headerTitleStyle: { fontWeight: '600' },
+      }}
+    >
     <Stack.Screen
       name="CarsList"
       component={CarsListScreen}
@@ -48,5 +51,6 @@ export const CarsStack = () => (
       component={AccidentDetailsScreen}
       options={{ title: i18n.t('navigation.accidentReport') }}
     />
-  </Stack.Navigator>
-);
+    </Stack.Navigator>
+  );
+};

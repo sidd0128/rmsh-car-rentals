@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Menu, Switch, Text } from 'react-native-paper';
 import type { FineFlowParamList } from '@app/navigation/types';
-import { colors, spacing } from '@app/theme';
+import { spacing } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { currencyFieldLabel } from '@core/constants/app';
 import {
   getEarliestSelectableHistoryDate,
@@ -29,6 +30,7 @@ import { useToastStore } from '@zustand/useToastStore';
 
 export const FineFormScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<FineFlowParamList, 'FineForm'>>();
   const addFine = useFineStore(s => s.addFine);
@@ -210,7 +212,9 @@ export const FineFormScreen = () => {
       {(isReadingDocument || autofillStatus) ? (
         <View style={styles.autofillStatus}>
           {isReadingDocument ? <ActivityIndicator size="small" color={colors.primary} /> : null}
-          <Text style={styles.autofillStatusText}>{autofillStatus}</Text>
+          <Text style={[styles.autofillStatusText, { color: colors.textSecondary }]}>
+            {autofillStatus}
+          </Text>
         </View>
       ) : null}
       <Menu
@@ -224,7 +228,9 @@ export const FineFormScreen = () => {
               onPress={() => setCustomerMenu(true)}
             />
             {selectedCustomerLicenseLabel ? (
-              <Text style={styles.customerLicenseText}>{selectedCustomerLicenseLabel}</Text>
+              <Text style={[styles.customerLicenseText, { color: colors.textSecondary }]}>
+                {selectedCustomerLicenseLabel}
+              </Text>
             ) : null}
           </View>
         }
@@ -236,7 +242,9 @@ export const FineFormScreen = () => {
               <View>
                 <Text>{c.name}</Text>
                 {customerLicenseLabel(c) ? (
-                  <Text style={styles.menuLicenseText}>{customerLicenseLabel(c)}</Text>
+                  <Text style={[styles.menuLicenseText, { color: colors.textSecondary }]}>
+                    {customerLicenseLabel(c)}
+                  </Text>
                 ) : null}
               </View>
             }
@@ -311,18 +319,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   autofillStatusText: {
-    color: colors.textSecondary,
     flex: 1,
   },
   customerLicenseText: {
-    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   customerMenuItem: {
     minHeight: 56,
   },
   menuLicenseText: {
-    color: colors.textSecondary,
     marginTop: 2,
   },
   licensePreview: {

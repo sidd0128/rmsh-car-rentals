@@ -2,7 +2,7 @@
 
 Simple map of how the app is built, where code lives, and how data flows.
 
-**Also read:** [ARCHITECTURE.md](./ARCHITECTURE.md) for design choices (Zustand, repositories, Firebase).
+**Also read:** [ARCHITECTURE.md](./ARCHITECTURE.md) for design choices (Zustand, repositories, Firebase) and [docs/SOURCE_MAP.md](./docs/SOURCE_MAP.md) for the file-by-file responsibility map.
 
 ---
 
@@ -10,7 +10,7 @@ Simple map of how the app is built, where code lives, and how data flows.
 
 Mobile fleet manager for a car rental business:
 
-- Cars, customers, rentals (assign / extend)
+- Cars, customers, rentals (assign and close/update active rental end date)
 - Rent installments (daily / weekly / monthly billing)
 - Fines and accidents
 - Dashboard stats and earnings views
@@ -47,19 +47,24 @@ flowchart TB
 
 ---
 
-## Source folders (`src/`)
+## Source Folders (`src/`)
 
 | Folder | Role |
 |--------|------|
 | **`app/`** | App shell: navigation stacks/tabs, theme tokens, `AppProvider` |
+| **`contextApis/`** | Theme and language providers/hooks used app-wide |
 | **`core/`** | Shared engine: types, repositories, sync, Firebase, business **services**, helpers, hooks |
 | **`features/`** | One folder per business area (cars, customers, rentals, …) — screens, stores, repos |
 | **`shared/`** | Design-system UI, layouts, modals, bottom sheets, media pickers |
 | **`reusable/`** | Small cross-screen widgets (search bar, earnings list cards) |
 | **`assets/`** | Images (e.g. logo) |
+| **`locales/`** | Translation JSON files |
+| **`network/`** | Connectivity provider, gate, and offline screen |
+| **`error/`** | Error boundary, fallback screen, and error logging/normalization |
+| **`zustand/`** | Global UI stores for loader, toast, modal, bottom sheet |
 | **`types/`** | Global TypeScript declarations |
 
-**Import aliases** (`babel.config.js`): `@app`, `@core`, `@features`, `@shared`, `@reusable`.
+**Import aliases** (`babel.config.js`): `@app`, `@contextApis`, `@core`, `@features`, `@shared`, `@reusable`, `@network`, `@error`, `@zustand`.
 
 ---
 
@@ -70,8 +75,8 @@ flowchart TB
 | Dashboard | `DashboardStack` | Home stats, earnings breakdown, upcoming earnings this year |
 | Cars | `CarsStack` | List (filters), details, add/edit car |
 | Customers | `CustomersStack` | List (search), profile, add/edit |
-| Rentals | `RentalsStack` | All rentals, rental details |
-| More | `SettingsStack` | Settings, sync, fines, accidents |
+| History | `HistoryStack` | Car picker and car rental timeline |
+| More | `SettingsStack` | Settings, sync, theme/language, fines, accidents |
 
 Auth (when Firebase configured): `Login` / `Register` before tabs.
 
@@ -84,11 +89,12 @@ Auth (when Firebase configured): `Login` / `Register` before tabs.
 | **auth** | `features/auth/` | Firebase login/register, session store |
 | **cars** | `features/cars/` | Fleet CRUD, filters, car status from rentals |
 | **customers** | `features/customers/` | Customer CRUD, profile, payment history |
-| **rentals** | `features/rentals/` | Bookings list/detail, assign & extend flows |
+| **rentals** | `features/rentals/` | Rental store/repository/types; assignment and end-date updates are launched from car/customer flows |
 | **payments** | `features/payments/` | Payment records store; no own tab (used everywhere) |
 | **dashboard** | `features/dashboard/` | Stats, earnings screens, settings |
 | **fines** | `features/fines/` | Fine list/form (car auto-filled from customer) |
 | **accidents** | `features/accidents/` | Accident list/form (same car linking as fines) |
+| **history** | `features/history/` | Car rental history picker and monthly timeline |
 
 ---
 
@@ -102,7 +108,7 @@ Pure functions — easy to unit test, no React imports.
 | **Booking conflicts** | `bookingConflictService.ts` | Blocks overlapping rental dates on same car |
 | **Rental billing** | `rentalBillingService.ts` | Builds installment schedule (daily/weekly/monthly), due dates |
 | **Rental schedule** | `rentalScheduleService.ts` | Creates rental + payments from assignment input |
-| **Extension booking** | `extensionBookingService.ts` | Max extend date when another booking exists after |
+| **Update rental end date** | `updateRentalEndDateService.ts` | Validates and updates active rental end date without overlapping future bookings |
 
 ---
 
@@ -117,6 +123,23 @@ Pure functions — easy to unit test, no React imports.
 | `resolveCustomerCarId.ts` | Which car links to a customer (active → upcoming → latest rental) |
 | `date.ts` / `historyDates.ts` | Format dates; min/max for date pickers |
 | `bottomSheetSnapHeight.ts` / `screenBottomInset.ts` | Sheet height and tab-bar clearance |
+
+---
+
+## Theme And Language
+
+Theme and language are app-level contexts, not per-screen globals.
+
+| Module | Purpose |
+|--------|---------|
+| `contextApis/theme/ThemeProvider.tsx` | Stores `light` / `dark` mode, exposes `colors`, `paperTheme`, `isDark` |
+| `contextApis/theme/useThemeContext.ts` | Hook every screen/component should use for runtime colors |
+| `app/theme/colors.ts` | Source palettes for light and dark mode |
+| `app/theme/paperTheme.ts` | React Native Paper themes derived from app palettes |
+| `contextApis/language/LanguageProvider.tsx` | Stores current language and updates i18n |
+| `locales/en.json` | English strings; English is currently the only selectable language |
+
+Rule: shared style modules like `screenStyles.ts` and `modalFormStyles.ts` should remain theme-neutral. Apply colors inside components with `useThemeContext()` so dark mode updates everywhere.
 
 ---
 
@@ -144,7 +167,7 @@ Screen → Zustand store → repositories.* (registry)
 |------|------------|
 | **ui** | `AppButton`, `AppInput`, `StatusBadge`, `EmptyState`, `WeekdayPicker`, `ReadOnlyFormField`, `PaymentInstallmentActions`, `TimelineView`, `AppDatePickerModal` |
 | **layouts** | `ScreenLayout`, `ScreenSection`, `ResponsiveContainer`, `screenStyles` |
-| **modals** | `AssignmentModal`, `ExtendBookingModal` |
+| **modals** | `AssignmentModal`, `SetRentalEndModal` |
 | **bottomSheets** | `AppBottomSheet`, `FilterBottomSheet` |
 | **media** | `MediaUploader`, `ImageSlider`, `ImageViewerModal` |
 
@@ -152,7 +175,11 @@ Screen → Zustand store → repositories.* (registry)
 
 | Export | Purpose |
 |--------|---------|
+| `SearchBar` | Plug-and-play themed search field |
 | `SearchHeader` | Search field + filter icon |
+| `SelectableList` | Single or multi-select option list |
+| `CollapsibleSection` | Generic expandable section with children |
+| `AppDropdown` | Theme-aware dropdown control |
 | `EarningsHireCard` | One hire row on earnings breakdown |
 | `EarningsCarSectionHeader` | Collapsible car header on earnings list |
 | `useDebouncedValue` | Debounced search text |
@@ -218,4 +245,6 @@ Located under `src/**/__tests__/` and `__tests__/App.test.tsx` — services (bil
 
 - [README.md](./README.md) — install and CocoaPods notes
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — why Zustand/repos are structured this way
+- [docs/SOURCE_MAP.md](./docs/SOURCE_MAP.md) — file-by-file responsibility map
+- [docs/I18N.md](./docs/I18N.md) — translation/language workflow
 - [firestore.rules.example](./firestore.rules.example) — Firestore security template

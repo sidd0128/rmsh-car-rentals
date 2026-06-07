@@ -6,7 +6,8 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { computeCarTotalPaid, getNextRentDueForCar } from '@core/helpers/rentalPayments';
@@ -26,6 +27,7 @@ import { useTranslation } from '@core/i18n';
 
 export const CarsListScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarsList'>>();
   const filteredCars = useFilteredCars();
@@ -109,7 +111,7 @@ export const CarsListScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.toolbar, { paddingHorizontal: horizontalPadding }]}>
         <SearchHeader
           value={searchQuery}
@@ -118,12 +120,14 @@ export const CarsListScreen = () => {
           onFilterPress={() => filterRef.current?.open()}
         />
         {filter !== 'ALL' && activeFilterLabel ? (
-          <Text style={styles.activeFilter}>
+          <Text style={[styles.activeFilter, { color: colors.primary }]}>
             {t('common.showingFilter', { label: activeFilterLabel })}
           </Text>
         ) : null}
         {filter === 'RETURNING_SOON' ? (
-          <Text style={styles.filterHint}>{returnsSoonFilterDescription()}</Text>
+          <Text style={[styles.filterHint, { color: colors.textMuted }]}>
+            {returnsSoonFilterDescription()}
+          </Text>
         ) : null}
       </View>
       <View style={styles.list}>
@@ -155,7 +159,7 @@ export const CarsListScreen = () => {
       </View>
       <FAB
         icon="plus"
-        style={[styles.fab, { right: horizontalPadding }]}
+        style={[styles.fab, { right: horizontalPadding, backgroundColor: colors.primary }]}
         onPress={() => navigation.navigate('CarForm', {})}
         color={colors.textInverse}
       />
@@ -171,24 +175,21 @@ export const CarsListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   toolbar: {
     paddingTop: spacing.md,
     gap: spacing.sm,
   },
   activeFilter: {
     ...typography.label,
-    color: colors.primary,
   },
   filterHint: {
     ...typography.caption,
-    color: colors.textMuted,
     lineHeight: 18,
   },
   list: { flex: 1 },
   fab: {
     position: 'absolute',
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });

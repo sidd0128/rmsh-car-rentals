@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import i18n from '@core/i18n';
 import { DashboardScreen } from '@features/dashboard/screens/DashboardScreen';
 import { EarningsBreakdownScreen } from '@features/dashboard/screens/EarningsBreakdownScreen';
@@ -9,14 +9,17 @@ import type { DashboardStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<DashboardStackParamList>();
 
-export const DashboardStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerStyle: { backgroundColor: colors.surface },
-      headerTintColor: colors.primary,
-      headerShown: false,
-    }}
-  >
+export const DashboardStack = () => {
+  const { colors } = useThemeContext();
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.primary,
+        headerShown: false,
+      }}
+    >
     <Stack.Screen name="DashboardHome" component={DashboardScreen} />
     <Stack.Screen
       name="EarningsBreakdown"
@@ -36,5 +39,6 @@ export const DashboardStack = () => (
         headerBackTitle: i18n.t('navigation.dashboard'),
       }}
     />
-  </Stack.Navigator>
-);
+    </Stack.Navigator>
+  );
+};

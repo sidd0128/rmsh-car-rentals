@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDate } from '@core/helpers/date';
 import type { AccidentRecord, Car } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
@@ -21,6 +22,7 @@ interface CustomerAccidentHistoryProps {
 export const CustomerAccidentHistory = memo<CustomerAccidentHistoryProps>(
   ({ accidents, carsById, onAccidentPress, emptyScope = 'customer' }) => {
     const { t } = useTranslation();
+    const { colors } = useThemeContext();
     if (accidents.length === 0) {
       const emptyKey =
         emptyScope === 'car' ? 'cars.noAccidentsForCar' : 'customers.noAccidents';
@@ -34,18 +36,25 @@ export const CustomerAccidentHistory = memo<CustomerAccidentHistoryProps>(
           return (
             <Pressable
               key={accident.id}
-              style={styles.card}
+              style={[
+                styles.card,
+                { backgroundColor: colors.surface, borderColor: colors.borderLight },
+              ]}
               onPress={() => onAccidentPress(accident.id)}
               accessibilityRole="button"
             >
               <Text style={styles.description}>{accident.description}</Text>
-              <Text style={styles.damage}>
+              <Text style={[styles.damage, { color: colors.error }]}>
                 {t('accidents.damageLabel', { amount: formatCurrency(accident.damageCost) })}
               </Text>
-              <Text style={styles.meta}>
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 {car?.name ?? t('common.car')} · {formatDate(accident.accidentDate)}
               </Text>
-              {accident.notes ? <Text style={styles.notes}>{accident.notes}</Text> : null}
+              {accident.notes ? (
+                <Text style={[styles.notes, { color: colors.textMuted }]}>
+                  {accident.notes}
+                </Text>
+              ) : null}
               {accident.proofImages.length > 0 ? (
                 <ImageSlider images={accident.proofImages} imageHeight={100} />
               ) : null}
@@ -62,10 +71,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -75,14 +82,11 @@ const styles = StyleSheet.create({
   },
   damage: {
     ...typography.h4,
-    color: colors.error,
   },
   meta: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
   },
   notes: {
     ...typography.caption,
-    color: colors.textMuted,
   },
 });

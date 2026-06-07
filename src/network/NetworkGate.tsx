@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
 import { NoInternetScreen } from './NoInternetScreen';
@@ -12,6 +12,7 @@ interface NetworkGateProps {
 }
 
 export const NetworkGate = ({ children }: NetworkGateProps) => {
+  const { colors } = useThemeContext();
   const { isConnected, isInternetReachable, isRefreshing, refresh } = useNetworkStatus();
   const authStatus = useFirebaseAuthStore(s => s.status);
   const shouldRequireInternetForLogin = isFirebaseConfigured() && authStatus !== 'authenticated';
@@ -24,7 +25,7 @@ export const NetworkGate = ({ children }: NetworkGateProps) => {
 
   if (isCheckingInitialStatus) {
     return (
-      <View style={styles.loading}>
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -42,6 +43,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
 });

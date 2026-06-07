@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import { Dialog, Portal, Snackbar, Text } from 'react-native-paper';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { AppBottomSheet, type AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
 import { useBottomSheetStore } from '@zustand/useBottomSheetStore';
 import { useLoaderStore } from '@zustand/useLoaderStore';
@@ -9,14 +10,14 @@ import { useModalStore } from '@zustand/useModalStore';
 import { useToastStore } from '@zustand/useToastStore';
 import { AppButton } from './AppButton';
 
-const toastColors = {
-  info: colors.info,
-  success: colors.success,
-  warning: colors.warning,
-  error: colors.error,
-};
-
 export const GlobalUiHost = () => {
+  const { colors } = useThemeContext();
+  const toastColors = {
+    info: colors.info,
+    success: colors.success,
+    warning: colors.warning,
+    error: colors.error,
+  };
   const { visible: loaderVisible, message: loaderMessage } = useLoaderStore();
   const { visible: toastVisible, message: toastMessage, type, duration, hideToast } =
     useToastStore();
@@ -89,10 +90,14 @@ export const GlobalUiHost = () => {
       </Snackbar>
 
       <Modal visible={loaderVisible} transparent animationType="fade">
-        <View style={styles.loaderOverlay}>
-          <View style={styles.loaderBox}>
+        <View style={[styles.loaderOverlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.loaderBox, { backgroundColor: colors.surface }]}>
             <ActivityIndicator size="large" color={colors.primary} />
-            {loaderMessage ? <Text style={styles.loaderText}>{loaderMessage}</Text> : null}
+            {loaderMessage ? (
+              <Text style={[styles.loaderText, { color: colors.text }]}>
+                {loaderMessage}
+              </Text>
+            ) : null}
           </View>
         </View>
       </Modal>
@@ -122,7 +127,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.overlay,
     padding: spacing.xl,
   },
   loaderBox: {
@@ -130,11 +134,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: colors.surface,
     padding: spacing.xl,
   },
   loaderText: {
-    color: colors.text,
     textAlign: 'center',
   },
 });

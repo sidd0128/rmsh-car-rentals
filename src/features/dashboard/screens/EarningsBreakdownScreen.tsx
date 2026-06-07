@@ -2,7 +2,8 @@ import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, spacing } from '@app/theme';
+import { spacing } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { formatCurrency } from '@core/utils/currency';
 import { useCarStore } from '@features/cars/store/useCarStore';
@@ -29,6 +30,7 @@ import { useTranslation } from '@core/i18n';
 
 export const EarningsBreakdownScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const cars = useCarStore(s => s.cars);
   const customers = useCustomerStore(s => s.customers);
   const rentals = useRentalStore(s => s.rentals);
@@ -112,12 +114,14 @@ export const EarningsBreakdownScreen = () => {
   const listHeader = useMemo(
     () => (
       <View style={screenStyles.earningsHeader}>
-        <Text style={screenStyles.earningsLead}>
+        <Text style={[screenStyles.earningsLead, { color: colors.primary }]}>
           {t('earnings.fleetTotalReceived', { amount: formatCurrency(fleetTotal) })}
         </Text>
-        <Text style={screenStyles.earningsHint}>{t('earnings.breakdownHint')}</Text>
+        <Text style={[screenStyles.earningsHint, { color: colors.textSecondary }]}>
+          {t('earnings.breakdownHint')}
+        </Text>
         {isSearchActive ? (
-          <Text style={screenStyles.earningsMeta}>
+          <Text style={[screenStyles.earningsMeta, { color: colors.textMuted }]}>
             {t('earnings.showingMatchingHires', {
               visible: visibleHires,
               hireWord: visibleHires === 1 ? t('earnings.hire') : t('earnings.hires'),
@@ -125,7 +129,7 @@ export const EarningsBreakdownScreen = () => {
             })}
           </Text>
         ) : (
-          <Text style={screenStyles.earningsMeta}>
+          <Text style={[screenStyles.earningsMeta, { color: colors.textMuted }]}>
             {t('earnings.hiresAcrossCars', {
               count: totalHires,
               cars: allSections.length,
@@ -134,11 +138,11 @@ export const EarningsBreakdownScreen = () => {
         )}
       </View>
     ),
-    [fleetTotal, isSearchActive, visibleHires, totalHires, allSections.length, t],
+    [fleetTotal, isSearchActive, visibleHires, totalHires, allSections.length, colors, t],
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.topBar, { paddingHorizontal: horizontalPadding }]}>
         {listHeader}
         <SearchHeader
@@ -160,7 +164,7 @@ export const EarningsBreakdownScreen = () => {
           ]}
           extraData={{ expandedCarId, debouncedSearch }}
           ListEmptyComponent={
-            <Text style={styles.empty}>
+            <Text style={[styles.empty, { color: colors.textMuted }]}>
               {isSearchActive ? t('earnings.noSearchResults') : t('earnings.noHiresYet')}
             </Text>
           }
@@ -173,7 +177,6 @@ export const EarningsBreakdownScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   topBar: {
     paddingTop: spacing.lg,
@@ -191,7 +194,6 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.md,
   },
   empty: {
-    color: colors.textMuted,
     marginTop: spacing.xxl,
     textAlign: 'center',
     fontSize: 15,

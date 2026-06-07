@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { spacing } from '@app/theme/spacing';
 import { radius } from '@app/theme/radius';
 import type { MediaUri } from '@core/types/media';
@@ -40,6 +40,7 @@ export const ImageSlider = memo<ImageSliderProps>(
     imageHeight = 200,
     imageWidth,
   }) => {
+    const { colors } = useThemeContext();
     const [activeIndex, setActiveIndex] = useState(0);
     const [viewerVisible, setViewerVisible] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(0);
@@ -59,8 +60,13 @@ export const ImageSlider = memo<ImageSliderProps>(
 
     if (!images.length && !editable) {
       return (
-        <View style={[styles.empty, { height: imageHeight }]}>
-          <Text style={styles.emptyText}>No images</Text>
+        <View
+          style={[
+            styles.empty,
+            { height: imageHeight, backgroundColor: colors.borderLight },
+          ]}
+        >
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No images</Text>
         </View>
       );
     }
@@ -69,10 +75,17 @@ export const ImageSlider = memo<ImageSliderProps>(
       return (
         <Pressable
           onPress={onAddImage}
-          style={[styles.addBtn, styles.emptyAdd, { height: imageHeight }]}
+          style={[
+            styles.addBtn,
+            styles.emptyAdd,
+            {
+              height: imageHeight,
+              borderColor: colors.border,
+            },
+          ]}
         >
           <IconButton icon="camera-plus" size={40} iconColor={colors.primary} />
-          <Text style={styles.addText}>Add photo</Text>
+          <Text style={[styles.addText, { color: colors.primary }]}>Add photo</Text>
         </Pressable>
       );
     }
@@ -96,7 +109,14 @@ export const ImageSlider = memo<ImageSliderProps>(
                 )}
                 <Image
                   source={{ uri: item }}
-                  style={[styles.image, { width: itemWidth, height: imageHeight }]}
+                  style={[
+                    styles.image,
+                    {
+                      width: itemWidth,
+                      height: imageHeight,
+                      backgroundColor: colors.borderLight,
+                    },
+                  ]}
                   onLoadStart={() => setLoading(p => ({ ...p, [index]: true }))}
                   onLoadEnd={() => setLoading(p => ({ ...p, [index]: false }))}
                   onError={() => reportImageLoadError(item, 'ImageSlider')}
@@ -132,10 +152,17 @@ export const ImageSlider = memo<ImageSliderProps>(
             editable && images.length < maxImages && onAddImage ? (
               <Pressable
                 onPress={onAddImage}
-                style={[styles.addBtn, { width: itemWidth, height: imageHeight }]}
+                style={[
+                  styles.addBtn,
+                  {
+                    width: itemWidth,
+                    height: imageHeight,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
                 <IconButton icon="camera-plus" size={32} iconColor={colors.primary} />
-                <Text style={styles.addText}>Add photo</Text>
+                <Text style={[styles.addText, { color: colors.primary }]}>Add photo</Text>
               </Pressable>
             ) : null
           }
@@ -143,7 +170,17 @@ export const ImageSlider = memo<ImageSliderProps>(
         {images.length > 1 ? (
           <View style={styles.dots}>
             {images.map((_, i) => (
-              <View key={i} style={[styles.dot, i === activeIndex && styles.dotActive]} />
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  { backgroundColor: colors.border },
+                  i === activeIndex && [
+                    styles.dotActive,
+                    { backgroundColor: colors.primary },
+                  ],
+                ]}
+              />
             ))}
           </View>
         ) : null}
@@ -160,7 +197,7 @@ export const ImageSlider = memo<ImageSliderProps>(
 
 const styles = StyleSheet.create({
   slide: { position: 'relative' },
-  image: { borderRadius: radius.md, backgroundColor: colors.borderLight },
+  image: { borderRadius: radius.md },
   loader: { position: 'absolute', alignSelf: 'center', top: '40%', zIndex: 1 },
   actions: { position: 'absolute', top: 0, right: 0, flexDirection: 'row' },
   delete: { margin: 0 },
@@ -173,23 +210,21 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   dots: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.sm, gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
-  dotActive: { backgroundColor: colors.primary, width: 18 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotActive: { width: 18 },
   empty: {
-    backgroundColor: colors.borderLight,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyText: { color: colors.textMuted },
+  emptyText: {},
   addBtn: {
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
   },
-  addText: { color: colors.primary, fontSize: 12 },
+  addText: { fontSize: 12 },
 });

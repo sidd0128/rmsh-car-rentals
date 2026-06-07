@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import { colors, spacing } from '@app/theme';
+import { spacing } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { SearchBar } from './SearchBar';
 
 export interface SearchHeaderProps {
@@ -12,24 +13,28 @@ export interface SearchHeaderProps {
 }
 
 export const SearchHeader = memo<SearchHeaderProps>(
-  ({ value, onChangeText, placeholder = 'Search...', onFilterPress }) => (
-    <View style={styles.row}>
-      <SearchBar
-        placeholder={placeholder}
-        onChangeText={onChangeText}
-        value={value}
-        style={styles.search}
-      />
-      {onFilterPress ? (
-        <IconButton
-          icon="filter-variant"
-          onPress={onFilterPress}
-          iconColor={colors.primary}
-          style={styles.filterBtn}
+  ({ value, onChangeText, placeholder = 'Search...', onFilterPress }) => {
+    const { colors } = useThemeContext();
+
+    return (
+      <View style={styles.row}>
+        <SearchBar
+          placeholder={placeholder}
+          onChangeText={onChangeText}
+          value={value}
+          style={styles.search}
         />
-      ) : null}
-    </View>
-  ),
+        {onFilterPress ? (
+          <IconButton
+            icon="filter-variant"
+            onPress={onFilterPress}
+            iconColor={colors.primary}
+            style={styles.filterBtn}
+          />
+        ) : null}
+      </View>
+    );
+  },
 );
 
 const styles = StyleSheet.create({

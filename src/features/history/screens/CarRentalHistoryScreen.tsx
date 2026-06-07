@@ -6,7 +6,8 @@ import { StyleSheet, View } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 import dayjs from 'dayjs';
 import type { HistoryStackParamList } from '@app/navigation/types';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDateTimeAmPm } from '@core/helpers/date';
 import {
   buildHistoryYearOptions,
@@ -59,6 +60,7 @@ const defaultExpandedMonthKeys = (
 
 export const CarRentalHistoryScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const route = useRoute<RouteProp<HistoryStackParamList, 'CarRentalHistory'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HistoryStackParamList>>();
   const car = useCarStore(s => s.getCarById(route.params.carId));
@@ -132,8 +134,10 @@ export const CarRentalHistoryScreen = () => {
     if (entry.kind === 'free') {
       return (
         <View key={`free-${entry.start}`} style={styles.entry}>
-          <Text style={styles.freeLabel}>{t('history.carWasFree')}</Text>
-          <Text style={styles.freePeriod}>
+          <Text style={[styles.freeLabel, { color: colors.success }]}>
+            {t('history.carWasFree')}
+          </Text>
+          <Text style={[styles.freePeriod, { color: colors.textSecondary }]}>
             {t('history.freePeriod', {
               start: formatDateTimeAmPm(entry.start),
               end: formatDateTimeAmPm(entry.end),
@@ -160,7 +164,7 @@ export const CarRentalHistoryScreen = () => {
             end: formatRentalEndDisplay(rental.endDate),
           })}
         </Text>
-        <Text style={styles.duration}>
+        <Text style={[styles.duration, { color: colors.primary }]}>
           {t('history.totalDuration', {
             duration: formatRentalDurationWeeks(rental.startDate, rental.endDate),
           })}
@@ -194,7 +198,9 @@ export const CarRentalHistoryScreen = () => {
             variant="outline"
             onPress={() => yearFilterRef.current?.open()}
           />
-          <Text style={styles.yearHint}>{t('history.tapToChangeYear')}</Text>
+          <Text style={[styles.yearHint, { color: colors.textMuted }]}>
+            {t('history.tapToChangeYear')}
+          </Text>
         </View>
         <IconButton
           icon="chevron-right"
@@ -257,7 +263,6 @@ const styles = StyleSheet.create({
   },
   yearHint: {
     ...typography.caption,
-    color: colors.textMuted,
     textAlign: 'center',
   },
   entry: {
@@ -266,14 +271,11 @@ const styles = StyleSheet.create({
   },
   duration: {
     ...typography.label,
-    color: colors.primary,
   },
   freeLabel: {
     ...typography.label,
-    color: colors.success,
   },
   freePeriod: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
   },
 });

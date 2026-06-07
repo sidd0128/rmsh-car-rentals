@@ -6,7 +6,8 @@ import dayjs from 'dayjs';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { formatDateTimeAmPm } from '@core/helpers/date';
 import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
@@ -32,6 +33,7 @@ import { useTranslation } from '@core/i18n';
 
 export const CarDetailsScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarDetails'>>();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const car = useCarStore(s => s.getCarById(route.params.carId));
@@ -122,7 +124,7 @@ export const CarDetailsScreen = () => {
               })}
             </Text>
             {SHOW_PAYMENTS_UI && nextRentDue ? (
-              <Text style={styles.nextRent}>
+              <Text style={[styles.nextRent, { color: colors.warning }]}>
                 {t('cars.nextRentPaymentDue', {
                   amount: formatCurrency(nextRentDue.amount),
                   date: formatDateTimeAmPm(nextRentDue.dueDate),
@@ -143,7 +145,7 @@ export const CarDetailsScreen = () => {
           </Text>
         )}
         {SHOW_PAYMENTS_UI ? (
-          <Text style={styles.earnings}>
+          <Text style={[styles.earnings, { color: colors.primary }]}>
             {t('cars.totalReceived', { amount: formatCurrency(totalPaid) })}
           </Text>
         ) : null}
@@ -228,12 +230,10 @@ const styles = StyleSheet.create({
   },
   earnings: {
     ...typography.h4,
-    color: colors.primary,
     marginTop: spacing.sm,
   },
   nextRent: {
     ...typography.body,
-    color: colors.warning,
     fontWeight: '600',
     marginTop: spacing.sm,
   },

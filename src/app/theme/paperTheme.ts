@@ -1,24 +1,29 @@
-import { MD3LightTheme, configureFonts } from 'react-native-paper';
+import { MD3DarkTheme, MD3LightTheme, configureFonts } from 'react-native-paper';
 import { buttonLabelStyle } from './buttonMetrics';
-import { colors } from './colors';
+import { colors, darkColors, type AppColors } from './colors';
 import { radius } from './radius';
 
 const fontConfig = configureFonts({ config: { fontFamily: 'System' } });
 
-export const paperTheme = {
-  ...MD3LightTheme,
+const buildPaperTheme = (
+  baseTheme: typeof MD3LightTheme,
+  appColors: AppColors,
+) => ({
+  ...baseTheme,
   fonts: fontConfig,
   roundness: radius.md,
   colors: {
-    ...MD3LightTheme.colors,
-    primary: colors.primary,
-    secondary: colors.secondary,
-    background: colors.background,
-    surface: colors.surface,
-    error: colors.error,
-    onPrimary: colors.textInverse,
-    onSurface: colors.text,
-    outline: colors.border,
+    ...baseTheme.colors,
+    primary: appColors.primary,
+    secondary: appColors.secondary,
+    background: appColors.background,
+    surface: appColors.surface,
+    surfaceVariant: appColors.surfaceElevated,
+    error: appColors.error,
+    onPrimary: appColors.textInverse,
+    onSurface: appColors.text,
+    onBackground: appColors.text,
+    outline: appColors.border,
   },
   components: {
     Button: {
@@ -28,4 +33,7 @@ export const paperTheme = {
       style: { minHeight: 48 },
     },
   },
-};
+});
+
+export const paperTheme = buildPaperTheme(MD3LightTheme, colors);
+export const darkPaperTheme = buildPaperTheme(MD3DarkTheme, darkColors);

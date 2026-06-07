@@ -3,7 +3,8 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { SegmentedButtons, Text } from 'react-native-paper';
 import { AppBottomSheet, AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
 import { AppButton, AppDropdown, AppInput, AppDatePickerModal, WeekdayPicker } from '@shared/ui';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { modalFormStyles } from '@shared/modals/modalFormStyles';
 import { OPEN_ENDED_RENTAL_END_ISO } from '@core/constants/rental';
 import type { BillingFrequency } from '@core/types/domain';
@@ -54,6 +55,7 @@ const defaultRateForFrequency = (
 export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalProps>(
   ({ onSuccess, onAddCustomer }, ref) => {
     const { t } = useTranslation();
+    const { colors } = useThemeContext();
     const sheetRef = useRef<AppBottomSheetRef>(null);
     const frequencyOptions = useMemo(
       (): { value: BillingFrequency; label: string }[] => [
@@ -181,7 +183,9 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
     return (
       <AppBottomSheet ref={sheetRef} scrollable>
         <Text style={typography.h3}>{t('assignment.title')}</Text>
-        <Text style={modalFormStyles.subtitle}>{t('assignment.subtitle')}</Text>
+        <Text style={[modalFormStyles.subtitle, { color: colors.textSecondary }]}>
+          {t('assignment.subtitle')}
+        </Text>
 
         <AppDropdown
           label={selectedCustomer?.name ?? t('assignment.selectCustomer')}
@@ -233,11 +237,15 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
             fullWidth
           />
         </View>
-        <Text style={styles.hint}>{formatDateTimeAmPm(startDateTime.toISOString())}</Text>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>
+          {formatDateTimeAmPm(startDateTime.toISOString())}
+        </Text>
 
         <Text style={modalFormStyles.fieldLabel}>{t('assignment.endDateTime')}</Text>
         {endDateUnset ? (
-          <Text style={styles.openEndedHint}>{t('assignment.endLeftBlank')}</Text>
+          <Text style={[styles.openEndedHint, { color: colors.textMuted }]}>
+            {t('assignment.endLeftBlank')}
+          </Text>
         ) : (
           <>
             <View style={styles.dateRow}>
@@ -258,7 +266,9 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
                 fullWidth
               />
             </View>
-            <Text style={styles.hint}>{formatDateTimeAmPm(endDateTime.toISOString())}</Text>
+            <Text style={[styles.hint, { color: colors.textMuted }]}>
+              {formatDateTimeAmPm(endDateTime.toISOString())}
+            </Text>
           </>
         )}
         <AppButton
@@ -274,7 +284,7 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
           <View>
             <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentPaidOn')}</Text>
             <WeekdayPicker value={rentDueWeekday} onChange={setRentDueWeekday} />
-            <Text style={styles.dueHint}>
+            <Text style={[styles.dueHint, { color: colors.textMuted }]}>
               {formatRentDueDaySummary('WEEKLY', rentDueWeekday)}
             </Text>
           </View>
@@ -289,14 +299,16 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
               onPress={() => setShowRentDueDay(true)}
               fullWidth
             />
-            <Text style={styles.dueHint}>
+            <Text style={[styles.dueHint, { color: colors.textMuted }]}>
               {formatRentDueDaySummary('MONTHLY', undefined, rentDueDayOfMonth)}
             </Text>
           </View>
         ) : null}
 
         {frequency === 'DAILY' ? (
-          <Text style={styles.dueHint}>{formatRentDueDaySummary('DAILY')}</Text>
+          <Text style={[styles.dueHint, { color: colors.textMuted }]}>
+            {formatRentDueDaySummary('DAILY')}
+          </Text>
         ) : null}
 
         <AppButton
@@ -373,17 +385,14 @@ const styles = StyleSheet.create({
   },
   dueHint: {
     ...typography.caption,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   hint: {
     ...typography.caption,
-    color: colors.textMuted,
     marginBottom: spacing.sm,
   },
   openEndedHint: {
     ...typography.bodySmall,
-    color: colors.textMuted,
     marginBottom: spacing.sm,
   },
 });

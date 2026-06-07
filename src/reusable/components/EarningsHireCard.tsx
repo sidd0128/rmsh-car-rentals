@@ -1,7 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, radius, shadows, spacing, typography } from '@app/theme';
+import { radius, shadows, spacing, typography, type AppColors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import type { PaymentStatus } from '@core/types/domain';
 import { formatCurrency } from '@core/utils/currency';
 import { StatusBadge } from '@shared/ui';
@@ -26,6 +27,8 @@ export const EarningsHireCard = memo<EarningsHireCardProps>(
     paymentStatus,
   }) => {
     const { t } = useTranslation();
+    const { colors } = useThemeContext();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const isPaid = paymentStatus === 'DONE' && paidAmount > 0;
 
     return (
@@ -76,7 +79,7 @@ export const EarningsHireCard = memo<EarningsHireCardProps>(
   },
 );
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     borderRadius: radius.md,
@@ -87,7 +90,7 @@ const styles = StyleSheet.create({
   },
   cardPaid: {
     borderColor: colors.success,
-    backgroundColor: '#F8FDFB',
+    backgroundColor: colors.successBg,
   },
   cardPending: {
     borderColor: colors.warning,

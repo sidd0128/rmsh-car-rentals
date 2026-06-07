@@ -4,7 +4,8 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { Text } from 'react-native-paper';
-import { colors, spacing, radius, typography } from '@app/theme';
+import { spacing, radius, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { AppButton } from './AppButton';
 
 export interface AppDatePickerModalProps {
@@ -23,6 +24,7 @@ export interface AppDatePickerModalProps {
  */
 export const AppDatePickerModal = memo<AppDatePickerModalProps>(
   ({ open, date, mode = 'date', minimumDate, maximumDate, onConfirm, onCancel }) => {
+    const { colors, isDark } = useThemeContext();
     const [tempDate, setTempDate] = useState(date);
     const pickerMode = mode === 'datetime' ? 'date' : mode;
     const title = pickerMode === 'time' ? 'Select time' : 'Select date';
@@ -59,8 +61,8 @@ export const AppDatePickerModal = memo<AppDatePickerModalProps>(
 
     return (
       <Modal visible transparent animationType="slide" onRequestClose={onCancel}>
-        <View style={styles.overlay}>
-          <View style={styles.sheet}>
+        <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
             <Text style={typography.h3}>{title}</Text>
             <DateTimePicker
               value={tempDate}
@@ -68,7 +70,7 @@ export const AppDatePickerModal = memo<AppDatePickerModalProps>(
               display="spinner"
               textColor={colors.text}
               accentColor={colors.primary}
-              themeVariant="light"
+              themeVariant={isDark ? 'dark' : 'light'}
               minimumDate={minimumDate}
               maximumDate={maximumDate}
               onChange={(_, selected) => {
@@ -97,10 +99,8 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: colors.overlay,
   },
   sheet: {
-    backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
     padding: spacing.lg,

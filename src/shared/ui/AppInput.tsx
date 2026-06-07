@@ -2,7 +2,8 @@ import React, { memo, useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { TextInput, HelperText, Text } from 'react-native-paper';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 interface AppInputProps {
   label: string;
@@ -40,6 +41,7 @@ export const AppInput = memo<AppInputProps>(
     enablePasswordToggle,
     containerStyle,
   }) => {
+    const { colors } = useThemeContext();
     const [passwordVisible, setPasswordVisible] = useState(false);
     const isPasswordField = Boolean(secureTextEntry);
     const hidePassword = isPasswordField && !passwordVisible;
@@ -61,7 +63,11 @@ export const AppInput = memo<AppInputProps>(
           outlineColor={colors.border}
           activeOutlineColor={colors.primary}
           outlineStyle={styles.outline}
-          style={[styles.input, multiline && styles.multiline]}
+          style={[
+            styles.input,
+            { backgroundColor: colors.surface },
+            multiline && styles.multiline,
+          ]}
           contentStyle={styles.inputContent}
           left={leftIcon ? <TextInput.Icon icon={leftIcon} color={colors.textMuted} /> : undefined}
           right={
@@ -111,9 +117,7 @@ const styles = StyleSheet.create({
   outline: {
     borderRadius: radius.sm,
   },
-  input: {
-    backgroundColor: colors.surface,
-  },
+  input: {},
   inputContent: {
     paddingVertical: spacing.sm,
   },

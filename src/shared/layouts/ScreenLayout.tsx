@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@app/theme';
 import { spacing } from '@app/theme/spacing';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { getScreenBottomClearance } from '@core/helpers/screenBottomInset';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { useOptionalBottomTabBarHeight } from '@core/hooks/useOptionalBottomTabBarHeight';
@@ -35,6 +35,8 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
     const insets = useSafeAreaInsets();
     const { horizontalPadding } = useDeviceLayout();
     const tabBarHeight = useOptionalBottomTabBarHeight();
+    const { colors } = useThemeContext();
+    const containerStyle = [styles.container, { backgroundColor: colors.background }];
 
     const paddedContent = (
       <ResponsiveContainer>
@@ -54,7 +56,7 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
 
     if (!scrollable) {
       return (
-        <View style={styles.container}>
+        <View style={containerStyle}>
           {bleedTop}
           {paddedContent}
         </View>
@@ -63,7 +65,7 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
 
     return (
       <ScrollView
-        style={styles.container}
+        style={containerStyle}
         contentContainerStyle={{
           paddingBottom: getScreenBottomClearance(tabBarHeight, insets.bottom),
         }}
@@ -82,7 +84,7 @@ export const ScreenLayout = memo<ScreenLayoutProps>(
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   padded: { paddingTop: spacing.lg },
   contentGap: { gap: CONTENT_GAP },
 });

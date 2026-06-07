@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import type { PaymentInstallmentAction } from '@core/helpers/paymentInstallment';
 import type { PaymentRecord } from '@core/types/domain';
 import { useTranslation } from '@core/i18n';
@@ -19,6 +20,7 @@ interface PaymentInstallmentActionsProps {
 export const PaymentInstallmentActions = memo<PaymentInstallmentActionsProps>(
   ({ status, paymentId, actingId, actingKind, onReceived, onNotPaid }) => {
     const { t } = useTranslation();
+    const { colors } = useThemeContext();
 
     if (status === 'DONE') {
       return null;
@@ -29,7 +31,9 @@ export const PaymentInstallmentActions = memo<PaymentInstallmentActionsProps>(
     if (status === 'NOT_PAID') {
       return (
         <View style={styles.stacked}>
-          <Text style={styles.notPaidTag}>{t('common.notPaid')}</Text>
+          <Text style={[styles.notPaidTag, { color: colors.error }]}>
+            {t('common.notPaid')}
+          </Text>
           <AppButton
             label={t('common.received')}
             onPress={() => onReceived(paymentId)}
@@ -77,6 +81,5 @@ const styles = StyleSheet.create({
   },
   notPaidTag: {
     ...typography.label,
-    color: colors.error,
   },
 });

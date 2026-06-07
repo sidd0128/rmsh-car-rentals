@@ -1,12 +1,13 @@
 import { createContext } from 'react';
-import { colors, paperTheme } from '@app/theme';
+import { paperTheme, type AppColors } from '@app/theme';
 
-export type ThemeMode = 'light';
+export type ThemeMode = 'light' | 'dark';
 
 export interface ThemeContextValue {
   mode: ThemeMode;
-  colors: typeof colors;
+  colors: AppColors;
   paperTheme: typeof paperTheme;
+  isDark: boolean;
   setMode: (mode: ThemeMode) => void;
 }
 

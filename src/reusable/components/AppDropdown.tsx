@@ -1,7 +1,8 @@
 import React, { memo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Menu, Text } from 'react-native-paper';
-import { colors, spacing } from '@app/theme';
+import { spacing } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { AppButton } from '@shared/ui/AppButton';
 
 export type DropdownOption<T extends string> = {
@@ -33,6 +34,7 @@ function AppDropdownInner<T extends string>({
   fullWidth,
   actions = [],
 }: AppDropdownProps<T>) {
+  const { colors } = useThemeContext();
   const [visible, setVisible] = useState(false);
 
   return (
@@ -56,7 +58,9 @@ function AppDropdownInner<T extends string>({
             option.description ? (
               <View>
                 <Text>{option.label}</Text>
-                <Text style={styles.description}>{option.description}</Text>
+                <Text style={[styles.description, { color: colors.textSecondary }]}>
+                  {option.description}
+                </Text>
               </View>
             ) : (
               option.label
@@ -88,7 +92,6 @@ export const AppDropdown = memo(AppDropdownInner) as <T extends string>(
 
 const styles = StyleSheet.create({
   description: {
-    color: colors.textSecondary,
     marginTop: spacing.xxs,
   },
 });

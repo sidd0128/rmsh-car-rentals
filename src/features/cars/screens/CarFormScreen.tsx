@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useForm } from 'react-hook-form';
 import type { CarsStackParamList } from '@app/navigation/types';
-import { colors } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { currencyFieldLabel } from '@core/constants/app';
 import { createId } from '@core/helpers/id';
 import type { CreateCarPayload } from '@core/types/domain';
@@ -30,6 +30,7 @@ interface CarFormValues {
 
 export const CarFormScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarForm'>>();
   const carId = route.params?.carId;
@@ -104,7 +105,7 @@ export const CarFormScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loading}>
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -151,6 +152,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
 });

@@ -7,7 +7,8 @@ import type { AuthStackParamList } from '@app/navigation/types';
 import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { signInWithEmail } from '@core/firebase/auth/services/firebaseAuthService';
 import { getFirebaseAuthErrorMessage } from '@core/firebase/auth/utils/firebaseAuthErrorUtils';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useTranslation } from '@core/i18n';
 import { AppButton, AppInput } from '@shared/ui';
 import { AuthScreenLayout } from '../components/AuthScreenLayout';
@@ -15,6 +16,7 @@ import { useFirebaseAuthStore } from '../store/useFirebaseAuthStore';
 
 export const LoginScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const sessionExpiredMessage = useFirebaseAuthStore(s => s.sessionExpiredMessage);
   const clearSessionExpiredMessage = useFirebaseAuthStore(s => s.clearSessionExpiredMessage);
@@ -52,13 +54,22 @@ export const LoginScreen = () => {
       subtitle={t('auth.signInSubtitle')}
       banner={
         sessionExpiredMessage ? (
-          <View style={styles.expiredBanner}>
-            <Text style={styles.expiredText}>{sessionExpiredMessage}</Text>
+          <View
+            style={[
+              styles.expiredBanner,
+              { backgroundColor: colors.warningBg, borderColor: colors.warning },
+            ]}
+          >
+            <Text style={[styles.expiredText, { color: colors.text }]}>
+              {sessionExpiredMessage}
+            </Text>
           </View>
         ) : null
       }
       footer={
-        <Text style={styles.footerNote}>{t('auth.dataStaysOnDevice')}</Text>
+        <Text style={[styles.footerNote, { color: colors.textMuted }]}>
+          {t('auth.dataStaysOnDevice')}
+        </Text>
       }
     >
       <AppInput
@@ -112,21 +123,17 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   expiredBanner: {
-    backgroundColor: colors.warningBg,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.warning,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   expiredText: {
     ...typography.bodySmall,
-    color: colors.text,
     lineHeight: 20,
   },
   footerNote: {
     ...typography.caption,
-    color: colors.textMuted,
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 18,

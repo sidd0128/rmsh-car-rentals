@@ -7,9 +7,9 @@ import {
 } from '@gorhom/bottom-sheet';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
-import { colors } from '@app/theme';
 import { spacing } from '@app/theme/spacing';
 import { radius } from '@app/theme/radius';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { useBottomSheetLayoutMetrics } from '@core/hooks/useBottomSheetLayoutMetrics';
 import { useBottomSheetModal } from '@core/hooks/useBottomSheetModal';
@@ -30,6 +30,7 @@ interface AppBottomSheetProps {
 export const AppBottomSheet = forwardRef<AppBottomSheetRef, AppBottomSheetProps>(
   ({ children, snapPoints: snapPointsProp, onDismiss, scrollable = false }, ref) => {
     const { ref: sheetRef, open, close } = useBottomSheetModal();
+    const { colors } = useThemeContext();
     const { horizontalPadding } = useDeviceLayout();
     const { topInset, bottomInset, maxSnapPoint, contentBottomPadding } =
       useBottomSheetLayoutMetrics();
@@ -83,8 +84,14 @@ export const AppBottomSheet = forwardRef<AppBottomSheetRef, AppBottomSheetProps>
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
-        backgroundStyle={styles.background}
-        handleIndicatorStyle={styles.handle}
+        backgroundStyle={[
+          styles.background,
+          { backgroundColor: colors.surface },
+        ]}
+        handleIndicatorStyle={[
+          styles.handle,
+          { backgroundColor: colors.border },
+        ]}
       >
         {scrollable ? (
           <BottomSheetScrollView
@@ -104,12 +111,10 @@ export const AppBottomSheet = forwardRef<AppBottomSheetRef, AppBottomSheetProps>
 
 const styles = StyleSheet.create({
   background: {
-    backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
   },
   handle: {
-    backgroundColor: colors.border,
     width: 40,
     marginTop: spacing.sm,
   },

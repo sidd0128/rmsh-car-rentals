@@ -5,7 +5,8 @@ import React, { useCallback, useMemo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CustomersStackParamList } from '@app/navigation/types';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDate } from '@core/helpers/date';
 import { sortPaymentsByDueDate } from '@core/helpers/paymentInstallment';
 import { computeCustomerTotalPaid } from '@core/helpers/rentalPayments';
@@ -34,6 +35,7 @@ import { useTranslation } from '@core/i18n';
 
 export const CustomerProfileScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const route = useRoute<RouteProp<CustomersStackParamList, 'CustomerProfile'>>();
   const navigation = useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
   const customer = useCustomerStore(s => s.getCustomerById(route.params.customerId));
@@ -112,8 +114,14 @@ export const CustomerProfileScreen = () => {
             onError={() => reportImageLoadError(customer.photo ?? '', 'CustomerProfileScreen')}
           />
         ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Text style={styles.avatarInitials}>
+          <View
+            style={[
+              styles.avatar,
+              styles.avatarPlaceholder,
+              { backgroundColor: colors.infoBg },
+            ]}
+          >
+            <Text style={[styles.avatarInitials, { color: colors.primary }]}>
               {customer.name
                 .split(' ')
                 .map(p => p[0])
@@ -130,20 +138,40 @@ export const CustomerProfileScreen = () => {
           </Text>
           <Text style={typography.bodySmall}>{customer.address}</Text>
           {customer.isBlacklisted ? (
-            <Text style={styles.blacklist}>{t('customers.blacklisted')}</Text>
+            <Text style={[styles.blacklist, { color: colors.error }]}>
+              {t('customers.blacklisted')}
+            </Text>
           ) : null}
         </View>
       </View>
 
       <View style={screenStyles.statsRow}>
-        <View style={screenStyles.statCard}>
-          <Text style={screenStyles.statValue}>{totalRentals}</Text>
-          <Text style={screenStyles.statLabel}>{t('customers.rentals')}</Text>
+        <View
+          style={[
+            screenStyles.statCard,
+            { backgroundColor: colors.surface, borderColor: colors.borderLight },
+          ]}
+        >
+          <Text style={[screenStyles.statValue, { color: colors.primary }]}>
+            {totalRentals}
+          </Text>
+          <Text style={[screenStyles.statLabel, { color: colors.textSecondary }]}>
+            {t('customers.rentals')}
+          </Text>
         </View>
         {SHOW_PAYMENTS_UI ? (
-          <View style={screenStyles.statCard}>
-            <Text style={screenStyles.statValue}>{formatCurrency(totalSpent)}</Text>
-            <Text style={screenStyles.statLabel}>{t('customers.totalSpent')}</Text>
+          <View
+            style={[
+              screenStyles.statCard,
+              { backgroundColor: colors.surface, borderColor: colors.borderLight },
+            ]}
+          >
+            <Text style={[screenStyles.statValue, { color: colors.primary }]}>
+              {formatCurrency(totalSpent)}
+            </Text>
+            <Text style={[screenStyles.statLabel, { color: colors.textSecondary }]}>
+              {t('customers.totalSpent')}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -231,20 +259,17 @@ const styles = StyleSheet.create({
     borderRadius: 44,
   },
   avatarPlaceholder: {
-    backgroundColor: colors.infoBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitials: {
     ...typography.h3,
-    color: colors.primary,
   },
   profileText: {
     flex: 1,
     gap: spacing.xs,
   },
   blacklist: {
-    color: colors.error,
     marginTop: spacing.xs,
     fontWeight: '600',
     fontSize: 13,

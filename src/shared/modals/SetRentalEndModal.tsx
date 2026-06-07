@@ -13,6 +13,7 @@ import { getLatestSelectableHistoryDate } from '@core/helpers/historyDates';
 import type { Rental } from '@core/types/domain';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { useTranslation } from '@core/i18n';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 export interface SetRentalEndModalRef {
   open: (rental: Rental) => void;
@@ -26,6 +27,7 @@ interface SetRentalEndModalProps {
 export const SetRentalEndModal = forwardRef<SetRentalEndModalRef, SetRentalEndModalProps>(
   ({ onSuccess }, ref) => {
     const { t } = useTranslation();
+    const { colors } = useThemeContext();
     const sheetRef = useRef<AppBottomSheetRef>(null);
     const [rental, setRental] = useState<Rental | null>(null);
     const [endDatePart, setEndDatePart] = useState(new Date());
@@ -72,9 +74,16 @@ export const SetRentalEndModal = forwardRef<SetRentalEndModalRef, SetRentalEndMo
     return (
       <AppBottomSheet ref={sheetRef} scrollable>
         <Text style={typography.h3}>{t('rentals.setEndTitle')}</Text>
-        <Text style={modalFormStyles.subtitle}>{t('rentals.setEndSubtitle')}</Text>
+        <Text style={[modalFormStyles.subtitle, { color: colors.textSecondary }]}>
+          {t('rentals.setEndSubtitle')}
+        </Text>
 
-        <View style={screenStyles.insetPanel}>
+        <View
+          style={[
+            screenStyles.insetPanel,
+            { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight },
+          ]}
+        >
           <Text style={typography.bodySmall}>{t('rentals.currentPeriod')}</Text>
           <Text style={typography.body}>
             {formatDateTimeAmPm(rental.startDate)} – {formatRentalEndDisplay(rental.endDate)}

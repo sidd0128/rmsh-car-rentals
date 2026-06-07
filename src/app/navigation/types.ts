@@ -24,11 +24,6 @@ export type CustomersStackParamList = {
 } & FineFlowParamList &
   AccidentFlowParamList;
 
-export type RentalsStackParamList = {
-  RentalsList: undefined;
-  RentalDetails: { rentalId: string };
-};
-
 export type HistoryStackParamList = {
   HistoryCarsList: undefined;
   CarRentalHistory: { carId: string };

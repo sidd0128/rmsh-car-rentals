@@ -2,9 +2,13 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import { List, Text } from 'react-native-paper';
+import { List, SegmentedButtons, Text } from 'react-native-paper';
 import type { SettingsStackParamList } from '@app/navigation/types';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useLanguage } from '@contextApis/language/useLanguage';
+import type { AppLanguage } from '@contextApis/language/LanguageContext';
+import type { ThemeMode } from '@contextApis/theme/ThemeContext';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { showDevDataTools } from '@core/config/env';
 import { loadDemoSeedData } from '@core/data/loadDemoSeedData';
 import { wipeAllAppData } from '@core/data/wipeAllAppData';
@@ -30,6 +34,8 @@ const accidentRecordsIcon = (props: ListIconProps) => (
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
+  const { language, options: languageOptions, setLanguage } = useLanguage();
+  const { colors, mode, setMode } = useThemeContext();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const { hydrateAll } = useHydrateStores();
   const authUser = useFirebaseAuthStore(s => s.user);
@@ -139,9 +145,47 @@ export const SettingsScreen = () => {
   return (
     <ScreenLayout onRefresh={handleSync} refreshing={isSyncing}>
       <Text style={typography.h2}>{t('settings.title')}</Text>
-      <Text style={styles.lead}>{t('settings.lead')}</Text>
+      <Text style={[styles.lead, { color: colors.textSecondary }]}>
+        {t('settings.lead')}
+      </Text>
 
-      <View style={screenStyles.syncCard}>
+      <View
+        style={[
+          screenStyles.syncCard,
+          { backgroundColor: colors.surface, borderColor: colors.borderLight },
+        ]}
+      >
+        <Text style={typography.h3}>{t('settings.preferences')}</Text>
+        <Text style={[styles.preferenceLabel, { color: colors.textSecondary }]}>
+          {t('settings.theme')}
+        </Text>
+        <SegmentedButtons
+          value={mode}
+          onValueChange={value => setMode(value as ThemeMode)}
+          buttons={[
+            { value: 'light', label: t('settings.themeLight') },
+            { value: 'dark', label: t('settings.themeDark') },
+          ]}
+        />
+        <Text style={[styles.preferenceLabel, { color: colors.textSecondary }]}>
+          {t('settings.language')}
+        </Text>
+        <SegmentedButtons
+          value={language}
+          onValueChange={value => setLanguage(value as AppLanguage)}
+          buttons={languageOptions.map(option => ({
+            value: option.value,
+            label: option.label,
+          }))}
+        />
+      </View>
+
+      <View
+        style={[
+          screenStyles.syncCard,
+          { backgroundColor: colors.surface, borderColor: colors.borderLight },
+        ]}
+      >
         <Text style={typography.h3}>{t('settings.account')}</Text>
         {authUser?.email ? (
           <Text style={styles.syncLine}>
@@ -157,9 +201,16 @@ export const SettingsScreen = () => {
       </View>
 
       {showDevDataTools() ? (
-        <View style={screenStyles.syncCard}>
+        <View
+          style={[
+            screenStyles.syncCard,
+            { backgroundColor: colors.surface, borderColor: colors.borderLight },
+          ]}
+        >
           <Text style={typography.h3}>{t('settings.devDataTitle')}</Text>
-          <Text style={styles.syncHint}>{t('settings.devDataHint')}</Text>
+          <Text style={[styles.syncHint, { color: colors.textMuted }]}>
+            {t('settings.devDataHint')}
+          </Text>
           <View style={styles.devActions}>
             <AppButton
               label={t('settings.loadDemo')}
@@ -179,7 +230,12 @@ export const SettingsScreen = () => {
         </View>
       ) : null}
 
-      <View style={screenStyles.syncCard}>
+      <View
+        style={[
+          screenStyles.syncCard,
+          { backgroundColor: colors.surface, borderColor: colors.borderLight },
+        ]}
+      >
         <Text style={typography.h3}>{t('settings.cloudSyncTitle')}</Text>
         <Text style={styles.syncLine}>
           {firebaseConfigured
@@ -194,7 +250,11 @@ export const SettingsScreen = () => {
             ? t('settings.lastSync', { time: formatDateTime(lastSyncedAt) })
             : t('settings.lastSyncNever')}
         </Text>
-        {lastMessage ? <Text style={styles.syncHint}>{lastMessage}</Text> : null}
+        {lastMessage ? (
+          <Text style={[styles.syncHint, { color: colors.textMuted }]}>
+            {lastMessage}
+          </Text>
+        ) : null}
         {showSyncButton ? (
           <AppButton
             label={t('settings.syncNow')}
@@ -203,11 +263,18 @@ export const SettingsScreen = () => {
             fullWidth
           />
         ) : firebaseConfigured && authStatus === 'authenticated' ? (
-          <Text style={styles.syncHint}>{t('settings.allSynced')}</Text>
+          <Text style={[styles.syncHint, { color: colors.textMuted }]}>
+            {t('settings.allSynced')}
+          </Text>
         ) : null}
       </View>
 
-      <View style={styles.menuCard}>
+      <View
+        style={[
+          styles.menuCard,
+          { backgroundColor: colors.surface, borderColor: colors.borderLight },
+        ]}
+      >
         <List.Item
           title={t('settings.fineManagement')}
           description={t('settings.fineManagementDesc')}
@@ -228,20 +295,20 @@ export const SettingsScreen = () => {
 const styles = StyleSheet.create({
   lead: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: -spacing.sm,
   },
   syncLine: { ...typography.bodySmall, lineHeight: 20 },
-  syncHint: { ...typography.caption, color: colors.textMuted, lineHeight: 18 },
+  syncHint: { ...typography.caption, lineHeight: 18 },
+  preferenceLabel: {
+    ...typography.label,
+  },
   devActions: {
     gap: spacing.sm,
     marginTop: spacing.sm,
   },
   menuCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     overflow: 'hidden',
   },
 });

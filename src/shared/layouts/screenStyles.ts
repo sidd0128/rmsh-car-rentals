@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
 
 /** Shared vertical space between major blocks inside scroll screens. */
 export const CONTENT_GAP = spacing.lg;
@@ -15,22 +15,18 @@ export const screenStyles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.borderLight,
   },
   statValue: {
     ...typography.h3,
-    color: colors.primary,
   },
   statLabel: {
     ...typography.caption,
     marginTop: spacing.xs,
-    color: colors.textSecondary,
   },
   actions: {
     gap: spacing.md,
@@ -46,39 +42,31 @@ export const screenStyles = StyleSheet.create({
   },
   earningsLead: {
     ...typography.h3,
-    color: colors.primary,
     fontWeight: '600',
   },
   earningsHint: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     lineHeight: 20,
   },
   earningsMeta: {
     ...typography.bodySmall,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   surfaceCard: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     padding: spacing.lg,
     gap: spacing.xs,
   },
   /** Nested panel inside cards or modal summaries */
   insetPanel: {
-    backgroundColor: colors.background,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     padding: spacing.md,
     gap: spacing.xxs,
   },
   emptyHint: {
     ...typography.bodySmall,
-    color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.lg,
     lineHeight: 22,
@@ -86,9 +74,7 @@ export const screenStyles = StyleSheet.create({
   syncCard: {
     padding: spacing.lg,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     gap: spacing.sm,
   },
   formStack: {

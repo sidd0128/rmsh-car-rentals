@@ -2,7 +2,8 @@ import React, { memo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { colors, radius, spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 export interface CollapsibleSectionProps {
   title: string;
@@ -25,28 +26,43 @@ export const CollapsibleSection = memo<CollapsibleSectionProps>(
     headerRight,
     containerStyle,
     bodyStyle,
-  }) => (
-    <View style={[styles.wrap, containerStyle]}>
-      <Pressable
-        onPress={onToggle}
-        style={({ pressed }) => [styles.header, pressed && styles.pressed]}
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-      >
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.summary}>{subtitle}</Text> : null}
-        </View>
-        {headerRight}
-        <Icon
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={24}
-          color={colors.primary}
-        />
-      </Pressable>
-      {expanded ? <View style={[styles.body, bodyStyle]}>{children}</View> : null}
-    </View>
-  ),
+  }) => {
+    const { colors } = useThemeContext();
+
+    return (
+      <View style={[styles.wrap, containerStyle]}>
+        <Pressable
+          onPress={onToggle}
+          style={({ pressed }) => [
+            styles.header,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+            pressed && styles.pressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+        >
+          <View style={styles.headerText}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle ? (
+              <Text style={[styles.summary, { color: colors.textMuted }]}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+          {headerRight}
+          <Icon
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={24}
+            color={colors.primary}
+          />
+        </Pressable>
+        {expanded ? <View style={[styles.body, bodyStyle]}>{children}</View> : null}
+      </View>
+    );
+  },
 );
 
 const styles = StyleSheet.create({
@@ -56,10 +72,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
@@ -73,7 +87,6 @@ const styles = StyleSheet.create({
   },
   summary: {
     ...typography.caption,
-    color: colors.textMuted,
     marginTop: spacing.xxs,
   },
   body: {

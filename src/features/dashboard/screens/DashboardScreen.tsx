@@ -13,7 +13,8 @@ import {
   carIsReturningSoon,
   returnsSoonFilterDescription,
 } from '@core/services/availabilityService';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { getAppName } from '@core/constants/app';
 import { useTranslation } from '@core/i18n';
 import { formatDate } from '@core/helpers/date';
@@ -40,6 +41,7 @@ type DashboardNav = CompositeNavigationProp<
 
 export const DashboardScreen = () => {
   const { t } = useTranslation();
+  const { colors } = useThemeContext();
   const navigation = useNavigation<DashboardNav>();
   const insets = useSafeAreaInsets();
   const cars = useCarStore(s => s.cars);
@@ -78,7 +80,7 @@ export const DashboardScreen = () => {
 
   return (
     <ScreenLayout onRefresh={onRefresh} style={{ paddingTop: insets.top + spacing.md }}>
-      <Text style={styles.brand}>{getAppName()}</Text>
+      <Text style={[styles.brand, { color: colors.primary }]}>{getAppName()}</Text>
       <Text style={typography.h1}>{t('dashboard.title')}</Text>
       <Text style={styles.subtitle}>{t('dashboard.subtitle')}</Text>
 
@@ -119,22 +121,34 @@ export const DashboardScreen = () => {
       </View>
 
       <Text style={[typography.h3, styles.recentHeading]}>{t('dashboard.recentBookings')}</Text>
-      <Text style={styles.recentHint}>
+      <Text style={[styles.recentHint, { color: colors.textMuted }]}>
         {t('dashboard.recentBookingsHint', { count: RECENT_BOOKINGS_LIMIT })}
       </Text>
       {stats.recent.length === 0 ? (
-        <Text style={screenStyles.emptyHint}>{t('dashboard.noBookingsYet')}</Text>
+        <Text style={[screenStyles.emptyHint, { color: colors.textMuted }]}>
+          {t('dashboard.noBookingsYet')}
+        </Text>
       ) : (
         stats.recent.map(r => {
           const car = cars.find(c => c.id === r.carId);
           const customer = customers.find(c => c.id === r.customerId);
           return (
-            <View key={r.id} style={[screenStyles.surfaceCard, styles.recentItem]}>
+            <View
+              key={r.id}
+              style={[
+                screenStyles.surfaceCard,
+                styles.recentItem,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderLight,
+                },
+              ]}
+            >
               <Text style={typography.h4}>{car?.name ?? t('common.car')}</Text>
               <Text style={typography.bodySmall}>
                 {customer?.name ?? t('common.customer')} · {r.status}
               </Text>
-              <Text style={styles.recentDates}>
+              <Text style={[styles.recentDates, { color: colors.textSecondary }]}>
                 {formatDate(r.startDate)} – {formatDate(r.endDate)}
               </Text>
             </View>
@@ -146,7 +160,7 @@ export const DashboardScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  brand: { ...typography.caption, color: colors.primary, marginBottom: spacing.xs },
+  brand: { ...typography.caption, marginBottom: spacing.xs },
   subtitle: { ...typography.bodySmall, marginBottom: spacing.lg },
   grid: {
     flexDirection: 'row',
@@ -161,7 +175,6 @@ const styles = StyleSheet.create({
   },
   recentHint: {
     ...typography.caption,
-    color: colors.textMuted,
     marginBottom: spacing.sm,
   },
   recentItem: {
@@ -169,7 +182,6 @@ const styles = StyleSheet.create({
   },
   recentDates: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginTop: spacing.xxs,
   },
 });

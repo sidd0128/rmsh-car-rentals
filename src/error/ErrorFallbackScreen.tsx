@@ -1,20 +1,32 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, spacing, typography } from '@app/theme';
+import { spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
 interface ErrorFallbackScreenProps {
   onRetry: () => void;
 }
 
-export const ErrorFallbackScreen = ({ onRetry }: ErrorFallbackScreenProps) => (
-  <View style={styles.container}>
-    <Text style={styles.title}>Something went wrong.</Text>
-    <Text style={styles.message}>Please refresh the app and try again.</Text>
-    <TouchableOpacity style={styles.button} onPress={onRetry}>
-      <Text style={styles.buttonText}>Try again</Text>
-    </TouchableOpacity>
-  </View>
-);
+export const ErrorFallbackScreen = ({ onRetry }: ErrorFallbackScreenProps) => {
+  const { colors } = useThemeContext();
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Something went wrong.</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>
+        Please refresh the app and try again.
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: colors.primary }]}
+        onPress={onRetry}
+      >
+        <Text style={[styles.buttonText, { color: colors.textInverse }]}>
+          Try again
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -23,16 +35,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.xl,
-    backgroundColor: colors.background,
   },
   title: {
     ...typography.h2,
-    color: colors.text,
     textAlign: 'center',
   },
   message: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   button: {
@@ -41,11 +50,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'stretch',
     borderRadius: 12,
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
   },
   buttonText: {
     ...typography.button,
-    color: colors.textInverse,
   },
 });

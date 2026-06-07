@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, shadows, radius, spacing, typography } from '@app/theme';
+import { shadows, radius, spacing, typography } from '@app/theme';
+import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDate } from '@core/helpers/date';
 import { formatCurrency } from '@core/utils/currency';
 import type { NextRentDue } from '@core/helpers/rentalPayments';
@@ -21,12 +22,16 @@ interface CarCardProps {
 
 export const CarCard = memo<CarCardProps>(
   ({ car, customer, totalPaid, nextRentDue, hidePaymentInfo, onPress }) => {
+  const { colors } = useThemeContext();
   const { t } = useTranslation();
   const badge = carStatusToBadge(car.status);
   const imageUri = car.images[0];
 
   return (
-    <Pressable onPress={onPress} style={[styles.card, shadows.md]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.card, shadows.md, { backgroundColor: colors.surface }]}
+    >
       {imageUri ? (
         <Image
           source={{ uri: imageUri }}
@@ -34,7 +39,7 @@ export const CarCard = memo<CarCardProps>(
           onError={() => reportImageLoadError(imageUri, 'CarCard')}
         />
       ) : (
-        <View style={[styles.image, styles.placeholder]} />
+        <View style={[styles.image, { backgroundColor: colors.borderLight }]} />
       )}
       <View style={styles.body}>
         <View style={styles.header}>
@@ -45,7 +50,7 @@ export const CarCard = memo<CarCardProps>(
           {car.brand} {car.model} · {car.numberPlate}
         </Text>
         {!hidePaymentInfo && nextRentDue ? (
-          <Text style={styles.nextRent}>
+          <Text style={[styles.nextRent, { color: colors.warning }]}>
             {t('cars.nextRent', {
               amount: formatCurrency(nextRentDue.amount),
               date: formatDate(nextRentDue.dueDate),
@@ -66,7 +71,7 @@ export const CarCard = memo<CarCardProps>(
           <Text style={styles.customer}>{t('cars.availableNow')}</Text>
         )}
         {!hidePaymentInfo ? (
-          <Text style={styles.earnings}>
+          <Text style={[styles.earnings, { color: colors.primary }]}>
             {t('cars.earned', { amount: formatCurrency(totalPaid) })}
           </Text>
         ) : null}
@@ -78,13 +83,11 @@ export const CarCard = memo<CarCardProps>(
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     marginBottom: spacing.md,
     overflow: 'hidden',
   },
   image: { width: '100%', height: 140 },
-  placeholder: { backgroundColor: colors.borderLight },
   body: { padding: spacing.lg },
   header: {
     flexDirection: 'row',
@@ -95,8 +98,7 @@ const styles = StyleSheet.create({
   customer: { ...typography.bodySmall, marginTop: spacing.xs },
   nextRent: {
     ...typography.label,
-    color: colors.warning,
     marginTop: spacing.sm,
   },
-  earnings: { ...typography.caption, color: colors.primary, marginTop: spacing.xs },
+  earnings: { ...typography.caption, marginTop: spacing.xs },
 });
