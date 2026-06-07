@@ -346,7 +346,6 @@ flowchart TD
 | `src/network/networkTypes.ts` | Network state types. |
 | `src/network/useNetworkStatus.ts` | Hook for network status. |
 | `src/locales/en.json` | English translation strings. |
-| `src/zustand/useBottomSheetStore.ts` | Global bottom sheet state, where needed. |
 | `src/zustand/useLoaderStore.ts` | Global loading overlay state. |
 | `src/zustand/useModalStore.ts` | Global modal state. |
 | `src/zustand/useToastStore.ts` | Global toast state. |

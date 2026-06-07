@@ -1,10 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import { Dialog, Portal, Snackbar, Text } from 'react-native-paper';
-import { spacing, typography } from '@app/theme';
+import { spacing } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
-import { AppBottomSheet, type AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
-import { useBottomSheetStore } from '@zustand/useBottomSheetStore';
 import { useLoaderStore } from '@zustand/useLoaderStore';
 import { useModalStore } from '@zustand/useModalStore';
 import { useToastStore } from '@zustand/useToastStore';
@@ -22,16 +20,6 @@ export const GlobalUiHost = () => {
   const { visible: toastVisible, message: toastMessage, type, duration, hideToast } =
     useToastStore();
   const { alert, hideAlert, modal, hideModal } = useModalStore();
-  const { sheet, hideBottomSheet } = useBottomSheetStore();
-  const bottomSheetRef = useRef<AppBottomSheetRef>(null);
-
-  useEffect(() => {
-    if (sheet) {
-      bottomSheetRef.current?.open();
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [sheet]);
 
   const handleAlertOk = () => {
     const onOk = alert?.onOk;
@@ -101,20 +89,6 @@ export const GlobalUiHost = () => {
           </View>
         </View>
       </Modal>
-
-      <AppBottomSheet
-        ref={bottomSheetRef}
-        snapPoints={sheet?.snapPoints}
-        scrollable={sheet?.scrollable}
-        onDismiss={() => {
-          const onDismiss = sheet?.onDismiss;
-          hideBottomSheet();
-          onDismiss?.();
-        }}
-      >
-        {sheet?.title ? <Text style={typography.h3}>{sheet.title}</Text> : null}
-        {sheet?.content}
-      </AppBottomSheet>
     </>
   );
 };
