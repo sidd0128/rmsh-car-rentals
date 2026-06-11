@@ -268,6 +268,9 @@ export const AssignmentModal = forwardRef<
             options={availableCarOptions}
             onSelect={setCarId}
             fullWidth
+            searchable
+            searchPlaceholder={t('assignment.searchCars')}
+            emptySearchMessage={t('assignment.noCarsMatchSearch')}
           />
           {availableCarOptions.length === 0 ? (
             <Text style={[styles.hint, { color: colors.textMuted }]}>

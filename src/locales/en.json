@@ -293,6 +293,8 @@
     "subtitle": "Set how rent is charged, which day payments are due, then confirm the schedule.",
     "selectCar": "Select car",
     "selectCustomer": "Select customer",
+    "searchCars": "Search cars, plates, models...",
+    "noCarsMatchSearch": "No cars match your search.",
     "selectCarAlert": "Select a car",
     "noAvailableCars": "No available cars right now.",
     "addNewCustomer": "+ Add new customer",

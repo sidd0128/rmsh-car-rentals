@@ -1,9 +1,10 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Menu, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { AppButton } from '@shared/ui/AppButton';
+import { SearchBar } from './SearchBar';
 
 export type DropdownOption<T extends string> = {
   label: string;
@@ -24,6 +25,9 @@ export interface AppDropdownProps<T extends string> {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   fullWidth?: boolean;
   actions?: DropdownAction[];
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  emptySearchMessage?: string;
 }
 
 function AppDropdownInner<T extends string>({
@@ -33,14 +37,36 @@ function AppDropdownInner<T extends string>({
   variant = 'outline',
   fullWidth,
   actions = [],
+  searchable = false,
+  searchPlaceholder = 'Search...',
+  emptySearchMessage = 'No matching options',
 }: AppDropdownProps<T>) {
   const { colors } = useThemeContext();
   const [visible, setVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const closeMenu = () => {
+    setVisible(false);
+    setSearchQuery('');
+  };
+
+  const filteredOptions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!searchable || normalizedQuery.length === 0) {
+      return options;
+    }
+
+    return options.filter(option => {
+      const searchableText = `${option.label} ${option.description ?? ''}`;
+      return searchableText.toLowerCase().includes(normalizedQuery);
+    });
+  }, [options, searchQuery, searchable]);
 
   return (
     <Menu
       visible={visible}
-      onDismiss={() => setVisible(false)}
+      onDismiss={closeMenu}
       anchor={
         <AppButton
           label={label}
@@ -50,7 +76,19 @@ function AppDropdownInner<T extends string>({
         />
       }
     >
-      {options.map(option => (
+      {searchable ? (
+        <View style={styles.searchContainer}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={searchPlaceholder}
+            style={styles.search}
+            inputStyle={styles.searchInput}
+          />
+        </View>
+      ) : null}
+
+      {filteredOptions.map(option => (
         <Menu.Item
           key={option.value}
           disabled={option.disabled}
@@ -68,16 +106,23 @@ function AppDropdownInner<T extends string>({
           }
           onPress={() => {
             onSelect(option.value);
-            setVisible(false);
+            closeMenu();
           }}
         />
       ))}
+
+      {searchable && filteredOptions.length === 0 ? (
+        <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
+          {emptySearchMessage}
+        </Text>
+      ) : null}
+
       {actions.map(action => (
         <Menu.Item
           key={action.label}
           title={action.label}
           onPress={() => {
-            setVisible(false);
+            closeMenu();
             action.onPress();
           }}
         />
@@ -91,7 +136,22 @@ export const AppDropdown = memo(AppDropdownInner) as <T extends string>(
 ) => React.ReactElement;
 
 const styles = StyleSheet.create({
+  searchContainer: {
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  search: {
+    minWidth: 260,
+  },
+  searchInput: {
+    minHeight: 36,
+  },
   description: {
     marginTop: spacing.xxs,
+  },
+  emptyMessage: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
 });

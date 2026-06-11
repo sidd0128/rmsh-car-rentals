@@ -7,6 +7,8 @@ export type {
 export { CollapsibleSection } from './components/CollapsibleSection';
 export type { CollapsibleSectionProps } from './components/CollapsibleSection';
 export { SearchHeader } from './components/SearchHeader';
+export { SearchBar } from './components/SearchBar';
+export type { SearchBarProps } from './components/SearchBar';
 export { SelectableList } from './components/SelectableList';
 export type {
   SelectableListOption,
