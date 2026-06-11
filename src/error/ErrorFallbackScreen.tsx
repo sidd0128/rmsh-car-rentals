@@ -1,18 +1,17 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { spacing, typography } from '@app/theme';
-import { useThemeContext } from '@contextApis/theme/useThemeContext';
+import { colors, spacing, typography } from '@app/theme';
 
 interface ErrorFallbackScreenProps {
   onRetry: () => void;
 }
 
 export const ErrorFallbackScreen = ({ onRetry }: ErrorFallbackScreenProps) => {
-  const { colors } = useThemeContext();
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Something went wrong.</Text>
+      <Text style={[styles.title, { color: colors.text }]}>
+        Something went wrong.
+      </Text>
       <Text style={[styles.message, { color: colors.textSecondary }]}>
         Please refresh the app and try again.
       </Text>

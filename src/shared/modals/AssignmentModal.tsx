@@ -1,8 +1,25 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { SegmentedButtons, Text } from 'react-native-paper';
-import { AppBottomSheet, AppBottomSheetRef } from '@shared/bottomSheets/AppBottomSheet';
-import { AppButton, AppDropdown, AppInput, AppDatePickerModal, WeekdayPicker } from '@shared/ui';
+import {
+  AppBottomSheet,
+  AppBottomSheetRef,
+} from '@shared/bottomSheets/AppBottomSheet';
+import {
+  AppButton,
+  AppDropdown,
+  AppInput,
+  AppDatePickerModal,
+  WeekdayPicker,
+} from '@shared/ui';
 import { spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { modalFormStyles } from '@shared/modals/modalFormStyles';
@@ -25,7 +42,8 @@ import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
 
 export interface AssignmentModalRef {
-  open: (carId: string) => void;
+  open: (carId: string, initialCustomerId?: string) => void;
+  openForCustomer: (customerId: string) => void;
   close: () => void;
 }
 
@@ -52,141 +70,221 @@ const defaultRateForFrequency = (
   }
 };
 
-export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalProps>(
-  ({ onSuccess, onAddCustomer }, ref) => {
-    const { t } = useTranslation();
-    const { colors } = useThemeContext();
-    const sheetRef = useRef<AppBottomSheetRef>(null);
-    const frequencyOptions = useMemo(
-      (): { value: BillingFrequency; label: string }[] => [
-        { value: 'DAILY', label: t('assignment.frequencyDaily') },
-        { value: 'WEEKLY', label: t('assignment.frequencyWeekly') },
-        { value: 'MONTHLY', label: t('assignment.frequencyMonthly') },
-      ],
-      [t],
-    );
-    const [carId, setCarId] = useState('');
-    const [customerId, setCustomerId] = useState('');
-    const [frequency, setFrequency] = useState<BillingFrequency>('WEEKLY');
-    const [rate, setRate] = useState('');
-    const [startDatePart, setStartDatePart] = useState(new Date());
-    const [startTimePart, setStartTimePart] = useState(new Date());
-    const [endDatePart, setEndDatePart] = useState(dayjs().add(7, 'day').toDate());
-    const [endTimePart, setEndTimePart] = useState(dayjs().add(7, 'day').toDate());
-    const [endDateUnset, setEndDateUnset] = useState(false);
-    const [rentDueWeekday, setRentDueWeekday] = useState<number>(() => dayjs().day());
-    const [rentDueDayOfMonth, setRentDueDayOfMonth] = useState(() =>
-      Math.min(dayjs().date(), 28),
-    );
-    const [showStartDate, setShowStartDate] = useState(false);
-    const [showStartTime, setShowStartTime] = useState(false);
-    const [showEndDate, setShowEndDate] = useState(false);
-    const [showEndTime, setShowEndTime] = useState(false);
-    const [showRentDueDay, setShowRentDueDay] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
+export const AssignmentModal = forwardRef<
+  AssignmentModalRef,
+  AssignmentModalProps
+>(({ onSuccess, onAddCustomer }, ref) => {
+  const { t } = useTranslation();
+  const { colors } = useThemeContext();
+  const sheetRef = useRef<AppBottomSheetRef>(null);
+  const frequencyOptions = useMemo(
+    (): { value: BillingFrequency; label: string }[] => [
+      { value: 'DAILY', label: t('assignment.frequencyDaily') },
+      { value: 'WEEKLY', label: t('assignment.frequencyWeekly') },
+      { value: 'MONTHLY', label: t('assignment.frequencyMonthly') },
+    ],
+    [t],
+  );
+  const [carId, setCarId] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [carLocked, setCarLocked] = useState(false);
+  const [customerLocked, setCustomerLocked] = useState(false);
+  const [frequency, setFrequency] = useState<BillingFrequency>('WEEKLY');
+  const [rate, setRate] = useState('');
+  const [startDatePart, setStartDatePart] = useState(new Date());
+  const [startTimePart, setStartTimePart] = useState(new Date());
+  const [endDatePart, setEndDatePart] = useState(
+    dayjs().add(7, 'day').toDate(),
+  );
+  const [endTimePart, setEndTimePart] = useState(
+    dayjs().add(7, 'day').toDate(),
+  );
+  const [endDateUnset, setEndDateUnset] = useState(false);
+  const [rentDueWeekday, setRentDueWeekday] = useState<number>(() =>
+    dayjs().day(),
+  );
+  const [rentDueDayOfMonth, setRentDueDayOfMonth] = useState(() =>
+    Math.min(dayjs().date(), 28),
+  );
+  const [showStartDate, setShowStartDate] = useState(false);
+  const [showStartTime, setShowStartTime] = useState(false);
+  const [showEndDate, setShowEndDate] = useState(false);
+  const [showEndTime, setShowEndTime] = useState(false);
+  const [showRentDueDay, setShowRentDueDay] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-    const customers = useCustomerStore(s => s.customers);
-    const car = useCarStore(s => (carId ? s.getCarById(carId) : undefined));
-    const assignRental = useRentalStore(s => s.assignRental);
-    const selectedCustomer = customers.find(c => c.id === customerId);
-    const customerOptions = useMemo(
-      () => customers.map(c => ({ label: c.name, value: c.id })),
-      [customers],
-    );
+  const customers = useCustomerStore(s => s.customers);
+  const cars = useCarStore(s => s.cars);
+  const car = useCarStore(s => (carId ? s.getCarById(carId) : undefined));
+  const assignRental = useRentalStore(s => s.assignRental);
+  const selectedCustomer = customers.find(c => c.id === customerId);
+  const customerOptions = useMemo(
+    () => customers.map(c => ({ label: c.name, value: c.id })),
+    [customers],
+  );
+  const availableCarOptions = useMemo(
+    () =>
+      cars
+        .filter(c => c.status === 'AVAILABLE')
+        .map(c => ({
+          label: c.name,
+          value: c.id,
+          description: `${c.brand} ${c.model} · ${c.numberPlate}`,
+        })),
+    [cars],
+  );
 
-    const startDateTime = useMemo(
-      () => mergeDateAndTime(startDatePart, startTimePart),
-      [startDatePart, startTimePart],
-    );
-    const endDateTime = useMemo(
-      () => mergeDateAndTime(endDatePart, endTimePart),
-      [endDatePart, endTimePart],
-    );
+  const startDateTime = useMemo(
+    () => mergeDateAndTime(startDatePart, startTimePart),
+    [startDatePart, startTimePart],
+  );
+  const endDateTime = useMemo(
+    () => mergeDateAndTime(endDatePart, endTimePart),
+    [endDatePart, endTimePart],
+  );
 
-    useImperativeHandle(ref, () => ({
-      open: id => {
+  const resetScheduleDefaults = useCallback(() => {
+    const now = new Date();
+    const weekLater = dayjs(now).add(7, 'day').toDate();
+
+    setRate('');
+    setStartDatePart(now);
+    setStartTimePart(now);
+    setEndDatePart(weekLater);
+    setEndTimePart(weekLater);
+    setEndDateUnset(false);
+    setRentDueWeekday(dayjs(now).day());
+    setRentDueDayOfMonth(Math.min(dayjs(now).date(), 28));
+    setFrequency('WEEKLY');
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      open: (id, initialCustomerId) => {
         setCarId(id);
-        setCustomerId('');
-        const now = new Date();
-        setStartDatePart(now);
-        setStartTimePart(now);
-        const weekLater = dayjs().add(7, 'day').toDate();
-        setEndDatePart(weekLater);
-        setEndTimePart(weekLater);
-        setEndDateUnset(false);
-        setRentDueWeekday(dayjs(now).day());
-        setRentDueDayOfMonth(Math.min(dayjs(now).date(), 28));
-        setFrequency('WEEKLY');
+        setCustomerId(initialCustomerId ?? '');
+        setCarLocked(true);
+        setCustomerLocked(Boolean(initialCustomerId));
+        resetScheduleDefaults();
+        sheetRef.current?.open();
+      },
+      openForCustomer: initialCustomerId => {
+        setCarId('');
+        setCustomerId(initialCustomerId);
+        setCarLocked(false);
+        setCustomerLocked(true);
+        resetScheduleDefaults();
         sheetRef.current?.open();
       },
       close: () => sheetRef.current?.close(),
-    }));
+    }),
+    [resetScheduleDefaults],
+  );
 
-    useEffect(() => {
-      const cfg = car?.priceConfigurations[0];
-      if (!cfg) {
-        return;
-      }
-      setRate(
-        defaultRateForFrequency(
-          frequency,
-          cfg.dailyRate,
-          cfg.weeklyRate,
-          cfg.monthlyRate,
-        ),
-      );
-    }, [car, frequency]);
-
-    const handleAssign = async () => {
-      if (!customerId) {
-        Alert.alert(t('assignment.selectCustomerAlert'));
-        return;
-      }
-      const rateAmount = Number(rate);
-      if (!Number.isFinite(rateAmount) || rateAmount <= 0) {
-        Alert.alert(t('assignment.invalidRate'));
-        return;
-      }
-      if (!endDateUnset && dayjs(endDateTime).isBefore(dayjs(startDateTime))) {
-        Alert.alert(t('assignment.invalidScheduleTitle'), t('assignment.endBeforeStart'));
-        return;
-      }
-
-      setSubmitting(true);
-      const result = await assignRental({
-        carId,
-        customerId,
-        startDate: startDateTime.toISOString(),
-        endDate: endDateUnset ? OPEN_ENDED_RENTAL_END_ISO : endDateTime.toISOString(),
-        openEnded: endDateUnset,
-        billingFrequency: frequency,
-        rateAmount,
-        collectFirstPaymentOnAssignment: false,
-        rentDueWeekday: frequency === 'WEEKLY' ? rentDueWeekday : undefined,
-        rentDueDayOfMonth: frequency === 'MONTHLY' ? rentDueDayOfMonth : undefined,
-      });
-      setSubmitting(false);
-
-      if (!result.success) {
-        Alert.alert(t('assignment.failedTitle'), result.error);
-        return;
-      }
-      sheetRef.current?.close();
-      onSuccess?.();
-    };
-
-    const rentDueMonthDate = useMemo(
-      () => dayjs().date(rentDueDayOfMonth).toDate(),
-      [rentDueDayOfMonth],
+  useEffect(() => {
+    const cfg = car?.priceConfigurations[0];
+    if (!cfg) {
+      return;
+    }
+    setRate(
+      defaultRateForFrequency(
+        frequency,
+        cfg.dailyRate,
+        cfg.weeklyRate,
+        cfg.monthlyRate,
+      ),
     );
+  }, [car, frequency]);
 
-    return (
-      <AppBottomSheet ref={sheetRef} scrollable>
-        <Text style={typography.h3}>{t('assignment.title')}</Text>
-        <Text style={[modalFormStyles.subtitle, { color: colors.textSecondary }]}>
-          {t('assignment.subtitle')}
-        </Text>
+  const handleAssign = async () => {
+    if (!carId) {
+      Alert.alert(t('assignment.selectCarAlert'));
+      return;
+    }
+    if (!customerId) {
+      Alert.alert(t('assignment.selectCustomerAlert'));
+      return;
+    }
+    const rateAmount = Number(rate);
+    if (!Number.isFinite(rateAmount) || rateAmount <= 0) {
+      Alert.alert(t('assignment.invalidRate'));
+      return;
+    }
+    if (!endDateUnset && dayjs(endDateTime).isBefore(dayjs(startDateTime))) {
+      Alert.alert(
+        t('assignment.invalidScheduleTitle'),
+        t('assignment.endBeforeStart'),
+      );
+      return;
+    }
 
+    setSubmitting(true);
+    const result = await assignRental({
+      carId,
+      customerId,
+      startDate: startDateTime.toISOString(),
+      endDate: endDateUnset
+        ? OPEN_ENDED_RENTAL_END_ISO
+        : endDateTime.toISOString(),
+      openEnded: endDateUnset,
+      billingFrequency: frequency,
+      rateAmount,
+      collectFirstPaymentOnAssignment: false,
+      rentDueWeekday: frequency === 'WEEKLY' ? rentDueWeekday : undefined,
+      rentDueDayOfMonth:
+        frequency === 'MONTHLY' ? rentDueDayOfMonth : undefined,
+    });
+    setSubmitting(false);
+
+    if (!result.success) {
+      Alert.alert(t('assignment.failedTitle'), result.error);
+      return;
+    }
+    sheetRef.current?.close();
+    onSuccess?.();
+  };
+
+  const rentDueMonthDate = useMemo(
+    () => dayjs().date(rentDueDayOfMonth).toDate(),
+    [rentDueDayOfMonth],
+  );
+
+  return (
+    <AppBottomSheet ref={sheetRef} scrollable>
+      <Text style={typography.h3}>
+        {customerLocked && !carLocked
+          ? t('assignment.assignCarTitle')
+          : t('assignment.title')}
+      </Text>
+      <Text style={[modalFormStyles.subtitle, { color: colors.textSecondary }]}>
+        {t('assignment.subtitle')}
+      </Text>
+
+      {carLocked ? null : (
+        <>
+          <AppDropdown
+            label={car?.name ?? t('assignment.selectCar')}
+            options={availableCarOptions}
+            onSelect={setCarId}
+            fullWidth
+          />
+          {availableCarOptions.length === 0 ? (
+            <Text style={[styles.hint, { color: colors.textMuted }]}>
+              {t('assignment.noAvailableCars')}
+            </Text>
+          ) : null}
+        </>
+      )}
+
+      {customerLocked ? (
+        <View>
+          <Text style={modalFormStyles.fieldLabel}>{t('common.customer')}</Text>
+          <Text style={typography.body}>
+            {selectedCustomer?.name ?? t('common.notAvailable')}
+          </Text>
+        </View>
+      ) : (
         <AppDropdown
           label={selectedCustomer?.name ?? t('assignment.selectCustomer')}
           options={customerOptions}
@@ -202,179 +300,191 @@ export const AssignmentModal = forwardRef<AssignmentModalRef, AssignmentModalPro
             },
           ]}
         />
+      )}
 
-        <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentFrequency')}</Text>
-        <SegmentedButtons
-          value={frequency}
-          onValueChange={v => setFrequency(v as BillingFrequency)}
-          buttons={frequencyOptions}
-          style={styles.segment}
-        />
+      <Text style={modalFormStyles.fieldLabel}>
+        {t('assignment.rentFrequency')}
+      </Text>
+      <SegmentedButtons
+        value={frequency}
+        onValueChange={v => setFrequency(v as BillingFrequency)}
+        buttons={frequencyOptions}
+        style={styles.segment}
+      />
 
-        <AppInput
-          label={rateFieldLabel(frequency)}
-          value={rate}
-          onChangeText={setRate}
-          keyboardType="numeric"
-        />
+      <AppInput
+        label={rateFieldLabel(frequency)}
+        value={rate}
+        onChangeText={setRate}
+        keyboardType="numeric"
+      />
 
-        <Text style={modalFormStyles.fieldLabel}>{t('assignment.startDateTime')}</Text>
-        <View style={styles.dateRow}>
-          <AppButton
-            label={t('assignment.startDateButton', {
-              date: dayjs(startDatePart).format('DD MMM YYYY'),
-            })}
-            variant="outline"
-            onPress={() => setShowStartDate(true)}
-            fullWidth
-          />
-          <AppButton
-            label={t('assignment.startTimeButton', {
-              time: dayjs(startTimePart).format('h:mm A'),
-            })}
-            variant="outline"
-            onPress={() => setShowStartTime(true)}
-            fullWidth
-          />
-        </View>
-        <Text style={[styles.hint, { color: colors.textMuted }]}>
-          {formatDateTimeAmPm(startDateTime.toISOString())}
-        </Text>
-
-        <Text style={modalFormStyles.fieldLabel}>{t('assignment.endDateTime')}</Text>
-        {endDateUnset ? (
-          <Text style={[styles.openEndedHint, { color: colors.textMuted }]}>
-            {t('assignment.endLeftBlank')}
-          </Text>
-        ) : (
-          <>
-            <View style={styles.dateRow}>
-              <AppButton
-                label={t('assignment.endDateButton', {
-                  date: dayjs(endDatePart).format('DD MMM YYYY'),
-                })}
-                variant="outline"
-                onPress={() => setShowEndDate(true)}
-                fullWidth
-              />
-              <AppButton
-                label={t('assignment.endTimeButton', {
-                  time: dayjs(endTimePart).format('h:mm A'),
-                })}
-                variant="outline"
-                onPress={() => setShowEndTime(true)}
-                fullWidth
-              />
-            </View>
-            <Text style={[styles.hint, { color: colors.textMuted }]}>
-              {formatDateTimeAmPm(endDateTime.toISOString())}
-            </Text>
-          </>
-        )}
+      <Text style={modalFormStyles.fieldLabel}>
+        {t('assignment.startDateTime')}
+      </Text>
+      <View style={styles.dateRow}>
         <AppButton
-          label={
-            endDateUnset ? t('assignment.setEndDateTime') : t('assignment.leaveEndBlank')
-          }
+          label={t('assignment.startDateButton', {
+            date: dayjs(startDatePart).format('DD MMM YYYY'),
+          })}
           variant="outline"
-          onPress={() => setEndDateUnset(prev => !prev)}
+          onPress={() => setShowStartDate(true)}
           fullWidth
         />
+        <AppButton
+          label={t('assignment.startTimeButton', {
+            time: dayjs(startTimePart).format('h:mm A'),
+          })}
+          variant="outline"
+          onPress={() => setShowStartTime(true)}
+          fullWidth
+        />
+      </View>
+      <Text style={[styles.hint, { color: colors.textMuted }]}>
+        {formatDateTimeAmPm(startDateTime.toISOString())}
+      </Text>
 
-        {frequency === 'WEEKLY' ? (
-          <View>
-            <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentPaidOn')}</Text>
-            <WeekdayPicker value={rentDueWeekday} onChange={setRentDueWeekday} />
-            <Text style={[styles.dueHint, { color: colors.textMuted }]}>
-              {formatRentDueDaySummary('WEEKLY', rentDueWeekday)}
-            </Text>
-          </View>
-        ) : null}
-
-        {frequency === 'MONTHLY' ? (
-          <View>
-            <Text style={modalFormStyles.fieldLabel}>{t('assignment.rentDueDayOfMonth')}</Text>
+      <Text style={modalFormStyles.fieldLabel}>
+        {t('assignment.endDateTime')}
+      </Text>
+      {endDateUnset ? (
+        <Text style={[styles.openEndedHint, { color: colors.textMuted }]}>
+          {t('assignment.endLeftBlank')}
+        </Text>
+      ) : (
+        <>
+          <View style={styles.dateRow}>
             <AppButton
-              label={t('common.dayOfMonthButton', { day: rentDueDayOfMonth })}
+              label={t('assignment.endDateButton', {
+                date: dayjs(endDatePart).format('DD MMM YYYY'),
+              })}
               variant="outline"
-              onPress={() => setShowRentDueDay(true)}
+              onPress={() => setShowEndDate(true)}
               fullWidth
             />
-            <Text style={[styles.dueHint, { color: colors.textMuted }]}>
-              {formatRentDueDaySummary('MONTHLY', undefined, rentDueDayOfMonth)}
-            </Text>
+            <AppButton
+              label={t('assignment.endTimeButton', {
+                time: dayjs(endTimePart).format('h:mm A'),
+              })}
+              variant="outline"
+              onPress={() => setShowEndTime(true)}
+              fullWidth
+            />
           </View>
-        ) : null}
-
-        {frequency === 'DAILY' ? (
-          <Text style={[styles.dueHint, { color: colors.textMuted }]}>
-            {formatRentDueDaySummary('DAILY')}
+          <Text style={[styles.hint, { color: colors.textMuted }]}>
+            {formatDateTimeAmPm(endDateTime.toISOString())}
           </Text>
-        ) : null}
+        </>
+      )}
+      <AppButton
+        label={
+          endDateUnset
+            ? t('assignment.setEndDateTime')
+            : t('assignment.leaveEndBlank')
+        }
+        variant="outline"
+        onPress={() => setEndDateUnset(prev => !prev)}
+        fullWidth
+      />
 
-        <AppButton
-          label={t('assignment.confirmAssignment')}
-          onPress={handleAssign}
-          loading={submitting}
-          fullWidth
-        />
+      {frequency === 'WEEKLY' ? (
+        <View>
+          <Text style={modalFormStyles.fieldLabel}>
+            {t('assignment.rentPaidOn')}
+          </Text>
+          <WeekdayPicker value={rentDueWeekday} onChange={setRentDueWeekday} />
+          <Text style={[styles.dueHint, { color: colors.textMuted }]}>
+            {formatRentDueDaySummary('WEEKLY', rentDueWeekday)}
+          </Text>
+        </View>
+      ) : null}
 
-        <AppDatePickerModal
-          open={showStartDate}
-          date={startDatePart}
-          minimumDate={getEarliestSelectableHistoryDate()}
-          maximumDate={getLatestSelectableHistoryDate()}
-          onConfirm={d => {
-            setShowStartDate(false);
-            setStartDatePart(d);
-          }}
-          onCancel={() => setShowStartDate(false)}
-        />
-        <AppDatePickerModal
-          open={showStartTime}
-          date={startTimePart}
-          mode="time"
-          onConfirm={d => {
-            setShowStartTime(false);
-            setStartTimePart(d);
-          }}
-          onCancel={() => setShowStartTime(false)}
-        />
-        <AppDatePickerModal
-          open={showEndDate}
-          date={endDatePart}
-          minimumDate={startDatePart}
-          maximumDate={getLatestSelectableHistoryDate()}
-          onConfirm={d => {
-            setShowEndDate(false);
-            setEndDatePart(d);
-          }}
-          onCancel={() => setShowEndDate(false)}
-        />
-        <AppDatePickerModal
-          open={showEndTime}
-          date={endTimePart}
-          mode="time"
-          onConfirm={d => {
-            setShowEndTime(false);
-            setEndTimePart(d);
-          }}
-          onCancel={() => setShowEndTime(false)}
-        />
-        <AppDatePickerModal
-          open={showRentDueDay}
-          date={rentDueMonthDate}
-          minimumDate={getEarliestSelectableHistoryDate()}
-          maximumDate={getLatestSelectableHistoryDate()}
-          onConfirm={d => {
-            setShowRentDueDay(false);
-            setRentDueDayOfMonth(Math.min(dayjs(d).date(), 28));
-          }}
-          onCancel={() => setShowRentDueDay(false)}
-        />
-      </AppBottomSheet>
-    );
-  },
-);
+      {frequency === 'MONTHLY' ? (
+        <View>
+          <Text style={modalFormStyles.fieldLabel}>
+            {t('assignment.rentDueDayOfMonth')}
+          </Text>
+          <AppButton
+            label={t('common.dayOfMonthButton', { day: rentDueDayOfMonth })}
+            variant="outline"
+            onPress={() => setShowRentDueDay(true)}
+            fullWidth
+          />
+          <Text style={[styles.dueHint, { color: colors.textMuted }]}>
+            {formatRentDueDaySummary('MONTHLY', undefined, rentDueDayOfMonth)}
+          </Text>
+        </View>
+      ) : null}
+
+      {frequency === 'DAILY' ? (
+        <Text style={[styles.dueHint, { color: colors.textMuted }]}>
+          {formatRentDueDaySummary('DAILY')}
+        </Text>
+      ) : null}
+
+      <AppButton
+        label={t('assignment.confirmAssignment')}
+        onPress={handleAssign}
+        loading={submitting}
+        fullWidth
+      />
+
+      <AppDatePickerModal
+        open={showStartDate}
+        date={startDatePart}
+        minimumDate={getEarliestSelectableHistoryDate()}
+        maximumDate={getLatestSelectableHistoryDate()}
+        onConfirm={d => {
+          setShowStartDate(false);
+          setStartDatePart(d);
+        }}
+        onCancel={() => setShowStartDate(false)}
+      />
+      <AppDatePickerModal
+        open={showStartTime}
+        date={startTimePart}
+        mode="time"
+        onConfirm={d => {
+          setShowStartTime(false);
+          setStartTimePart(d);
+        }}
+        onCancel={() => setShowStartTime(false)}
+      />
+      <AppDatePickerModal
+        open={showEndDate}
+        date={endDatePart}
+        minimumDate={startDatePart}
+        maximumDate={getLatestSelectableHistoryDate()}
+        onConfirm={d => {
+          setShowEndDate(false);
+          setEndDatePart(d);
+        }}
+        onCancel={() => setShowEndDate(false)}
+      />
+      <AppDatePickerModal
+        open={showEndTime}
+        date={endTimePart}
+        mode="time"
+        onConfirm={d => {
+          setShowEndTime(false);
+          setEndTimePart(d);
+        }}
+        onCancel={() => setShowEndTime(false)}
+      />
+      <AppDatePickerModal
+        open={showRentDueDay}
+        date={rentDueMonthDate}
+        minimumDate={getEarliestSelectableHistoryDate()}
+        maximumDate={getLatestSelectableHistoryDate()}
+        onConfirm={d => {
+          setShowRentDueDay(false);
+          setRentDueDayOfMonth(Math.min(dayjs(d).date(), 28));
+        }}
+        onCancel={() => setShowRentDueDay(false)}
+      />
+    </AppBottomSheet>
+  );
+});
 
 const styles = StyleSheet.create({
   segment: {

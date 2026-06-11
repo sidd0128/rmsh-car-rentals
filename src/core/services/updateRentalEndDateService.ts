@@ -1,6 +1,9 @@
 import dayjs from 'dayjs';
 import { repositories } from '@core/database/repositoryRegistry';
-import { isOpenEndedRental, OPEN_ENDED_RENTAL_END_ISO } from '@core/constants/rental';
+import {
+  isOpenEndedRental,
+  OPEN_ENDED_RENTAL_END_ISO,
+} from '@core/constants/rental';
 import { hasBookingConflict } from './bookingConflictService';
 import {
   deriveCarStatus,
@@ -37,7 +40,10 @@ export const updateRentalEndDate = async (
       rental.id,
     )
   ) {
-    return { success: false, error: 'Booking dates conflict with another rental' };
+    return {
+      success: false,
+      error: 'Booking dates conflict with another rental',
+    };
   }
 
   const wasOpen = isOpenEndedRental(rental.endDate);
@@ -48,9 +54,9 @@ export const updateRentalEndDate = async (
     status:
       rental.status === 'UPCOMING'
         ? rental.status
-        : end.isBefore(dayjs(), 'minute')
-          ? 'COMPLETED'
-          : 'ACTIVE',
+        : end.isAfter(dayjs())
+        ? 'ACTIVE'
+        : 'COMPLETED',
   };
 
   if (wasOpen && !isOpenEndedRental(newEndDate)) {
@@ -61,7 +67,9 @@ export const updateRentalEndDate = async (
 
   const car = await repositories.cars.getCarById(rental.carId);
   if (car) {
-    const updatedRentals = await repositories.rentals.getRentalsByCarId(rental.carId);
+    const updatedRentals = await repositories.rentals.getRentalsByCarId(
+      rental.carId,
+    );
     await repositories.cars.updateCar({
       ...car,
       status: deriveCarStatus(car, updatedRentals),

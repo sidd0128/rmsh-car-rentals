@@ -17,8 +17,13 @@ export const GlobalUiHost = () => {
     error: colors.error,
   };
   const { visible: loaderVisible, message: loaderMessage } = useLoaderStore();
-  const { visible: toastVisible, message: toastMessage, type, duration, hideToast } =
-    useToastStore();
+  const {
+    visible: toastVisible,
+    message: toastMessage,
+    type,
+    duration,
+    hideToast,
+  } = useToastStore();
   const { alert, hideAlert, modal, hideModal } = useModalStore();
 
   const handleAlertOk = () => {
@@ -57,11 +62,17 @@ export const GlobalUiHost = () => {
         <Dialog visible={Boolean(modal)} onDismiss={handleModalCancel}>
           <Dialog.Title>{modal?.title}</Dialog.Title>
           {modal?.message || modal?.content ? (
-            <Dialog.Content>{modal.content ?? <Text>{modal.message}</Text>}</Dialog.Content>
+            <Dialog.Content>
+              {modal.content ?? <Text>{modal.message}</Text>}
+            </Dialog.Content>
           ) : null}
           <Dialog.Actions>
             {modal?.cancelText ? (
-              <AppButton label={modal.cancelText} variant="outline" onPress={handleModalCancel} />
+              <AppButton
+                label={modal.cancelText}
+                variant="outline"
+                onPress={handleModalCancel}
+              />
             ) : null}
             <AppButton label={modal?.okText ?? 'OK'} onPress={handleModalOk} />
           </Dialog.Actions>
@@ -78,7 +89,9 @@ export const GlobalUiHost = () => {
       </Snackbar>
 
       <Modal visible={loaderVisible} transparent animationType="fade">
-        <View style={[styles.loaderOverlay, { backgroundColor: colors.overlay }]}>
+        <View
+          style={[styles.loaderOverlay, { backgroundColor: colors.overlay }]}
+        >
           <View style={[styles.loaderBox, { backgroundColor: colors.surface }]}>
             <ActivityIndicator size="large" color={colors.primary} />
             {loaderMessage ? (

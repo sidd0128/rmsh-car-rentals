@@ -43,19 +43,21 @@ const TabBar = (props: BottomTabBarProps) => {
   const { colors } = useThemeContext();
 
   return (
-  <View
-    style={[
-      styles.tabBarContainer,
-      {
-        backgroundColor: colors.surface,
-        borderTopColor: colors.border,
-      },
-    ]}
-  >
-    <BottomTabBar {...props} />
-  </View>
+    <View
+      style={[
+        styles.tabBarContainer,
+        {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
+      ]}
+    >
+      <BottomTabBar {...props} />
+    </View>
   );
 };
+
+const renderTabBar = (props: BottomTabBarProps) => <TabBar {...props} />;
 
 export const BottomTabs = () => {
   const { colors } = useThemeContext();
@@ -63,7 +65,7 @@ export const BottomTabs = () => {
 
   return (
     <Tab.Navigator
-      tabBar={TabBar}
+      tabBar={renderTabBar}
       screenOptions={{
         headerShown: false,
         tabBarPosition: 'bottom',
