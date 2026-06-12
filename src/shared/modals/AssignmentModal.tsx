@@ -293,6 +293,9 @@ export const AssignmentModal = forwardRef<
           options={customerOptions}
           onSelect={setCustomerId}
           fullWidth
+          searchable
+          searchPlaceholder={t('assignment.searchCustomers')}
+          emptySearchMessage={t('assignment.noCustomersMatchSearch')}
           actions={[
             {
               label: t('assignment.addNewCustomer'),

@@ -295,6 +295,8 @@
     "selectCustomer": "Select customer",
     "searchCars": "Search cars, plates, models...",
     "noCarsMatchSearch": "No cars match your search.",
+    "searchCustomers": "Search customers...",
+    "noCustomersMatchSearch": "No customers match your search.",
     "selectCarAlert": "Select a car",
     "noAvailableCars": "No available cars right now.",
     "addNewCustomer": "+ Add new customer",

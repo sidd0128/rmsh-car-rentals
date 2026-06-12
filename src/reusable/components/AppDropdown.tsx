@@ -1,10 +1,12 @@
 import React, { memo, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Menu, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { AppButton } from '@shared/ui/AppButton';
 import { SearchBar } from './SearchBar';
+
+const DEFAULT_SEARCHABLE_MIN_OPTIONS = 12;
 
 export type DropdownOption<T extends string> = {
   label: string;
@@ -26,8 +28,10 @@ export interface AppDropdownProps<T extends string> {
   fullWidth?: boolean;
   actions?: DropdownAction[];
   searchable?: boolean;
+  searchableMinOptions?: number;
   searchPlaceholder?: string;
   emptySearchMessage?: string;
+  maxMenuHeight?: number;
 }
 
 function AppDropdownInner<T extends string>({
@@ -38,12 +42,19 @@ function AppDropdownInner<T extends string>({
   fullWidth,
   actions = [],
   searchable = false,
+  searchableMinOptions = DEFAULT_SEARCHABLE_MIN_OPTIONS,
   searchPlaceholder = 'Search...',
   emptySearchMessage = 'No matching options',
+  maxMenuHeight,
 }: AppDropdownProps<T>) {
   const { colors } = useThemeContext();
+  const { height } = useWindowDimensions();
   const [visible, setVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const shouldShowSearch =
+    searchable || options.length >= searchableMinOptions;
+  const optionListMaxHeight =
+    maxMenuHeight ?? Math.min(360, Math.max(180, height * 0.38));
 
   const closeMenu = () => {
     setVisible(false);
@@ -53,7 +64,7 @@ function AppDropdownInner<T extends string>({
   const filteredOptions = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    if (!searchable || normalizedQuery.length === 0) {
+    if (!shouldShowSearch || normalizedQuery.length === 0) {
       return options;
     }
 
@@ -61,7 +72,7 @@ function AppDropdownInner<T extends string>({
       const searchableText = `${option.label} ${option.description ?? ''}`;
       return searchableText.toLowerCase().includes(normalizedQuery);
     });
-  }, [options, searchQuery, searchable]);
+  }, [options, searchQuery, shouldShowSearch]);
 
   return (
     <Menu
@@ -76,7 +87,7 @@ function AppDropdownInner<T extends string>({
         />
       }
     >
-      {searchable ? (
+      {shouldShowSearch ? (
         <View style={styles.searchContainer}>
           <SearchBar
             value={searchQuery}
@@ -88,45 +99,62 @@ function AppDropdownInner<T extends string>({
         </View>
       ) : null}
 
-      {filteredOptions.map(option => (
-        <Menu.Item
-          key={option.value}
-          disabled={option.disabled}
-          title={
-            option.description ? (
-              <View>
-                <Text>{option.label}</Text>
-                <Text style={[styles.description, { color: colors.textSecondary }]}>
-                  {option.description}
-                </Text>
-              </View>
-            ) : (
-              option.label
-            )
-          }
-          onPress={() => {
-            onSelect(option.value);
-            closeMenu();
-          }}
-        />
-      ))}
+      <ScrollView
+        style={[styles.optionsList, { maxHeight: optionListMaxHeight }]}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
+        {filteredOptions.map(option => (
+          <Menu.Item
+            key={option.value}
+            disabled={option.disabled}
+            title={
+              option.description ? (
+                <View>
+                  <Text>{option.label}</Text>
+                  <Text
+                    style={[
+                      styles.description,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {option.description}
+                  </Text>
+                </View>
+              ) : (
+                option.label
+              )
+            }
+            onPress={() => {
+              onSelect(option.value);
+              closeMenu();
+            }}
+          />
+        ))}
 
-      {searchable && filteredOptions.length === 0 ? (
-        <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
-          {emptySearchMessage}
-        </Text>
+        {shouldShowSearch && filteredOptions.length === 0 ? (
+          <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
+            {emptySearchMessage}
+          </Text>
+        ) : null}
+      </ScrollView>
+
+      {actions.length > 0 ? (
+        <View
+          style={[styles.actionsContainer, { borderTopColor: colors.border }]}
+        >
+          {actions.map(action => (
+            <Menu.Item
+              key={action.label}
+              title={action.label}
+              onPress={() => {
+                closeMenu();
+                action.onPress();
+              }}
+            />
+          ))}
+        </View>
       ) : null}
-
-      {actions.map(action => (
-        <Menu.Item
-          key={action.label}
-          title={action.label}
-          onPress={() => {
-            closeMenu();
-            action.onPress();
-          }}
-        />
-      ))}
     </Menu>
   );
 }
@@ -147,11 +175,17 @@ const styles = StyleSheet.create({
   searchInput: {
     minHeight: 36,
   },
+  optionsList: {
+    minWidth: 280,
+  },
   description: {
     marginTop: spacing.xxs,
   },
   emptyMessage: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  actionsContainer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });
