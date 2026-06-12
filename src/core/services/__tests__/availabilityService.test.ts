@@ -120,4 +120,20 @@ describe('availabilityService', () => {
     ];
     expect(carIsReturningSoon(car('car1'), rentals)).toBe(false);
   });
+
+  it('excludes stale active rentals that already ended', () => {
+    const rentals = [
+      rental({
+        id: 'r1',
+        carId: 'car1',
+        startDate: dayjs().subtract(10, 'day').toISOString(),
+        endDate: dayjs().subtract(1, 'day').toISOString(),
+        status: 'ACTIVE',
+      }),
+    ];
+
+    expect(rentalIsReturningSoon(rentals[0])).toBe(false);
+    expect(carIsReturningSoon(car('car1'), rentals)).toBe(false);
+    expect(resolveCurrentBookingForCar('car1', rentals)).toBeUndefined();
+  });
 });
