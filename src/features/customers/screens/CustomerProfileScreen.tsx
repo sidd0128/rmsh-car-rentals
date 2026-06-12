@@ -14,6 +14,7 @@ import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDate, formatDateTimeAmPm } from '@core/helpers/date';
 import { sortPaymentsByDueDate } from '@core/helpers/paymentInstallment';
 import { computeCustomerTotalPaid } from '@core/helpers/rentalPayments';
+import { rentalIsCurrent } from '@core/helpers/rentalStatus';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { formatCurrency } from '@core/utils/currency';
 import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
@@ -77,7 +78,7 @@ export const CustomerProfileScreen = () => {
   const activeRentals = useMemo(
     () =>
       customerRentals
-        .filter(r => r.status === 'ACTIVE')
+        .filter(r => rentalIsCurrent(r))
         .sort(
           (a, b) => dayjs(b.startDate).valueOf() - dayjs(a.startDate).valueOf(),
         ),

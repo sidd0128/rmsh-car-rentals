@@ -39,6 +39,7 @@ const CustomerRow = ({
   const { activeRental, car } = useCustomerRentalInfo(customerId);
   if (!customer) return null;
 
+  const activeCar = activeRental ? car : undefined;
   const missedRent = SHOW_PAYMENTS_UI
     ? customerHasNotPaidInstallment(customerId, payments)
     : false;
@@ -66,9 +67,9 @@ const CustomerRow = ({
           <StatusBadge label={t('customers.onRent')} variant="on_rent" />
         ) : null}
       </View>
-      {car ? (
+      {activeCar ? (
         <Text style={typography.bodySmall}>
-          {car.name}
+          {activeCar.name}
           {SHOW_PAYMENTS_UI && nextDue
             ? ` · ${formatInstallmentDueLabel(nextDue)}`
             : activeRental

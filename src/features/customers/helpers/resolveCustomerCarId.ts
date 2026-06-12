@@ -1,4 +1,8 @@
 import dayjs from 'dayjs';
+import {
+  rentalIsCurrent,
+  rentalStartsInFuture,
+} from '@core/helpers/rentalStatus';
 import type { Rental } from '@core/types/domain';
 
 /**
@@ -9,12 +13,12 @@ export const resolveCustomerCarId = (
   rentals: Rental[],
 ): string | undefined => {
   const customerRentals = rentals.filter(r => r.customerId === customerId);
-  const active = customerRentals.find(r => r.status === 'ACTIVE');
+  const active = customerRentals.find(r => rentalIsCurrent(r));
   if (active) {
     return active.carId;
   }
 
-  const upcoming = customerRentals.find(r => r.status === 'UPCOMING');
+  const upcoming = customerRentals.find(r => rentalStartsInFuture(r));
   if (upcoming) {
     return upcoming.carId;
   }

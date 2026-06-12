@@ -3,27 +3,20 @@
  */
 import i18n from '@core/i18n';
 import dayjs from 'dayjs';
+import {
+  rentalIsCurrent,
+  rentalStartsInFuture,
+} from '@core/helpers/rentalStatus';
 import type { Car, Rental } from '../types/domain';
-
-const isWithinRentalPeriod = (rental: Rental, now: dayjs.Dayjs): boolean => {
-  const start = dayjs(rental.startDate).startOf('day');
-  const end = dayjs(rental.endDate).startOf('day');
-  return !now.isBefore(start, 'day') && !now.isAfter(end, 'day');
-};
 
 /** Rental whose contract period includes today (any non-completed status). */
 export const resolveCurrentBookingForCar = (
   carId: string,
   rentals: Rental[],
 ): Rental | undefined => {
-  const now = dayjs().startOf('day');
+  const now = dayjs();
   return rentals
-    .filter(
-      r =>
-        r.carId === carId &&
-        r.status !== 'COMPLETED' &&
-        isWithinRentalPeriod(r, now),
-    )
+    .filter(r => r.carId === carId && rentalIsCurrent(r, now))
     .sort((a, b) => dayjs(b.endDate).valueOf() - dayjs(a.endDate).valueOf())[0];
 };
 
@@ -32,18 +25,13 @@ export const resolveNextUpcomingBookingForCar = (
   carId: string,
   rentals: Rental[],
 ): Rental | undefined => {
-  const now = dayjs().startOf('day');
+  const now = dayjs();
   if (resolveCurrentBookingForCar(carId, rentals)) {
     return undefined;
   }
 
   return rentals
-    .filter(
-      r =>
-        r.carId === carId &&
-        r.status !== 'COMPLETED' &&
-        now.isBefore(dayjs(r.startDate).startOf('day'), 'day'),
-    )
+    .filter(r => r.carId === carId && rentalStartsInFuture(r, now))
     .sort((a, b) => dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf())[0];
 };
 
@@ -66,7 +54,7 @@ export const rentalIsReturningSoon = (
   rental: Rental,
   withinDays = RETURNS_SOON_WITHIN_DAYS,
 ): boolean =>
-  rental.status === 'ACTIVE' && daysUntilRentalEnd(rental) <= withinDays;
+  rentalIsCurrent(rental) && daysUntilRentalEnd(rental) <= withinDays;
 
 /** Car currently on rent with the active contract ending soon. */
 export const carIsReturningSoon = (car: Car, rentals: Rental[]): boolean => {
@@ -86,13 +74,8 @@ export const deriveCarStatus = (car: Car, rentals: Rental[]): Car['status'] => {
 
 /** Future rentals for display (excludes contracts already in progress today). */
 export const resolveFutureBookingsForCar = (carId: string, rentals: Rental[]): Rental[] => {
-  const now = dayjs().startOf('day');
+  const now = dayjs();
   return rentals
-    .filter(
-      r =>
-        r.carId === carId &&
-        r.status !== 'COMPLETED' &&
-        now.isBefore(dayjs(r.startDate).startOf('day'), 'day'),
-    )
+    .filter(r => r.carId === carId && rentalStartsInFuture(r, now))
     .sort((a, b) => dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf());
 };
