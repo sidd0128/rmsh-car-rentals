@@ -50,6 +50,8 @@ export interface Car {
   year: number;
   color: string;
   numberPlate: string;
+  regoExpiryDate?: string;
+  purchaseDate?: string;
   images: MediaUri[];
   status: CarStatus;
   priceConfigurations: PriceConfiguration[];
@@ -66,6 +68,7 @@ export interface Customer {
   name: string;
   age: number;
   phone: string;
+  email?: string;
   address: string;
   licenseNumber?: string;
   photo?: MediaUri;

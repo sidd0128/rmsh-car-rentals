@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useForm } from 'react-hook-form';
+import dayjs from 'dayjs';
 import type { CarsStackParamList } from '@app/navigation/types';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { currencyFieldLabel } from '@core/constants/app';
@@ -24,9 +25,16 @@ interface CarFormValues {
   year: string;
   color: string;
   numberPlate: string;
+  regoExpiryDate: string;
+  purchaseDate: string;
   dailyRate: string;
   notes: string;
 }
+
+const isValidIsoDate = (value: string) => {
+  const trimmed = value.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) && dayjs(trimmed).isValid();
+};
 
 export const CarFormScreen = () => {
   const { t } = useTranslation();
@@ -46,6 +54,8 @@ export const CarFormScreen = () => {
       year: String(new Date().getFullYear()),
       color: '',
       numberPlate: '',
+      regoExpiryDate: '',
+      purchaseDate: '',
       dailyRate: '500',
       notes: '',
     },
@@ -62,6 +72,8 @@ export const CarFormScreen = () => {
         year: String(car.year),
         color: car.color,
         numberPlate: car.numberPlate,
+        regoExpiryDate: car.regoExpiryDate ?? '',
+        purchaseDate: car.purchaseDate ?? '',
         dailyRate: String(car.priceConfigurations[0]?.dailyRate ?? 500),
         notes: car.notes ?? '',
       });
@@ -77,6 +89,8 @@ export const CarFormScreen = () => {
       year: Number(values.year),
       color: values.color.trim(),
       numberPlate: values.numberPlate.trim(),
+      regoExpiryDate: values.regoExpiryDate.trim() || undefined,
+      purchaseDate: values.purchaseDate.trim() || undefined,
       images,
       status: car?.status ?? 'AVAILABLE',
       priceConfigurations: [
@@ -129,6 +143,26 @@ export const CarFormScreen = () => {
           name="numberPlate"
           control={control}
           label={t('cars.numberPlate')}
+        />
+        <ControlledAppInput
+          name="regoExpiryDate"
+          control={control}
+          label={t('cars.regoExpiryDate')}
+          placeholder={t('cars.datePlaceholder')}
+          rules={{
+            validate: value =>
+              !value.trim() || isValidIsoDate(value) || t('cars.invalidDate'),
+          }}
+        />
+        <ControlledAppInput
+          name="purchaseDate"
+          control={control}
+          label={t('cars.purchaseDate')}
+          placeholder={t('cars.datePlaceholder')}
+          rules={{
+            validate: value =>
+              !value.trim() || isValidIsoDate(value) || t('cars.invalidDate'),
+          }}
         />
         <ControlledAppInput
           name="dailyRate"

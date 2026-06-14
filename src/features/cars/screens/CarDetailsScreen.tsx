@@ -9,7 +9,7 @@ import type { CarsStackParamList } from '@app/navigation/types';
 import { spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
-import { formatDateTimeAmPm } from '@core/helpers/date';
+import { formatDate, formatDateTimeAmPm } from '@core/helpers/date';
 import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { computeCarTotalPaid, getNextRentDueForCar } from '@core/helpers/rentalPayments';
 import { formatCurrency } from '@core/utils/currency';
@@ -149,6 +149,15 @@ export const CarDetailsScreen = () => {
             {t('cars.totalReceived', { amount: formatCurrency(totalPaid) })}
           </Text>
         ) : null}
+      </ScreenSection>
+
+      <ScreenSection title={t('common.details')} showDivider>
+        <Text style={typography.bodySmall}>
+          {t('cars.regoExpiryDate')}: {car.regoExpiryDate ? formatDate(car.regoExpiryDate) : t('common.notAvailable')}
+        </Text>
+        <Text style={typography.bodySmall}>
+          {t('cars.purchaseDate')}: {car.purchaseDate ? formatDate(car.purchaseDate) : t('common.notAvailable')}
+        </Text>
       </ScreenSection>
 
       <View style={screenStyles.actions}>

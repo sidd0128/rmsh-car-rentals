@@ -1,7 +1,7 @@
 import React, { memo, useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { TextInput, HelperText, Text } from 'react-native-paper';
-import { Control, Controller, FieldValues, Path } from 'react-hook-form';
+import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { radius, spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 
@@ -89,17 +89,20 @@ export const AppInput = memo<AppInputProps>(
 interface ControlledAppInputProps<T extends FieldValues> extends Omit<AppInputProps, 'value' | 'onChangeText'> {
   name: Path<T>;
   control: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
 }
 
 export function ControlledAppInput<T extends FieldValues>({
   name,
   control,
+  rules,
   ...props
 }: ControlledAppInputProps<T>) {
   return (
     <Controller
       name={name}
       control={control}
+      rules={rules}
       render={({ field: { value, onChange }, fieldState: { error } }) => (
         <AppInput
           {...props}

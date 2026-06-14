@@ -253,6 +253,9 @@ export const CustomerProfileScreen = () => {
               {t('customers.yearsOld', { age: customer.age })} ·{' '}
               {customer.phone}
             </Text>
+            {customer.email ? (
+              <Text style={typography.bodySmall}>{customer.email}</Text>
+            ) : null}
             <Text style={typography.bodySmall}>{customer.address}</Text>
             {customer.isBlacklisted ? (
               <Text style={[styles.blacklist, { color: colors.error }]}>

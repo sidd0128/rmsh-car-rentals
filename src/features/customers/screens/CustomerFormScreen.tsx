@@ -22,9 +22,12 @@ interface CustomerFormValues {
   name: string;
   age: string;
   phone: string;
+  email: string;
   address: string;
   licenseNumber: string;
 }
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const CustomerFormScreen = () => {
   const { t } = useTranslation();
@@ -38,7 +41,7 @@ export const CustomerFormScreen = () => {
   const existing = customerId ? getCustomerById(customerId) : undefined;
 
   const { control, getValues, handleSubmit, reset, setValue } = useForm<CustomerFormValues>({
-    defaultValues: { name: '', age: '', phone: '', address: '', licenseNumber: '' },
+    defaultValues: { name: '', age: '', phone: '', email: '', address: '', licenseNumber: '' },
   });
 
   const [licenseImages, setLicenseImages] = useState<string[]>([]);
@@ -52,6 +55,7 @@ export const CustomerFormScreen = () => {
         name: existing.name,
         age: String(existing.age),
         phone: existing.phone,
+        email: existing.email ?? '',
         address: existing.address,
         licenseNumber: existing.licenseNumber ?? '',
       });
@@ -127,12 +131,18 @@ export const CustomerFormScreen = () => {
   );
 
   const onSubmit = handleSubmit(async values => {
+    if (!licenseImages.length) {
+      showToast(t('customers.drivingLicenseRequired'), { type: 'error' });
+      return;
+    }
+
     const payload: CreateCustomerPayload = {
       name: values.name.trim(),
       age: Number(values.age),
       phone: values.phone.trim(),
+      email: values.email.trim() || undefined,
       address: values.address.trim(),
-      licenseNumber: values.licenseNumber.trim() || undefined,
+      licenseNumber: values.licenseNumber.trim(),
       drivingLicenseImages: licenseImages.slice(0, 1),
       documents,
       isBlacklisted,
@@ -162,7 +172,14 @@ export const CustomerFormScreen = () => {
       <Text variant="titleMedium">{t('customers.documents')}</Text>
       <MediaUploader images={documents} onChange={setDocuments} maxImages={4} />
       <View style={styles.form}>
-        <ControlledAppInput name="name" control={control} label={t('customers.fullName')} />
+        <ControlledAppInput
+          name="name"
+          control={control}
+          label={t('customers.fullName')}
+          rules={{
+            validate: value => value.trim().length > 0 || t('customers.nameRequired'),
+          }}
+        />
         <ControlledAppInput
           name="age"
           control={control}
@@ -176,16 +193,34 @@ export const CustomerFormScreen = () => {
           keyboardType="phone-pad"
         />
         <ControlledAppInput
+          name="email"
+          control={control}
+          label={t('customers.email')}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          rules={{
+            validate: value =>
+              !value.trim() || emailPattern.test(value.trim()) || t('customers.invalidEmail'),
+          }}
+        />
+        <ControlledAppInput
           name="licenseNumber"
           control={control}
           label={t('customers.licenseNumber')}
           keyboardType="numeric"
+          rules={{
+            validate: value => value.trim().length > 0 || t('customers.licenseNumberRequired'),
+          }}
         />
         <ControlledAppInput
           name="address"
           control={control}
           label={t('customers.address')}
           multiline
+          rules={{
+            validate: value => value.trim().length > 0 || t('customers.addressRequired'),
+          }}
         />
         <View style={styles.switchRow}>
           <Text>{t('customers.blacklistedLabel')}</Text>
