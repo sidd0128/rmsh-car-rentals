@@ -7,18 +7,13 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
 import { spacing, typography } from '@app/theme';
-import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { formatDate, formatDateTimeAmPm } from '@core/helpers/date';
 import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
-import { computeCarTotalPaid, getNextRentDueForCar } from '@core/helpers/rentalPayments';
-import { formatCurrency } from '@core/utils/currency';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
-import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useAccidentStore } from '@features/accidents/store/useAccidentStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { useFineStore } from '@features/fines/store/useFineStore';
-import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
@@ -28,18 +23,19 @@ import { AppButton, StatusBadge, carStatusToBadge } from '@shared/ui';
 import { ImageSlider } from '@shared/media';
 import { CustomerAccidentHistory } from '@features/customers/components/CustomerAccidentHistory';
 import { CustomerFineHistory } from '@features/customers/components/CustomerFineHistory';
+import {
+  CarDetailsAssignmentPaymentLines,
+  CarDetailsTotalReceived,
+} from '../components/CarDetailsPaymentInfo';
 import { useCarStore } from '../store/useCarStore';
 import { useTranslation } from '@core/i18n';
 
 export const CarDetailsScreen = () => {
   const { t } = useTranslation();
-  const { colors } = useThemeContext();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarDetails'>>();
   const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const car = useCarStore(s => s.getCarById(route.params.carId));
   const customers = useCustomerStore(s => s.customers);
-  const rentals = useRentalStore(s => s.rentals);
-  const payments = usePaymentStore(s => s.payments);
   const fines = useFineStore(s => s.fines);
   const accidents = useAccidentStore(s => s.accidents);
   const cars = useCarStore(s => s.cars);
@@ -82,12 +78,6 @@ export const CarDetailsScreen = () => {
     return cid ? customers.find(c => c.id === cid) : undefined;
   }, [car, customers]);
 
-  const nextRentDue = useMemo(
-    () =>
-      SHOW_PAYMENTS_UI && car ? getNextRentDueForCar(car, payments) : null,
-    [car, payments],
-  );
-
   if (!car) {
     return (
       <ScreenLayout>
@@ -97,7 +87,6 @@ export const CarDetailsScreen = () => {
   }
 
   const badge = carStatusToBadge(car.status);
-  const totalPaid = SHOW_PAYMENTS_UI ? computeCarTotalPaid(car.id, rentals, payments) : 0;
   const isCarAvailable = car.status === 'AVAILABLE';
 
   return (
@@ -123,17 +112,7 @@ export const CarDetailsScreen = () => {
                 end: formatRentalEndDisplay(car.currentBooking.endDate),
               })}
             </Text>
-            {SHOW_PAYMENTS_UI && nextRentDue ? (
-              <Text style={[styles.nextRent, { color: colors.warning }]}>
-                {t('cars.nextRentPaymentDue', {
-                  amount: formatCurrency(nextRentDue.amount),
-                  date: formatDateTimeAmPm(nextRentDue.dueDate),
-                })}
-              </Text>
-            ) : null}
-            {SHOW_PAYMENTS_UI && !nextRentDue ? (
-              <Text style={typography.bodySmall}>{t('cars.allInstallmentsReceived')}</Text>
-            ) : null}
+            {SHOW_PAYMENTS_UI ? <CarDetailsAssignmentPaymentLines car={car} /> : null}
           </>
         ) : (
           <Text style={typography.bodySmall}>
@@ -144,11 +123,7 @@ export const CarDetailsScreen = () => {
             })}
           </Text>
         )}
-        {SHOW_PAYMENTS_UI ? (
-          <Text style={[styles.earnings, { color: colors.primary }]}>
-            {t('cars.totalReceived', { amount: formatCurrency(totalPaid) })}
-          </Text>
-        ) : null}
+        {SHOW_PAYMENTS_UI ? <CarDetailsTotalReceived car={car} /> : null}
       </ScreenSection>
 
       <ScreenSection title={t('common.details')} showDivider>
@@ -236,14 +211,5 @@ const styles = StyleSheet.create({
   titleCol: {
     flex: 1,
     gap: spacing.xs,
-  },
-  earnings: {
-    ...typography.h4,
-    marginTop: spacing.sm,
-  },
-  nextRent: {
-    ...typography.body,
-    fontWeight: '600',
-    marginTop: spacing.sm,
   },
 });

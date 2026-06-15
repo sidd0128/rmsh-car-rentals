@@ -21,7 +21,6 @@ import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { getAppName } from '@core/constants/app';
 import { useTranslation } from '@core/i18n';
 import { formatDate } from '@core/helpers/date';
-import { formatCurrency } from '@core/utils/currency';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
@@ -29,10 +28,8 @@ import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { StatCard } from '../components/StatCard';
+import { DashboardPaymentStatCards } from '../components/DashboardPaymentStatCards';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
-import { computeFleetTotalPaid } from '@core/helpers/rentalPayments';
-import { computeUpcomingEarningsTotalForYear } from '@core/helpers/upcomingEarnings';
-import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { getPendingBookingRequestCount } from '@features/bookingRequests/helpers/bookingRequestSelectors';
 import { useBookingRequestStore } from '@features/bookingRequests/store/useBookingRequestStore';
 import dayjs from 'dayjs';
@@ -52,7 +49,6 @@ export const DashboardScreen = () => {
   const cars = useCarStore(s => s.cars);
   const customers = useCustomerStore(s => s.customers);
   const rentals = useRentalStore(s => s.rentals);
-  const payments = usePaymentStore(s => s.payments);
   const bookingRequests = useBookingRequestStore(s => s.bookingRequests);
   const { hydrateAll } = useHydrateStores();
 
@@ -65,12 +61,6 @@ export const DashboardScreen = () => {
     const returningSoon = cars.filter(c =>
       carIsReturningSoon(c, rentals),
     ).length;
-    const totalEarnings = SHOW_PAYMENTS_UI
-      ? computeFleetTotalPaid(rentals, payments)
-      : 0;
-    const upcomingEarnings = SHOW_PAYMENTS_UI
-      ? computeUpcomingEarningsTotalForYear(payments, dayjs().year())
-      : 0;
     const recent = [...rentals]
       .sort(
         (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
@@ -84,12 +74,10 @@ export const DashboardScreen = () => {
       onRent,
       upcomingBookings,
       returningSoon,
-      totalEarnings,
-      upcomingEarnings,
       recent,
       pendingBookingRequests,
     };
-  }, [bookingRequests, cars, rentals, payments]);
+  }, [bookingRequests, cars, rentals]);
 
   const onRefresh = useCallback(() => hydrateAll(), [hydrateAll]);
 
@@ -137,20 +125,7 @@ export const DashboardScreen = () => {
           onPress={() => navigation.navigate('BookingRequests')}
         />
         {SHOW_PAYMENTS_UI ? (
-          <>
-            <StatCard
-              label={t('dashboard.totalEarnings')}
-              value={formatCurrency(stats.totalEarnings)}
-              accent={colors.primary}
-              onPress={() => navigation.navigate('EarningsBreakdown')}
-            />
-            <StatCard
-              label={t('dashboard.upcomingEarningsThisYear')}
-              value={formatCurrency(stats.upcomingEarnings)}
-              accent={colors.secondary}
-              onPress={() => navigation.navigate('UpcomingEarnings')}
-            />
-          </>
+          <DashboardPaymentStatCards rentals={rentals} navigation={navigation} />
         ) : null}
       </View>
 

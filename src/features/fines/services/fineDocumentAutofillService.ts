@@ -1,8 +1,6 @@
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { parseOcrDateToken } from '@core/helpers/ocrDateParse';
 import type { Car, Customer, Rental } from '@core/types/domain';
-
-dayjs.extend(customParseFormat);
 
 export interface FineDocumentExtraction {
   text: string;
@@ -151,24 +149,6 @@ const parseDateCandidates = (text: string): Array<{ date: Date; score: number }>
   const candidates: Array<{ date: Date; score: number }> = [];
   const numericDate = /\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/g;
   const wordDate = /\b(\d{1,2}\s+(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{2,4})\b/gi;
-  const formats = [
-    'D/M/YYYY',
-    'DD/MM/YYYY',
-    'D-MM-YYYY',
-    'DD-MM-YYYY',
-    'D/M/YY',
-    'DD/MM/YY',
-    'D-MM-YY',
-    'DD-MM-YY',
-    'D MMM YYYY',
-    'DD MMM YYYY',
-    'D MMMM YYYY',
-    'DD MMMM YYYY',
-    'D MMM YY',
-    'DD MMM YY',
-    'D MMMM YY',
-    'DD MMMM YY',
-  ];
 
   lines.forEach((line, index) => {
     const context = [lines[index - 1], line, lines[index + 1]]
@@ -178,11 +158,10 @@ const parseDateCandidates = (text: string): Array<{ date: Date; score: number }>
     const matches = [...line.matchAll(numericDate), ...line.matchAll(wordDate)];
 
     matches.forEach(match => {
-      const raw = match[1];
-      const parsed = dayjs(raw, formats, true);
-      if (parsed.isValid()) {
+      const parsedDate = parseOcrDateToken(match[1]);
+      if (parsedDate) {
         candidates.push({
-          date: parsed.startOf('day').toDate(),
+          date: parsedDate,
           score,
         });
       }

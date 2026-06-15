@@ -8,21 +8,19 @@ import type { CustomersStackParamList } from '@app/navigation/types';
 import { spacing, typography, shadows, radius } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
+import { SHOW_PAYMENTS_UI } from '@core/constants/features';
+import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { EmptyState, StatusBadge } from '@shared/ui';
 import { SearchHeader } from '@reusable';
 import { useCustomerStore } from '../store/useCustomerStore';
-import { SHOW_PAYMENTS_UI } from '@core/constants/features';
-import { customerHasNotPaidInstallment } from '@core/helpers/customerPaymentStatus';
-import {
-  formatInstallmentDueLabel,
-  nextPendingInstallmentForCustomer,
-} from '@core/helpers/paymentInstallment';
-import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
-import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useFilteredCustomers } from '../hooks/useFilteredCustomers';
 import { useCustomerRentalInfo } from '../hooks/useCustomerRentalInfo';
+import {
+  CustomerListPaymentBadge,
+  CustomerListPaymentSubtitle,
+} from '../components/CustomerListPaymentRowExtras';
 import { useTranslation } from '@core/i18n';
 
 const CustomerRow = ({
@@ -35,17 +33,10 @@ const CustomerRow = ({
   const { t } = useTranslation();
   const { colors } = useThemeContext();
   const customer = useCustomerStore(s => s.getCustomerById(customerId));
-  const payments = usePaymentStore(s => s.payments);
   const { activeRental, car } = useCustomerRentalInfo(customerId);
   if (!customer) return null;
 
   const activeCar = activeRental ? car : undefined;
-  const missedRent = SHOW_PAYMENTS_UI
-    ? customerHasNotPaidInstallment(customerId, payments)
-    : false;
-  const nextDue = SHOW_PAYMENTS_UI
-    ? nextPendingInstallmentForCustomer(customerId, payments)
-    : undefined;
 
   return (
     <Pressable
@@ -55,26 +46,29 @@ const CustomerRow = ({
       <View style={styles.cardHeader}>
         <Text style={typography.h4}>{customer.name}</Text>
         {SHOW_PAYMENTS_UI ? (
-          missedRent ? (
-            <StatusBadge label={t('customers.notPaid')} variant="not_paid" />
-          ) : (
-            <StatusBadge
-              label={activeRental?.paymentStatus ?? t('common.notAvailable')}
-              variant={activeRental?.paymentStatus === 'DONE' ? 'done' : 'pending'}
-            />
-          )
+          <CustomerListPaymentBadge
+            customerId={customerId}
+            activeRental={activeRental}
+            car={activeCar}
+          />
         ) : activeRental ? (
           <StatusBadge label={t('customers.onRent')} variant="on_rent" />
         ) : null}
       </View>
-      {activeCar ? (
+      {SHOW_PAYMENTS_UI ? (
+        <CustomerListPaymentSubtitle
+          customerId={customerId}
+          activeRental={activeRental}
+          car={activeCar}
+        />
+      ) : activeCar ? (
         <Text style={typography.bodySmall}>
           {activeCar.name}
-          {SHOW_PAYMENTS_UI && nextDue
-            ? ` · ${formatInstallmentDueLabel(nextDue)}`
-            : activeRental
-              ? ` · ${t('customers.until', { date: formatRentalEndDisplay(activeRental.endDate) })}`
-              : ''}
+          {activeRental
+            ? ` · ${t('customers.until', {
+                date: formatRentalEndDisplay(activeRental.endDate),
+              })}`
+            : ''}
         </Text>
       ) : (
         <Text style={typography.bodySmall}>{t('customers.noActiveRental')}</Text>

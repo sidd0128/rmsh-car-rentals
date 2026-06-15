@@ -1,7 +1,5 @@
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-
-dayjs.extend(customParseFormat);
+import { parseOcrDateToken } from '@core/helpers/ocrDateParse';
 
 export interface CustomerLicenseExtraction {
   text: string;
@@ -16,27 +14,6 @@ interface AutofillInput {
   ocrText: string;
   referenceDate?: Date;
 }
-
-const dateFormats = [
-  'D/M/YYYY',
-  'DD/MM/YYYY',
-  'D-MM-YYYY',
-  'DD-MM-YYYY',
-  'D.M.YYYY',
-  'DD.MM.YYYY',
-  'D/M/YY',
-  'DD/MM/YY',
-  'D-MM-YY',
-  'DD-MM-YY',
-  'D MMM YYYY',
-  'DD MMM YYYY',
-  'D MMMM YYYY',
-  'DD MMMM YYYY',
-  'D MMM YY',
-  'DD MMM YY',
-  'D MMMM YY',
-  'DD MMMM YY',
-];
 
 const ignoredNameValues = new Set([
   'address',
@@ -85,12 +62,6 @@ const normalizeName = (value: string): string =>
     .trim();
 
 const compactLabel = (line: string): string => line.replace(/[^a-z]/gi, '').toLowerCase();
-
-const normalizeMonthCase = (value: string): string =>
-  value.replace(
-    /\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC)\b/g,
-    month => month.charAt(0) + month.slice(1).toLowerCase(),
-  );
 
 const isLikelyLabel = (line: string): boolean => {
   const normalized = normalizeLine(line);
@@ -158,8 +129,7 @@ const parseDate = (value: string): Date | undefined => {
     return undefined;
   }
 
-  const parsed = dayjs(normalizeMonthCase(dateMatch[1]), dateFormats, true);
-  return parsed.isValid() ? parsed.startOf('day').toDate() : undefined;
+  return parseOcrDateToken(dateMatch[1]);
 };
 
 const parseDateOfBirth = (lines: string[]): Date | undefined => {

@@ -1,4 +1,3 @@
-import i18n from '@core/i18n';
 import type { Car, PaymentRecord, Rental } from '@core/types/domain';
 import { installmentDueDay, sortPaymentsByDueDate } from './paymentInstallment';
 
@@ -28,14 +27,6 @@ export const paidAmountForRental = (
     .filter(p => p.status === 'DONE')
     .reduce((sum, p) => sum + p.amount, 0);
 
-export const pendingAmountForRental = (
-  rental: Rental,
-  payments: PaymentRecord[],
-): number =>
-  paymentsForRental(rental.id, payments)
-    .filter(p => p.status === 'PENDING')
-    .reduce((sum, p) => sum + p.amount, 0);
-
 export const deriveRentalPaymentStatus = (
   rentalPayments: PaymentRecord[],
 ): Rental['paymentStatus'] => {
@@ -46,28 +37,6 @@ export const deriveRentalPaymentStatus = (
     return 'PENDING';
   }
   return rentalPayments.every(p => p.status === 'DONE') ? 'DONE' : 'PENDING';
-};
-
-export const rentalPaymentProgressLabel = (
-  rentalId: string,
-  payments: PaymentRecord[],
-): string => {
-  const rentalPayments = paymentsForRental(rentalId, payments);
-  if (rentalPayments.length === 0) {
-    return i18n.t('rentals.noPaymentSchedule');
-  }
-  const notPaid = rentalPayments.filter(p => p.status === 'NOT_PAID').length;
-  if (notPaid > 0) {
-    return i18n.t('rentals.paymentsNotPaid', { count: notPaid });
-  }
-  const paid = rentalPayments.filter(p => p.status === 'DONE').length;
-  const total = rentalPayments.length;
-  if (total === 1) {
-    return rentalPayments[0].status === 'DONE'
-      ? i18n.t('rentals.paidInFull')
-      : i18n.t('rentals.paymentPending');
-  }
-  return i18n.t('rentals.paymentsReceived', { paid, total });
 };
 
 export const computeFleetTotalPaid = (
