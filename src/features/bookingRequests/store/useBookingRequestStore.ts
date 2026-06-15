@@ -1,13 +1,14 @@
 import { create } from 'zustand';
+import { FIRESTORE_COLLECTION_NAMES } from '@core/firebase/constants/firestoreCollectionNames';
+import { firestoreDocumentSyncService } from '@core/firebase/services/firestoreDocumentSyncService';
 import { bookingRequestApprovalService } from '@core/services/bookingRequestApprovalService';
-import { offlineFirstSyncOrchestratorService } from '@core/sync/services/offlineFirstSyncOrchestratorService';
 import type { BookingRequest } from '@core/types/domain';
-import { asyncStorageBookingRequestRepository } from '../repository/asyncStorageBookingRequestRepository';
 
 interface BookingRequestState {
   bookingRequests: BookingRequest[];
   loading: boolean;
   hydrate: () => Promise<void>;
+  setBookingRequests: (bookingRequests: BookingRequest[]) => void;
   approveRequest: (
     requestId: string,
   ) => Promise<{ success: boolean; error?: string }>;
@@ -16,8 +17,10 @@ interface BookingRequestState {
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-const refreshFromCloud = async (): Promise<void> => {
-  await offlineFirstSyncOrchestratorService.pullRemoteIntoLocal();
+const getCloudBookingRequests = (): Promise<BookingRequest[]> => {
+  return firestoreDocumentSyncService.fetchAllDocuments<BookingRequest>(
+    FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+  );
 };
 
 export const useBookingRequestStore = create<BookingRequestState>(set => ({
@@ -25,18 +28,23 @@ export const useBookingRequestStore = create<BookingRequestState>(set => ({
   loading: false,
 
   hydrate: async () => {
-    const bookingRequests =
-      await asyncStorageBookingRequestRepository.getBookingRequests();
-    set({ bookingRequests });
+    set({ loading: true });
+    try {
+      const bookingRequests = await getCloudBookingRequests();
+      set({ bookingRequests, loading: false });
+    } catch (error) {
+      set({ loading: false });
+      throw error;
+    }
   },
+
+  setBookingRequests: bookingRequests => set({ bookingRequests }),
 
   approveRequest: async requestId => {
     set({ loading: true });
     try {
       await bookingRequestApprovalService.approveRequest(requestId);
-      await refreshFromCloud();
-      const bookingRequests =
-        await asyncStorageBookingRequestRepository.getBookingRequests();
+      const bookingRequests = await getCloudBookingRequests();
       set({ bookingRequests, loading: false });
       return { success: true };
     } catch (error) {
@@ -53,9 +61,7 @@ export const useBookingRequestStore = create<BookingRequestState>(set => ({
     set({ loading: true });
     try {
       await bookingRequestApprovalService.declineRequest(requestId);
-      await refreshFromCloud();
-      const bookingRequests =
-        await asyncStorageBookingRequestRepository.getBookingRequests();
+      const bookingRequests = await getCloudBookingRequests();
       set({ bookingRequests, loading: false });
       return { success: true };
     } catch (error) {

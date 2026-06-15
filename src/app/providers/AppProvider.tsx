@@ -137,13 +137,14 @@ export const AppProvider = () => {
       return undefined;
     }
 
-    const unsubscribe = bookingRequestRealtimeSyncService.subscribe(() => {
-      useBookingRequestStore.getState().hydrate().catch(error => {
+    const unsubscribe = bookingRequestRealtimeSyncService.subscribe(
+      bookingRequests => {
+        useBookingRequestStore.getState().setBookingRequests(bookingRequests);
+      },
+      error => {
         handleError(error, 'AppProvider.bookingRequestRealtimeSync');
-      });
-    }, error => {
-      handleError(error, 'AppProvider.bookingRequestRealtimeSync');
-    });
+      },
+    );
 
     return unsubscribe ?? undefined;
   }, [authStatus]);
