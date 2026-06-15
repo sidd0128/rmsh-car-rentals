@@ -26,7 +26,11 @@ export const BookingRequestsScreen = () => {
     () =>
       bookingRequests
         .filter(request => request.status === 'PENDING')
-        .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()),
+        .sort(
+          (a, b) =>
+            new Date(b.requestedAt).getTime() -
+            new Date(a.requestedAt).getTime(),
+        ),
     [bookingRequests],
   );
 
@@ -36,46 +40,60 @@ export const BookingRequestsScreen = () => {
   }, [hydrateAll, hydrateRequests]);
 
   const handleApprove = (requestId: string) => {
-    Alert.alert(t('bookingRequests.approveTitle'), t('bookingRequests.approveMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('bookingRequests.approve'),
-        onPress: () => {
-          approveRequest(requestId).then(async result => {
-            if (!result.success) {
-              Alert.alert(t('bookingRequests.actionFailedTitle'), result.error);
-              return;
-            }
-            await refresh();
-          });
+    Alert.alert(
+      t('bookingRequests.approveTitle'),
+      t('bookingRequests.approveMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('bookingRequests.approve'),
+          onPress: () => {
+            approveRequest(requestId).then(async result => {
+              if (!result.success) {
+                Alert.alert(
+                  t('bookingRequests.actionFailedTitle'),
+                  result.error,
+                );
+                return;
+              }
+              await refresh();
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleDecline = (requestId: string) => {
-    Alert.alert(t('bookingRequests.declineTitle'), t('bookingRequests.declineMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('bookingRequests.decline'),
-        style: 'destructive',
-        onPress: () => {
-          declineRequest(requestId).then(async result => {
-            if (!result.success) {
-              Alert.alert(t('bookingRequests.actionFailedTitle'), result.error);
-              return;
-            }
-            await refresh();
-          });
+    Alert.alert(
+      t('bookingRequests.declineTitle'),
+      t('bookingRequests.declineMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('bookingRequests.decline'),
+          style: 'destructive',
+          onPress: () => {
+            declineRequest(requestId).then(async result => {
+              if (!result.success) {
+                Alert.alert(
+                  t('bookingRequests.actionFailedTitle'),
+                  result.error,
+                );
+                return;
+              }
+              await refresh();
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
     <ScreenLayout onRefresh={refresh} refreshing={loading}>
       <Text style={typography.h2}>{t('bookingRequests.title')}</Text>
-      <Text style={[styles.lead, { color: colors.textSecondary }]}> 
+      <Text style={[styles.lead, { color: colors.textSecondary }]}>
         {t('bookingRequests.subtitle')}
       </Text>
 
@@ -88,23 +106,35 @@ export const BookingRequestsScreen = () => {
             style={[
               screenStyles.surfaceCard,
               styles.card,
-              { backgroundColor: colors.surface, borderColor: colors.borderLight },
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.borderLight,
+              },
             ]}
           >
             <View style={styles.cardHeader}>
               <View style={styles.titleBlock}>
                 <Text style={typography.h4}>{request.customerName}</Text>
-                <Text style={[typography.bodySmall, { color: colors.textSecondary }]}> 
+                <Text
+                  style={[
+                    typography.bodySmall,
+                    { color: colors.textSecondary },
+                  ]}
+                >
                   {request.carName} · {request.carNumberPlate}
                 </Text>
               </View>
-              <StatusBadge label={t('bookingRequests.pending')} variant="pending" />
+              <StatusBadge
+                label={t('bookingRequests.pending')}
+                variant="pending"
+              />
             </View>
 
-            <Text style={[styles.line, { color: colors.textSecondary }]}> 
-              {formatDateTimeAmPm(request.startDate)} - {formatDateTimeAmPm(request.endDate)}
+            <Text style={[styles.line, { color: colors.textSecondary }]}>
+              {formatDateTimeAmPm(request.startDate)} -{' '}
+              {formatDateTimeAmPm(request.endDate)}
             </Text>
-            <Text style={[styles.line, { color: colors.textSecondary }]}> 
+            <Text style={[styles.line, { color: colors.textSecondary }]}>
               {t('bookingRequests.rateAndTotal', {
                 rate: formatCurrency(request.rateAmount),
                 total: formatCurrency(request.estimatedTotalAmount),

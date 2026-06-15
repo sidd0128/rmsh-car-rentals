@@ -26,5 +26,6 @@ export const repositories = {
   fines: offlineFirstFineRepository as IFineRepository,
   accidents: offlineFirstAccidentRepository as IAccidentRepository,
   payments: offlineFirstPaymentRepository as IPaymentRepository,
-  bookingRequests: offlineFirstBookingRequestRepository as IBookingRequestRepository,
+  bookingRequests:
+    offlineFirstBookingRequestRepository as IBookingRequestRepository,
 };

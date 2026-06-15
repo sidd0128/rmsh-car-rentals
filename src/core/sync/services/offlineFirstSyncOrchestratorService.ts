@@ -41,7 +41,8 @@ export const offlineFirstSyncOrchestratorService = {
       return {
         success: true,
         skipped: true,
-        message: 'Firebase not configured — running offline with local storage only.',
+        message:
+          'Firebase not configured — running offline with local storage only.',
       };
     }
 
@@ -66,7 +67,8 @@ export const offlineFirstSyncOrchestratorService = {
       return {
         success: true,
         skipped: true,
-        message: 'Device offline — using local data. Changes will sync when online.',
+        message:
+          'Device offline — using local data. Changes will sync when online.',
       };
     }
 
@@ -81,7 +83,8 @@ export const offlineFirstSyncOrchestratorService = {
         message: 'Cloud sync completed.',
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Cloud sync failed';
+      const message =
+        error instanceof Error ? error.message : 'Cloud sync failed';
       return { success: false, skipped: false, message };
     }
   },
@@ -99,13 +102,17 @@ export const offlineFirstSyncOrchestratorService = {
       try {
         if (entry.operation === 'delete') {
           const id = String(entry.payload.id);
-          await firestoreDocumentSyncService.deleteDocument(entry.collectionName, id);
-        } else {
-          const cloudReadyPayload = await cloudMediaSyncService.prepareEntityForCloud(
+          await firestoreDocumentSyncService.deleteDocument(
             entry.collectionName,
-            entry.payload as { id: string },
-            { showUploadErrors: false },
+            id,
           );
+        } else {
+          const cloudReadyPayload =
+            await cloudMediaSyncService.prepareEntityForCloud(
+              entry.collectionName,
+              entry.payload as { id: string },
+              { showUploadErrors: false },
+            );
           await firestoreDocumentSyncService.upsertDocument(
             entry.collectionName,
             cloudMediaSyncService.stripLocalMediaUrisForCloud(
@@ -132,26 +139,29 @@ export const offlineFirstSyncOrchestratorService = {
       remoteAccidents,
       remotePayments,
       remoteBookingRequests,
-    ] =
-      await Promise.all([
-        firestoreDocumentSyncService.fetchAllDocuments<Car>(FIRESTORE_COLLECTION_NAMES.CARS),
-        firestoreDocumentSyncService.fetchAllDocuments<Customer>(
-          FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-        ),
-        firestoreDocumentSyncService.fetchAllDocuments<Rental>(
-          FIRESTORE_COLLECTION_NAMES.RENTALS,
-        ),
-        firestoreDocumentSyncService.fetchAllDocuments<Fine>(FIRESTORE_COLLECTION_NAMES.FINES),
-        firestoreDocumentSyncService.fetchAllDocuments<AccidentRecord>(
-          FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-        ),
-        firestoreDocumentSyncService.fetchAllDocuments<PaymentRecord>(
-          FIRESTORE_COLLECTION_NAMES.PAYMENTS,
-        ),
-        firestoreDocumentSyncService.fetchAllDocuments<BookingRequest>(
-          FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
-        ),
-      ]);
+    ] = await Promise.all([
+      firestoreDocumentSyncService.fetchAllDocuments<Car>(
+        FIRESTORE_COLLECTION_NAMES.CARS,
+      ),
+      firestoreDocumentSyncService.fetchAllDocuments<Customer>(
+        FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+      ),
+      firestoreDocumentSyncService.fetchAllDocuments<Rental>(
+        FIRESTORE_COLLECTION_NAMES.RENTALS,
+      ),
+      firestoreDocumentSyncService.fetchAllDocuments<Fine>(
+        FIRESTORE_COLLECTION_NAMES.FINES,
+      ),
+      firestoreDocumentSyncService.fetchAllDocuments<AccidentRecord>(
+        FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+      ),
+      firestoreDocumentSyncService.fetchAllDocuments<PaymentRecord>(
+        FIRESTORE_COLLECTION_NAMES.PAYMENTS,
+      ),
+      firestoreDocumentSyncService.fetchAllDocuments<BookingRequest>(
+        FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+      ),
+    ]);
 
     const [
       localCars,
@@ -161,21 +171,24 @@ export const offlineFirstSyncOrchestratorService = {
       localAccidents,
       localPayments,
       localBookingRequests,
-    ] =
-      await Promise.all([
-        asyncStorageCarRepository.getCars(),
-        asyncStorageCustomerRepository.getCustomers(),
-        asyncStorageRentalRepository.getRentals(),
-        asyncStorageFineRepository.getFines(),
-        asyncStorageAccidentRepository.getAccidents(),
-        asyncStoragePaymentRepository.getPayments(),
-        asyncStorageBookingRequestRepository.getBookingRequests(),
-      ]);
+    ] = await Promise.all([
+      asyncStorageCarRepository.getCars(),
+      asyncStorageCustomerRepository.getCustomers(),
+      asyncStorageRentalRepository.getRentals(),
+      asyncStorageFineRepository.getFines(),
+      asyncStorageAccidentRepository.getAccidents(),
+      asyncStoragePaymentRepository.getPayments(),
+      asyncStorageBookingRequestRepository.getBookingRequests(),
+    ]);
 
     const remoteCarById = new Map(remoteCars.map(car => [car.id, car]));
-    const remoteCustomerById = new Map(remoteCustomers.map(customer => [customer.id, customer]));
+    const remoteCustomerById = new Map(
+      remoteCustomers.map(customer => [customer.id, customer]),
+    );
     const remoteFineById = new Map(remoteFines.map(fine => [fine.id, fine]));
-    const remoteAccidentById = new Map(remoteAccidents.map(accident => [accident.id, accident]));
+    const remoteAccidentById = new Map(
+      remoteAccidents.map(accident => [accident.id, accident]),
+    );
 
     await Promise.all([
       asyncStorageCarRepository.replaceAll(
@@ -191,15 +204,16 @@ export const offlineFirstSyncOrchestratorService = {
         ),
       ),
       asyncStorageCustomerRepository.replaceAll(
-        mergeEntityListsByTimestamp(localCustomers, remoteCustomers).map(customer =>
-          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
-            FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-            cloudMediaSyncService.mergeRemoteMediaUrls(
+        mergeEntityListsByTimestamp(localCustomers, remoteCustomers).map(
+          customer =>
+            cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
               FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-              customer,
-              remoteCustomerById.get(customer.id),
+              cloudMediaSyncService.mergeRemoteMediaUrls(
+                FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+                customer,
+                remoteCustomerById.get(customer.id),
+              ),
             ),
-          ),
         ),
       ),
       asyncStorageRentalRepository.replaceAll(
@@ -218,36 +232,41 @@ export const offlineFirstSyncOrchestratorService = {
         ),
       ),
       asyncStorageAccidentRepository.replaceAll(
-        mergeEntityListsByTimestamp(localAccidents, remoteAccidents).map(accident =>
-          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
-            FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-            cloudMediaSyncService.mergeRemoteMediaUrls(
+        mergeEntityListsByTimestamp(localAccidents, remoteAccidents).map(
+          accident =>
+            cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
               FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-              accident,
-              remoteAccidentById.get(accident.id),
+              cloudMediaSyncService.mergeRemoteMediaUrls(
+                FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+                accident,
+                remoteAccidentById.get(accident.id),
+              ),
             ),
-          ),
         ),
       ),
       asyncStoragePaymentRepository.replaceAll(
         mergeEntityListsByTimestamp(localPayments, remotePayments),
       ),
       asyncStorageBookingRequestRepository.replaceAll(
-        mergeEntityListsByTimestamp(localBookingRequests, remoteBookingRequests),
+        mergeEntityListsByTimestamp(
+          localBookingRequests,
+          remoteBookingRequests,
+        ),
       ),
     ]);
   },
 
   /** Uploads local documents that may not exist remotely yet (after merge). */
   async pushLocalOnlyDocuments(): Promise<void> {
-    const [cars, customers, rentals, fines, accidents, payments] = await Promise.all([
-      asyncStorageCarRepository.getCars(),
-      asyncStorageCustomerRepository.getCustomers(),
-      asyncStorageRentalRepository.getRentals(),
-      asyncStorageFineRepository.getFines(),
-      asyncStorageAccidentRepository.getAccidents(),
-      asyncStoragePaymentRepository.getPayments(),
-    ]);
+    const [cars, customers, rentals, fines, accidents, payments] =
+      await Promise.all([
+        asyncStorageCarRepository.getCars(),
+        asyncStorageCustomerRepository.getCustomers(),
+        asyncStorageRentalRepository.getRentals(),
+        asyncStorageFineRepository.getFines(),
+        asyncStorageAccidentRepository.getAccidents(),
+        asyncStoragePaymentRepository.getPayments(),
+      ]);
 
     await Promise.all([
       ...cars.map(async car =>
@@ -277,7 +296,10 @@ export const offlineFirstSyncOrchestratorService = {
         ),
       ),
       ...rentals.map(rental =>
-        firestoreDocumentSyncService.upsertDocument(FIRESTORE_COLLECTION_NAMES.RENTALS, rental),
+        firestoreDocumentSyncService.upsertDocument(
+          FIRESTORE_COLLECTION_NAMES.RENTALS,
+          rental,
+        ),
       ),
       ...fines.map(async fine =>
         firestoreDocumentSyncService.upsertDocument(

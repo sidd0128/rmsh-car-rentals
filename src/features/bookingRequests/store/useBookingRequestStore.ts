@@ -8,8 +8,12 @@ interface BookingRequestState {
   bookingRequests: BookingRequest[];
   loading: boolean;
   hydrate: () => Promise<void>;
-  approveRequest: (requestId: string) => Promise<{ success: boolean; error?: string }>;
-  declineRequest: (requestId: string) => Promise<{ success: boolean; error?: string }>;
+  approveRequest: (
+    requestId: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  declineRequest: (
+    requestId: string,
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const refreshFromCloud = async (): Promise<void> => {
@@ -21,7 +25,8 @@ export const useBookingRequestStore = create<BookingRequestState>(set => ({
   loading: false,
 
   hydrate: async () => {
-    const bookingRequests = await asyncStorageBookingRequestRepository.getBookingRequests();
+    const bookingRequests =
+      await asyncStorageBookingRequestRepository.getBookingRequests();
     set({ bookingRequests });
   },
 
@@ -30,14 +35,16 @@ export const useBookingRequestStore = create<BookingRequestState>(set => ({
     try {
       await bookingRequestApprovalService.approveRequest(requestId);
       await refreshFromCloud();
-      const bookingRequests = await asyncStorageBookingRequestRepository.getBookingRequests();
+      const bookingRequests =
+        await asyncStorageBookingRequestRepository.getBookingRequests();
       set({ bookingRequests, loading: false });
       return { success: true };
     } catch (error) {
       set({ loading: false });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Could not approve request.',
+        error:
+          error instanceof Error ? error.message : 'Could not approve request.',
       };
     }
   },
@@ -47,14 +54,16 @@ export const useBookingRequestStore = create<BookingRequestState>(set => ({
     try {
       await bookingRequestApprovalService.declineRequest(requestId);
       await refreshFromCloud();
-      const bookingRequests = await asyncStorageBookingRequestRepository.getBookingRequests();
+      const bookingRequests =
+        await asyncStorageBookingRequestRepository.getBookingRequests();
       set({ bookingRequests, loading: false });
       return { success: true };
     } catch (error) {
       set({ loading: false });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Could not decline request.',
+        error:
+          error instanceof Error ? error.message : 'Could not decline request.',
       };
     }
   },

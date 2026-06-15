@@ -14,7 +14,9 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
 const nowISO = (): string => new Date().toISOString();
 
 const readLocalSettings = async (): Promise<AppSettings> => {
-  const settings = await storageService.getItem<AppSettings>(STORAGE_KEYS.APP_SETTINGS);
+  const settings = await storageService.getItem<AppSettings>(
+    STORAGE_KEYS.APP_SETTINGS,
+  );
   return settings ?? DEFAULT_APP_SETTINGS;
 };
 
@@ -44,7 +46,9 @@ export const appSettingsService = {
     }
   },
 
-  async setAutoAcceptNewBookingRequests(enabled: boolean): Promise<AppSettings> {
+  async setAutoAcceptNewBookingRequests(
+    enabled: boolean,
+  ): Promise<AppSettings> {
     const current = await this.getSettings();
     const timestamp = nowISO();
     const next: AppSettings = {

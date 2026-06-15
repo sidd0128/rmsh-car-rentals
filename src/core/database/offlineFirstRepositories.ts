@@ -34,8 +34,9 @@ class OfflineFirstCarRepository implements ICarRepository {
   getCars = () => asyncStorageCarRepository.getCars();
   getCarById = (id: string) => asyncStorageCarRepository.getCarById(id);
   addCar = (payload: CreateCarPayload) =>
-    saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CARS, () =>
-      asyncStorageCarRepository.addCar(payload),
+    saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.CARS,
+      () => asyncStorageCarRepository.addCar(payload),
       car => asyncStorageCarRepository.updateCar(car),
     );
   updateCar = async (car: Car) => {
@@ -52,19 +53,23 @@ class OfflineFirstCarRepository implements ICarRepository {
 
 class OfflineFirstCustomerRepository implements ICustomerRepository {
   getCustomers = () => asyncStorageCustomerRepository.getCustomers();
-  getCustomerById = (id: string) => asyncStorageCustomerRepository.getCustomerById(id);
+  getCustomerById = (id: string) =>
+    asyncStorageCustomerRepository.getCustomerById(id);
   addCustomer = (payload: CreateCustomerPayload) =>
-    saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.CUSTOMERS, () =>
-      asyncStorageCustomerRepository.addCustomer(payload),
+    saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+      () => asyncStorageCustomerRepository.addCustomer(payload),
       customer => asyncStorageCustomerRepository.updateCustomer(customer),
     );
   updateCustomer = async (customer: Customer) => {
-    const previousCustomer = await asyncStorageCustomerRepository.getCustomerById(customer.id);
+    const previousCustomer =
+      await asyncStorageCustomerRepository.getCustomerById(customer.id);
     await asyncStorageCustomerRepository.updateCustomer(customer);
     await saveEntityWithCloudSync(
       FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
       async () => customer,
-      syncedCustomer => asyncStorageCustomerRepository.updateCustomer(syncedCustomer),
+      syncedCustomer =>
+        asyncStorageCustomerRepository.updateCustomer(syncedCustomer),
       previousCustomer,
     );
   };
@@ -72,27 +77,35 @@ class OfflineFirstCustomerRepository implements ICustomerRepository {
 
 class OfflineFirstRentalRepository implements IRentalRepository {
   getRentals = () => asyncStorageRentalRepository.getRentals();
-  getRentalById = (id: string) => asyncStorageRentalRepository.getRentalById(id);
-  getRentalsByCarId = (carId: string) => asyncStorageRentalRepository.getRentalsByCarId(carId);
+  getRentalById = (id: string) =>
+    asyncStorageRentalRepository.getRentalById(id);
+  getRentalsByCarId = (carId: string) =>
+    asyncStorageRentalRepository.getRentalsByCarId(carId);
   addRental = (payload: CreateRentalPayload) =>
     saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.RENTALS, () =>
       asyncStorageRentalRepository.addRental(payload),
     );
   updateRental = async (rental: Rental) => {
     await asyncStorageRentalRepository.updateRental(rental);
-    await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.RENTALS, async () => rental);
+    await saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.RENTALS,
+      async () => rental,
+    );
   };
 }
 
 class OfflineFirstFineRepository implements IFineRepository {
   getFines = () => asyncStorageFineRepository.getFines();
   addFine = (payload: CreateFinePayload) =>
-    saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.FINES, () =>
-      asyncStorageFineRepository.addFine(payload),
+    saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.FINES,
+      () => asyncStorageFineRepository.addFine(payload),
       fine => asyncStorageFineRepository.updateFine(fine),
     );
   updateFine = async (fine: Fine) => {
-    const previousFine = (await asyncStorageFineRepository.getFines()).find(f => f.id === fine.id);
+    const previousFine = (await asyncStorageFineRepository.getFines()).find(
+      f => f.id === fine.id,
+    );
     await asyncStorageFineRepository.updateFine(fine);
     await saveEntityWithCloudSync(
       FIRESTORE_COLLECTION_NAMES.FINES,
@@ -106,8 +119,9 @@ class OfflineFirstFineRepository implements IFineRepository {
 class OfflineFirstAccidentRepository implements IAccidentRepository {
   getAccidents = () => asyncStorageAccidentRepository.getAccidents();
   addAccident = (payload: CreateAccidentPayload) =>
-    saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.ACCIDENTS, () =>
-      asyncStorageAccidentRepository.addAccident(payload),
+    saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+      () => asyncStorageAccidentRepository.addAccident(payload),
       accident => asyncStorageAccidentRepository.save(accident),
     );
 }
@@ -122,14 +136,21 @@ class OfflineFirstPaymentRepository implements IPaymentRepository {
     );
   updatePayment = async (payment: PaymentRecord) => {
     await asyncStoragePaymentRepository.updatePayment(payment);
-    await saveEntityWithCloudSync(FIRESTORE_COLLECTION_NAMES.PAYMENTS, async () => payment);
+    await saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.PAYMENTS,
+      async () => payment,
+    );
   };
 }
 
 export const offlineFirstCarRepository = new OfflineFirstCarRepository();
-export const offlineFirstCustomerRepository = new OfflineFirstCustomerRepository();
+export const offlineFirstCustomerRepository =
+  new OfflineFirstCustomerRepository();
 export const offlineFirstRentalRepository = new OfflineFirstRentalRepository();
 export const offlineFirstFineRepository = new OfflineFirstFineRepository();
-export const offlineFirstAccidentRepository = new OfflineFirstAccidentRepository();
-export const offlineFirstPaymentRepository = new OfflineFirstPaymentRepository();
-export const offlineFirstBookingRequestRepository = asyncStorageBookingRequestRepository;
+export const offlineFirstAccidentRepository =
+  new OfflineFirstAccidentRepository();
+export const offlineFirstPaymentRepository =
+  new OfflineFirstPaymentRepository();
+export const offlineFirstBookingRequestRepository =
+  asyncStorageBookingRequestRepository;

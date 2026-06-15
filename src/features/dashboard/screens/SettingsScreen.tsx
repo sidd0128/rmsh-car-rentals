@@ -37,7 +37,8 @@ export const SettingsScreen = () => {
   const { t } = useTranslation();
   const { language, options: languageOptions, setLanguage } = useLanguage();
   const { colors, mode, setMode } = useThemeContext();
-  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const { hydrateAll } = useHydrateStores();
   const authUser = useFirebaseAuthStore(s => s.user);
   const isOnline = useCloudSyncStore(s => s.isOnline);
@@ -90,7 +91,10 @@ export const SettingsScreen = () => {
     await loadDemoSeedData();
     await hydrateAll();
     setLoadingDemo(false);
-    Alert.alert(t('settings.loadDemoDoneTitle'), t('settings.loadDemoDoneMessage'));
+    Alert.alert(
+      t('settings.loadDemoDoneTitle'),
+      t('settings.loadDemoDoneMessage'),
+    );
   };
 
   const handleLoadDemo = () => {
@@ -195,8 +199,10 @@ export const SettingsScreen = () => {
         />
         <View style={styles.switchRow}>
           <View style={styles.switchCopy}>
-            <Text style={typography.h4}>{t('settings.autoAcceptBookingRequests')}</Text>
-            <Text style={[styles.syncHint, { color: colors.textMuted }]}> 
+            <Text style={typography.h4}>
+              {t('settings.autoAcceptBookingRequests')}
+            </Text>
+            <Text style={[styles.syncHint, { color: colors.textMuted }]}>
               {t('settings.autoAcceptBookingRequestsDesc')}
             </Text>
           </View>
@@ -232,7 +238,10 @@ export const SettingsScreen = () => {
         <View
           style={[
             screenStyles.syncCard,
-            { backgroundColor: colors.surface, borderColor: colors.borderLight },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.borderLight,
+            },
           ]}
         >
           <Text style={typography.h3}>{t('settings.devDataTitle')}</Text>
@@ -271,7 +280,9 @@ export const SettingsScreen = () => {
             : t('settings.firebaseNotConfigured')}
         </Text>
         <Text style={styles.syncLine}>
-          {isOnline ? t('settings.networkOnline') : t('settings.networkOffline')}
+          {isOnline
+            ? t('settings.networkOnline')
+            : t('settings.networkOffline')}
         </Text>
         <Text style={styles.syncLine}>
           {lastSyncedAt

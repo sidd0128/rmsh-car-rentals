@@ -6,7 +6,10 @@ import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { BottomTabParamList, DashboardStackParamList } from '@app/navigation/types';
+import type {
+  BottomTabParamList,
+  DashboardStackParamList,
+} from '@app/navigation/types';
 import { openCarsListWithFilter } from '@features/cars/navigation/openCarsListWithFilter';
 import {
   carHasUpcomingBookingOnly,
@@ -55,8 +58,12 @@ export const DashboardScreen = () => {
   const stats = useMemo(() => {
     const available = cars.filter(c => c.status === 'AVAILABLE').length;
     const onRent = cars.filter(c => c.status === 'ON_RENT').length;
-    const upcomingBookings = cars.filter(c => carHasUpcomingBookingOnly(c, rentals)).length;
-    const returningSoon = cars.filter(c => carIsReturningSoon(c, rentals)).length;
+    const upcomingBookings = cars.filter(c =>
+      carHasUpcomingBookingOnly(c, rentals),
+    ).length;
+    const returningSoon = cars.filter(c =>
+      carIsReturningSoon(c, rentals),
+    ).length;
     const totalEarnings = SHOW_PAYMENTS_UI
       ? computeFleetTotalPaid(rentals, payments)
       : 0;
@@ -64,7 +71,9 @@ export const DashboardScreen = () => {
       ? computeUpcomingEarningsTotalForYear(payments, dayjs().year())
       : 0;
     const recent = [...rentals]
-      .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
+      .sort(
+        (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+      )
       .slice(0, RECENT_BOOKINGS_LIMIT);
     const pendingBookingRequests = bookingRequests.filter(
       request => request.status === 'PENDING',
@@ -85,15 +94,28 @@ export const DashboardScreen = () => {
   const onRefresh = useCallback(() => hydrateAll(), [hydrateAll]);
 
   return (
-    <ScreenLayout onRefresh={onRefresh} style={{ paddingTop: insets.top + spacing.md }}>
-      <Text style={[styles.brand, { color: colors.primary }]}>{getAppName()}</Text>
+    <ScreenLayout
+      onRefresh={onRefresh}
+      style={{ paddingTop: insets.top + spacing.md }}
+    >
+      <Text style={[styles.brand, { color: colors.primary }]}>
+        {getAppName()}
+      </Text>
       <Text style={typography.h1}>{t('dashboard.title')}</Text>
       <Text style={styles.subtitle}>{t('dashboard.subtitle')}</Text>
 
       <View style={styles.grid}>
         <StatCard label={t('dashboard.totalCars')} value={cars.length} />
-        <StatCard label={t('dashboard.available')} value={stats.available} accent={colors.success} />
-        <StatCard label={t('dashboard.onRent')} value={stats.onRent} accent={colors.info} />
+        <StatCard
+          label={t('dashboard.available')}
+          value={stats.available}
+          accent={colors.success}
+        />
+        <StatCard
+          label={t('dashboard.onRent')}
+          value={stats.onRent}
+          accent={colors.info}
+        />
         <StatCard
           label={t('dashboard.returnsSoon')}
           value={stats.returningSoon}
@@ -132,7 +154,9 @@ export const DashboardScreen = () => {
         ) : null}
       </View>
 
-      <Text style={[typography.h3, styles.recentHeading]}>{t('dashboard.recentBookings')}</Text>
+      <Text style={[typography.h3, styles.recentHeading]}>
+        {t('dashboard.recentBookings')}
+      </Text>
       <Text style={[styles.recentHint, { color: colors.textMuted }]}>
         {t('dashboard.recentBookingsHint', { count: RECENT_BOOKINGS_LIMIT })}
       </Text>
@@ -160,7 +184,9 @@ export const DashboardScreen = () => {
               <Text style={typography.bodySmall}>
                 {customer?.name ?? t('common.customer')} · {r.status}
               </Text>
-              <Text style={[styles.recentDates, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.recentDates, { color: colors.textSecondary }]}
+              >
                 {formatDate(r.startDate)} – {formatDate(r.endDate)}
               </Text>
             </View>

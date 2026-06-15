@@ -17,7 +17,12 @@ import {
   resolveCurrentBookingForCar,
   resolveFutureBookingsForCar,
 } from '@core/services/availabilityService';
-import type { BookingRequest, Car, PaymentRecord, Rental } from '@core/types/domain';
+import type {
+  BookingRequest,
+  Car,
+  PaymentRecord,
+  Rental,
+} from '@core/types/domain';
 
 const nowISO = (): string => new Date().toISOString();
 
@@ -27,15 +32,14 @@ const sanitizeForFirestore = (value: unknown): unknown => {
   }
 
   if (value && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).reduce<Record<string, unknown>>(
-      (clean, [key, entry]) => {
-        if (entry !== undefined) {
-          clean[key] = sanitizeForFirestore(entry);
-        }
-        return clean;
-      },
-      {},
-    );
+    return Object.entries(value as Record<string, unknown>).reduce<
+      Record<string, unknown>
+    >((clean, [key, entry]) => {
+      if (entry !== undefined) {
+        clean[key] = sanitizeForFirestore(entry);
+      }
+      return clean;
+    }, {});
   }
 
   return value;
@@ -59,7 +63,9 @@ const getCarBookings = (car: Car): Rental[] => [
 const getDb = () => {
   const db = getFirestoreDatabaseOrNull();
   if (!db) {
-    throw new Error('Firebase is not configured. Booking requests require cloud sync.');
+    throw new Error(
+      'Firebase is not configured. Booking requests require cloud sync.',
+    );
   }
   return db;
 };
@@ -72,7 +78,11 @@ export const bookingRequestApprovalService = {
 
     await executeWithFreshFirebaseSession(() =>
       runTransaction(db, async transaction => {
-        const requestRef = doc(db, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS, requestId);
+        const requestRef = doc(
+          db,
+          FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+          requestId,
+        );
         const requestSnapshot = await transaction.get(requestRef);
         if (!requestSnapshot.exists()) {
           throw new Error('Booking request was not found.');
@@ -114,7 +124,9 @@ export const bookingRequestApprovalService = {
         }
 
         const timestamp = nowISO();
-        const rentalRef = doc(collection(db, FIRESTORE_COLLECTION_NAMES.RENTALS));
+        const rentalRef = doc(
+          collection(db, FIRESTORE_COLLECTION_NAMES.RENTALS),
+        );
         rentalId = rentalRef.id;
         const start = dayjs(request.startDate);
         const rental: Rental = {
@@ -135,38 +147,50 @@ export const bookingRequestApprovalService = {
           updatedAt: timestamp,
         };
 
-        const paymentDocs: Array<{ ref: DocumentReference; payment: PaymentRecord }> =
-          preview.installments.map(installment => {
-            const paymentRef = doc(collection(db, FIRESTORE_COLLECTION_NAMES.PAYMENTS));
-            return {
-              ref: paymentRef,
-              payment: {
-                id: paymentRef.id,
-                rentalId: rental.id,
-                customerId: request.customerId,
-                carId: request.carId,
-                amount: installment.amount,
-                status: 'PENDING',
-                dueDate: installment.dueDate,
-                installmentIndex: installment.index,
-                label: installment.label,
-                periodStart: installment.periodStart,
-                periodEnd: installment.periodEnd,
-                createdAt: timestamp,
-                updatedAt: timestamp,
-              },
-            };
-          });
+        const paymentDocs: Array<{
+          ref: DocumentReference;
+          payment: PaymentRecord;
+        }> = preview.installments.map(installment => {
+          const paymentRef = doc(
+            collection(db, FIRESTORE_COLLECTION_NAMES.PAYMENTS),
+          );
+          return {
+            ref: paymentRef,
+            payment: {
+              id: paymentRef.id,
+              rentalId: rental.id,
+              customerId: request.customerId,
+              carId: request.carId,
+              amount: installment.amount,
+              status: 'PENDING',
+              dueDate: installment.dueDate,
+              installmentIndex: installment.index,
+              label: installment.label,
+              periodStart: installment.periodStart,
+              periodEnd: installment.periodEnd,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            },
+          };
+        });
 
         const updatedCarRentals = [...carRentals, rental];
         setWithoutId(transaction, rentalRef, rental);
-        paymentDocs.forEach(({ ref, payment }) => setWithoutId(transaction, ref, payment));
+        paymentDocs.forEach(({ ref, payment }) =>
+          setWithoutId(transaction, ref, payment),
+        );
         transaction.update(
           carRef,
           sanitizeForFirestore({
             status: deriveCarStatus(car, updatedCarRentals),
-            currentBooking: resolveCurrentBookingForCar(request.carId, updatedCarRentals),
-            futureBookings: resolveFutureBookingsForCar(request.carId, updatedCarRentals),
+            currentBooking: resolveCurrentBookingForCar(
+              request.carId,
+              updatedCarRentals,
+            ),
+            futureBookings: resolveFutureBookingsForCar(
+              request.carId,
+              updatedCarRentals,
+            ),
             updatedAt: timestamp,
           }) as Record<string, unknown>,
         );
@@ -190,7 +214,11 @@ export const bookingRequestApprovalService = {
 
     await executeWithFreshFirebaseSession(() =>
       runTransaction(db, async transaction => {
-        const requestRef = doc(db, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS, requestId);
+        const requestRef = doc(
+          db,
+          FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+          requestId,
+        );
         const requestSnapshot = await transaction.get(requestRef);
         if (!requestSnapshot.exists()) {
           throw new Error('Booking request was not found.');

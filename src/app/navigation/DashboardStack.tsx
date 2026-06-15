@@ -21,34 +21,34 @@ export const DashboardStack = () => {
         headerShown: false,
       }}
     >
-    <Stack.Screen name="DashboardHome" component={DashboardScreen} />
-    <Stack.Screen
-      name="EarningsBreakdown"
-      component={EarningsBreakdownScreen}
-      options={{
-        headerShown: true,
-        title: i18n.t('navigation.earningsBreakdown'),
-        headerBackTitle: i18n.t('navigation.dashboard'),
-      }}
-    />
-    <Stack.Screen
-      name="BookingRequests"
-      component={BookingRequestsScreen}
-      options={{
-        headerShown: true,
-        title: i18n.t('navigation.bookingRequests'),
-        headerBackTitle: i18n.t('navigation.dashboard'),
-      }}
-    />
-    <Stack.Screen
-      name="UpcomingEarnings"
-      component={UpcomingEarningsScreen}
-      options={{
-        headerShown: true,
-        title: i18n.t('navigation.upcomingEarningsThisYear'),
-        headerBackTitle: i18n.t('navigation.dashboard'),
-      }}
-    />
+      <Stack.Screen name="DashboardHome" component={DashboardScreen} />
+      <Stack.Screen
+        name="EarningsBreakdown"
+        component={EarningsBreakdownScreen}
+        options={{
+          headerShown: true,
+          title: i18n.t('navigation.earningsBreakdown'),
+          headerBackTitle: i18n.t('navigation.dashboard'),
+        }}
+      />
+      <Stack.Screen
+        name="BookingRequests"
+        component={BookingRequestsScreen}
+        options={{
+          headerShown: true,
+          title: i18n.t('navigation.bookingRequests'),
+          headerBackTitle: i18n.t('navigation.dashboard'),
+        }}
+      />
+      <Stack.Screen
+        name="UpcomingEarnings"
+        component={UpcomingEarningsScreen}
+        options={{
+          headerShown: true,
+          title: i18n.t('navigation.upcomingEarningsThisYear'),
+          headerBackTitle: i18n.t('navigation.dashboard'),
+        }}
+      />
     </Stack.Navigator>
   );
 };

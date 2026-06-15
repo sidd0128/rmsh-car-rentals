@@ -163,15 +163,29 @@ export interface AppSettings {
 
 export type CreateCarPayload = Omit<
   Car,
-  'id' | 'totalEarnings' | 'currentBooking' | 'futureBookings' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'totalEarnings'
+  | 'currentBooking'
+  | 'futureBookings'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 export type CreateCustomerPayload = Omit<
   Customer,
-  'id' | 'totalSpent' | 'totalRentals' | 'fineHistory' | 'accidentHistory' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'totalSpent'
+  | 'totalRentals'
+  | 'fineHistory'
+  | 'accidentHistory'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
-export type CreateRentalPayload = Omit<Rental, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateRentalPayload = Omit<
+  Rental,
+  'id' | 'createdAt' | 'updatedAt'
+>;
 
 export type CreateBookingRequestPayload = Omit<
   BookingRequest,
@@ -188,4 +202,7 @@ export type CreateBookingRequestPayload = Omit<
 
 export type CreateFinePayload = Omit<Fine, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type CreateAccidentPayload = Omit<AccidentRecord, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateAccidentPayload = Omit<
+  AccidentRecord,
+  'id' | 'createdAt' | 'updatedAt'
+>;

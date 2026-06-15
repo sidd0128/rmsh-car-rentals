@@ -21,7 +21,9 @@ export const useAppSettingsStore = create<AppSettingsState>(set => ({
   setAutoAcceptNewBookingRequests: async enabled => {
     set({ saving: true });
     try {
-      const settings = await appSettingsService.setAutoAcceptNewBookingRequests(enabled);
+      const settings = await appSettingsService.setAutoAcceptNewBookingRequests(
+        enabled,
+      );
       set({ settings, saving: false });
     } catch (error) {
       set({ saving: false });
