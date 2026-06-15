@@ -5,6 +5,7 @@
 import { FIRESTORE_COLLECTION_NAMES } from '@core/firebase/constants/firestoreCollectionNames';
 import type { IAccidentRepository } from '@features/accidents/repository/IAccidentRepository';
 import { asyncStorageAccidentRepository } from '@features/accidents/repository/asyncStorageAccidentRepository';
+import { asyncStorageBookingRequestRepository } from '@features/bookingRequests/repository/asyncStorageBookingRequestRepository';
 import type { ICarRepository } from '@features/cars/repository/ICarRepository';
 import { asyncStorageCarRepository } from '@features/cars/repository/asyncStorageCarRepository';
 import type { ICustomerRepository } from '@features/customers/repository/ICustomerRepository';
@@ -131,3 +132,4 @@ export const offlineFirstRentalRepository = new OfflineFirstRentalRepository();
 export const offlineFirstFineRepository = new OfflineFirstFineRepository();
 export const offlineFirstAccidentRepository = new OfflineFirstAccidentRepository();
 export const offlineFirstPaymentRepository = new OfflineFirstPaymentRepository();
+export const offlineFirstBookingRequestRepository = asyncStorageBookingRequestRepository;

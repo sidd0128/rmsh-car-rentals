@@ -6,6 +6,7 @@ import type { MediaUri } from './media';
 export type CarStatus = 'AVAILABLE' | 'ON_RENT' | 'UPCOMING_BOOKING';
 export type RentalStatus = 'ACTIVE' | 'COMPLETED' | 'UPCOMING';
 export type PaymentStatus = 'PENDING' | 'DONE' | 'NOT_PAID';
+export type BookingRequestStatus = 'PENDING' | 'APPROVED' | 'DECLINED';
 /** How recurring rent is charged for a rental contract. */
 export type BillingFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
@@ -129,6 +130,37 @@ export interface PaymentRecord {
   updatedAt: string;
 }
 
+export interface BookingRequest {
+  id: string;
+  carId: string;
+  customerId: string;
+  customerName: string;
+  carName: string;
+  carNumberPlate: string;
+  startDate: string;
+  endDate: string;
+  billingFrequency: BillingFrequency;
+  estimatedTotalAmount: number;
+  rateAmount: number;
+  rentDueWeekday?: number;
+  rentDueDayOfMonth?: number;
+  status: BookingRequestStatus;
+  rentalId?: string;
+  declineReason?: string;
+  resolvedBy?: string;
+  requestedAt: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppSettings {
+  id: 'global';
+  autoAcceptNewBookingRequests: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type CreateCarPayload = Omit<
   Car,
   'id' | 'totalEarnings' | 'currentBooking' | 'futureBookings' | 'createdAt' | 'updatedAt'
@@ -140,6 +172,19 @@ export type CreateCustomerPayload = Omit<
 >;
 
 export type CreateRentalPayload = Omit<Rental, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type CreateBookingRequestPayload = Omit<
+  BookingRequest,
+  | 'id'
+  | 'status'
+  | 'rentalId'
+  | 'declineReason'
+  | 'resolvedBy'
+  | 'resolvedAt'
+  | 'requestedAt'
+  | 'createdAt'
+  | 'updatedAt'
+>;
 
 export type CreateFinePayload = Omit<Fine, 'id' | 'createdAt' | 'updatedAt'>;
 

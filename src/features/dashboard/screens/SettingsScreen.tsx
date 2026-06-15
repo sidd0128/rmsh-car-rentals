@@ -2,7 +2,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import { List, SegmentedButtons, Text } from 'react-native-paper';
+import { List, SegmentedButtons, Switch, Text } from 'react-native-paper';
 import type { SettingsStackParamList } from '@app/navigation/types';
 import { radius, spacing, typography } from '@app/theme';
 import { useLanguage } from '@contextApis/language/useLanguage';
@@ -18,6 +18,7 @@ import { useTranslation } from '@core/i18n';
 import { useCloudSyncStore } from '@core/store/useCloudSyncStore';
 import { performAppLogout } from '@core/storage/performAppLogout';
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
+import { useAppSettingsStore } from '@features/dashboard/store/useAppSettingsStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton } from '@shared/ui';
@@ -48,6 +49,11 @@ export const SettingsScreen = () => {
   const refreshPendingSync = useCloudSyncStore(s => s.refreshPendingSync);
   const syncNow = useCloudSyncStore(s => s.syncNow);
   const authStatus = useFirebaseAuthStore(s => s.status);
+  const appSettings = useAppSettingsStore(s => s.settings);
+  const settingsSaving = useAppSettingsStore(s => s.saving);
+  const setAutoAcceptNewBookingRequests = useAppSettingsStore(
+    s => s.setAutoAcceptNewBookingRequests,
+  );
   const showSyncButton =
     firebaseConfigured && authStatus === 'authenticated' && hasPendingSync;
   const [wipingAll, setWipingAll] = useState(false);
@@ -142,6 +148,15 @@ export const SettingsScreen = () => {
     ]);
   };
 
+  const handleAutoAcceptToggle = (enabled: boolean) => {
+    setAutoAcceptNewBookingRequests(enabled).catch(error => {
+      Alert.alert(
+        t('settings.bookingRequestsSettingFailedTitle'),
+        error instanceof Error ? error.message : t('auth.errors.generic'),
+      );
+    });
+  };
+
   return (
     <ScreenLayout onRefresh={handleSync} refreshing={isSyncing}>
       <Text style={typography.h2}>{t('settings.title')}</Text>
@@ -178,6 +193,19 @@ export const SettingsScreen = () => {
             label: option.label,
           }))}
         />
+        <View style={styles.switchRow}>
+          <View style={styles.switchCopy}>
+            <Text style={typography.h4}>{t('settings.autoAcceptBookingRequests')}</Text>
+            <Text style={[styles.syncHint, { color: colors.textMuted }]}> 
+              {t('settings.autoAcceptBookingRequestsDesc')}
+            </Text>
+          </View>
+          <Switch
+            value={appSettings?.autoAcceptNewBookingRequests === true}
+            onValueChange={handleAutoAcceptToggle}
+            disabled={settingsSaving}
+          />
+        </View>
       </View>
 
       <View
@@ -305,6 +333,15 @@ const styles = StyleSheet.create({
   devActions: {
     gap: spacing.sm,
     marginTop: spacing.sm,
+  },
+  switchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+  },
+  switchCopy: {
+    flex: 1,
   },
   menuCard: {
     borderRadius: radius.md,

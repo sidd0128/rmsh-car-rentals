@@ -3,11 +3,13 @@
  */
 import { useCallback } from 'react';
 import { useAccidentStore } from '@features/accidents/store/useAccidentStore';
+import { useBookingRequestStore } from '@features/bookingRequests/store/useBookingRequestStore';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { useFineStore } from '@features/fines/store/useFineStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
+import { useAppSettingsStore } from '@features/dashboard/store/useAppSettingsStore';
 
 export const useHydrateStores = () => {
   const hydrateAll = useCallback(async () => {
@@ -18,6 +20,8 @@ export const useHydrateStores = () => {
       useFineStore.getState().hydrate(),
       useAccidentStore.getState().hydrate(),
       usePaymentStore.getState().hydrate(),
+      useBookingRequestStore.getState().hydrate(),
+      useAppSettingsStore.getState().hydrate(),
     ]);
   }, []);
 

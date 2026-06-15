@@ -4,6 +4,7 @@ import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { getCurrentFirebaseUser } from '@core/firebase/auth/services/firebaseAuthService';
 import { getFirebaseAppOrNull } from '@core/firebase/services/firebaseAppInitializationService';
 import { asyncStorageAccidentRepository } from '@features/accidents/repository/asyncStorageAccidentRepository';
+import { asyncStorageBookingRequestRepository } from '@features/bookingRequests/repository/asyncStorageBookingRequestRepository';
 import { asyncStorageCarRepository } from '@features/cars/repository/asyncStorageCarRepository';
 import { asyncStorageCustomerRepository } from '@features/customers/repository/asyncStorageCustomerRepository';
 import { asyncStorageFineRepository } from '@features/fines/repository/asyncStorageFineRepository';
@@ -11,6 +12,7 @@ import { asyncStoragePaymentRepository } from '@features/payments/repository/asy
 import { asyncStorageRentalRepository } from '@features/rentals/repository/asyncStorageRentalRepository';
 import type {
   AccidentRecord,
+  BookingRequest,
   Car,
   Customer,
   Fine,
@@ -122,7 +124,15 @@ export const offlineFirstSyncOrchestratorService = {
 
   /** Downloads Firestore data and merges into AsyncStorage (newer timestamp wins). */
   async pullRemoteIntoLocal(): Promise<void> {
-    const [remoteCars, remoteCustomers, remoteRentals, remoteFines, remoteAccidents, remotePayments] =
+    const [
+      remoteCars,
+      remoteCustomers,
+      remoteRentals,
+      remoteFines,
+      remoteAccidents,
+      remotePayments,
+      remoteBookingRequests,
+    ] =
       await Promise.all([
         firestoreDocumentSyncService.fetchAllDocuments<Car>(FIRESTORE_COLLECTION_NAMES.CARS),
         firestoreDocumentSyncService.fetchAllDocuments<Customer>(
@@ -138,9 +148,20 @@ export const offlineFirstSyncOrchestratorService = {
         firestoreDocumentSyncService.fetchAllDocuments<PaymentRecord>(
           FIRESTORE_COLLECTION_NAMES.PAYMENTS,
         ),
+        firestoreDocumentSyncService.fetchAllDocuments<BookingRequest>(
+          FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+        ),
       ]);
 
-    const [localCars, localCustomers, localRentals, localFines, localAccidents, localPayments] =
+    const [
+      localCars,
+      localCustomers,
+      localRentals,
+      localFines,
+      localAccidents,
+      localPayments,
+      localBookingRequests,
+    ] =
       await Promise.all([
         asyncStorageCarRepository.getCars(),
         asyncStorageCustomerRepository.getCustomers(),
@@ -148,6 +169,7 @@ export const offlineFirstSyncOrchestratorService = {
         asyncStorageFineRepository.getFines(),
         asyncStorageAccidentRepository.getAccidents(),
         asyncStoragePaymentRepository.getPayments(),
+        asyncStorageBookingRequestRepository.getBookingRequests(),
       ]);
 
     const remoteCarById = new Map(remoteCars.map(car => [car.id, car]));
@@ -209,6 +231,9 @@ export const offlineFirstSyncOrchestratorService = {
       ),
       asyncStoragePaymentRepository.replaceAll(
         mergeEntityListsByTimestamp(localPayments, remotePayments),
+      ),
+      asyncStorageBookingRequestRepository.replaceAll(
+        mergeEntityListsByTimestamp(localBookingRequests, remoteBookingRequests),
       ),
     ]);
   },

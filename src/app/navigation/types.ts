@@ -33,6 +33,7 @@ export type DashboardStackParamList = {
   DashboardHome: undefined;
   EarningsBreakdown: undefined;
   UpcomingEarnings: undefined;
+  BookingRequests: undefined;
 };
 
 export type SettingsStackParamList = {

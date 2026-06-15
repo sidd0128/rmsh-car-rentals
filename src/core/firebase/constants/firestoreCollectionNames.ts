@@ -9,6 +9,8 @@ export const FIRESTORE_COLLECTION_NAMES = {
   FINES: 'fines',
   ACCIDENTS: 'accidents',
   PAYMENTS: 'payments',
+  BOOKING_REQUESTS: 'bookingRequests',
+  APP_SETTINGS: 'appSettings',
 } as const;
 
 export type FirestoreCollectionName =

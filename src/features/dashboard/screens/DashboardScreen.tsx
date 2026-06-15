@@ -30,6 +30,7 @@ import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { computeFleetTotalPaid } from '@core/helpers/rentalPayments';
 import { computeUpcomingEarningsTotalForYear } from '@core/helpers/upcomingEarnings';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
+import { useBookingRequestStore } from '@features/bookingRequests/store/useBookingRequestStore';
 import dayjs from 'dayjs';
 
 const RECENT_BOOKINGS_LIMIT = 5;
@@ -48,6 +49,7 @@ export const DashboardScreen = () => {
   const customers = useCustomerStore(s => s.customers);
   const rentals = useRentalStore(s => s.rentals);
   const payments = usePaymentStore(s => s.payments);
+  const bookingRequests = useBookingRequestStore(s => s.bookingRequests);
   const { hydrateAll } = useHydrateStores();
 
   const stats = useMemo(() => {
@@ -64,6 +66,9 @@ export const DashboardScreen = () => {
     const recent = [...rentals]
       .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
       .slice(0, RECENT_BOOKINGS_LIMIT);
+    const pendingBookingRequests = bookingRequests.filter(
+      request => request.status === 'PENDING',
+    ).length;
 
     return {
       available,
@@ -73,8 +78,9 @@ export const DashboardScreen = () => {
       totalEarnings,
       upcomingEarnings,
       recent,
+      pendingBookingRequests,
     };
-  }, [cars, rentals, payments]);
+  }, [bookingRequests, cars, rentals, payments]);
 
   const onRefresh = useCallback(() => hydrateAll(), [hydrateAll]);
 
@@ -102,6 +108,12 @@ export const DashboardScreen = () => {
           onPress={() => openCarsListWithFilter(navigation, 'UPCOMING_BOOKING')}
         />
         <StatCard label={t('dashboard.customers')} value={customers.length} />
+        <StatCard
+          label={t('dashboard.newBookingRequests')}
+          value={stats.pendingBookingRequests}
+          accent={colors.primary}
+          onPress={() => navigation.navigate('BookingRequests')}
+        />
         {SHOW_PAYMENTS_UI ? (
           <>
             <StatCard
