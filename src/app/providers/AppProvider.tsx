@@ -10,7 +10,6 @@ import { ThemeProvider } from '@contextApis/theme/ThemeProvider';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
-import { bookingRequestRealtimeSyncService } from '@core/sync/services/bookingRequestRealtimeSyncService';
 import { offlineFirstSyncOrchestratorService } from '@core/sync/services/offlineFirstSyncOrchestratorService';
 import {
   startCloudSyncConnectivityListener,
@@ -19,7 +18,7 @@ import {
 import { handleError } from '@error/errorHandler';
 import { useFirebaseAuthBootstrap } from '@features/auth/hooks/useFirebaseAuthBootstrap';
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
-import { useBookingRequestStore } from '@features/bookingRequests/store/useBookingRequestStore';
+import { useBookingRequestRealtimeSync } from '@features/bookingRequests/hooks/useBookingRequestRealtimeSync';
 import { NetworkGate } from '@network/NetworkGate';
 import { NetworkProvider } from '@network/NetworkProvider';
 import { GlobalUiHost } from '@shared/ui/GlobalUiHost';
@@ -81,6 +80,7 @@ export const AppProvider = () => {
   const authStatus = useFirebaseAuthStore(s => s.status);
 
   useFirebaseAuthBootstrap();
+  useBookingRequestRealtimeSync();
 
   useEffect(() => {
     const loadAppData = async () => {
@@ -131,23 +131,6 @@ export const AppProvider = () => {
     const unsubscribe = startCloudSyncConnectivityListener();
     return unsubscribe;
   }, []);
-
-  useEffect(() => {
-    if (!isFirebaseConfigured() || authStatus !== 'authenticated') {
-      return undefined;
-    }
-
-    const unsubscribe = bookingRequestRealtimeSyncService.subscribe(
-      bookingRequests => {
-        useBookingRequestStore.getState().setBookingRequests(bookingRequests);
-      },
-      error => {
-        handleError(error, 'AppProvider.bookingRequestRealtimeSync');
-      },
-    );
-
-    return unsubscribe ?? undefined;
-  }, [authStatus]);
 
   const firebaseConfigured = isFirebaseConfigured();
   const waitingForAuth = firebaseConfigured && authStatus === 'initializing';

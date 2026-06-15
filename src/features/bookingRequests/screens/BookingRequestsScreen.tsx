@@ -4,18 +4,23 @@ import { Text } from 'react-native-paper';
 import { spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDateTimeAmPm } from '@core/helpers/date';
-import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useTranslation } from '@core/i18n';
 import { formatCurrency } from '@core/utils/currency';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { AppButton, EmptyState, StatusBadge } from '@shared/ui';
+import {
+  getPendingBookingRequests,
+  sortBookingRequestsByNewest,
+} from '../helpers/bookingRequestSelectors';
 import { useBookingRequestStore } from '../store/useBookingRequestStore';
+
+type RequestActionResult = { success: boolean; error?: string };
+type RequestAction = () => Promise<RequestActionResult>;
 
 export const BookingRequestsScreen = () => {
   const { t } = useTranslation();
   const { colors } = useThemeContext();
-  const { hydrateAll } = useHydrateStores();
   const bookingRequests = useBookingRequestStore(s => s.bookingRequests);
   const loading = useBookingRequestStore(s => s.loading);
   const hydrateRequests = useBookingRequestStore(s => s.hydrate);
@@ -24,20 +29,29 @@ export const BookingRequestsScreen = () => {
 
   const pendingRequests = useMemo(
     () =>
-      bookingRequests
-        .filter(request => request.status === 'PENDING')
-        .sort(
-          (a, b) =>
-            new Date(b.requestedAt).getTime() -
-            new Date(a.requestedAt).getTime(),
-        ),
+      sortBookingRequestsByNewest(getPendingBookingRequests(bookingRequests)),
     [bookingRequests],
   );
 
-  const refresh = useCallback(async () => {
-    await hydrateAll();
-    await hydrateRequests();
-  }, [hydrateAll, hydrateRequests]);
+  const refresh = useCallback(() => hydrateRequests(), [hydrateRequests]);
+
+  const showActionError = useCallback(
+    (error?: string) => {
+      Alert.alert(t('bookingRequests.actionFailedTitle'), error);
+    },
+    [t],
+  );
+
+  const runRequestAction = useCallback(
+    (action: RequestAction) => {
+      action().then(result => {
+        if (!result.success) {
+          showActionError(result.error);
+        }
+      });
+    },
+    [showActionError],
+  );
 
   const handleApprove = (requestId: string) => {
     Alert.alert(
@@ -48,16 +62,7 @@ export const BookingRequestsScreen = () => {
         {
           text: t('bookingRequests.approve'),
           onPress: () => {
-            approveRequest(requestId).then(async result => {
-              if (!result.success) {
-                Alert.alert(
-                  t('bookingRequests.actionFailedTitle'),
-                  result.error,
-                );
-                return;
-              }
-              await refresh();
-            });
+            runRequestAction(() => approveRequest(requestId));
           },
         },
       ],
@@ -74,16 +79,7 @@ export const BookingRequestsScreen = () => {
           text: t('bookingRequests.decline'),
           style: 'destructive',
           onPress: () => {
-            declineRequest(requestId).then(async result => {
-              if (!result.success) {
-                Alert.alert(
-                  t('bookingRequests.actionFailedTitle'),
-                  result.error,
-                );
-                return;
-              }
-              await refresh();
-            });
+            runRequestAction(() => declineRequest(requestId));
           },
         },
       ],

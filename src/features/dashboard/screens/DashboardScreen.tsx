@@ -33,6 +33,7 @@ import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { computeFleetTotalPaid } from '@core/helpers/rentalPayments';
 import { computeUpcomingEarningsTotalForYear } from '@core/helpers/upcomingEarnings';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
+import { getPendingBookingRequestCount } from '@features/bookingRequests/helpers/bookingRequestSelectors';
 import { useBookingRequestStore } from '@features/bookingRequests/store/useBookingRequestStore';
 import dayjs from 'dayjs';
 
@@ -75,9 +76,8 @@ export const DashboardScreen = () => {
         (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
       )
       .slice(0, RECENT_BOOKINGS_LIMIT);
-    const pendingBookingRequests = bookingRequests.filter(
-      request => request.status === 'PENDING',
-    ).length;
+    const pendingBookingRequests =
+      getPendingBookingRequestCount(bookingRequests);
 
     return {
       available,
