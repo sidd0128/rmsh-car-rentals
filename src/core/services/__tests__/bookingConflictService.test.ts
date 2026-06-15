@@ -1,4 +1,7 @@
-import { hasBookingConflict } from '../bookingConflictService';
+import {
+  findBookingConflict,
+  hasBookingConflict,
+} from '../bookingConflictService';
 import type { Rental } from '../../types/domain';
 
 const baseRental = (overrides: Partial<Rental>): Rental => ({
@@ -19,6 +22,7 @@ describe('bookingConflictService', () => {
   it('detects overlapping rentals', () => {
     const rentals = [
       baseRental({
+        id: 'conflicting-rental',
         startDate: '2026-02-01T00:00:00.000Z',
         endDate: '2026-02-10T00:00:00.000Z',
       }),
@@ -28,6 +32,12 @@ describe('bookingConflictService', () => {
       endDate: '2026-02-15T00:00:00.000Z',
     });
     expect(conflict).toBe(true);
+    expect(
+      findBookingConflict(rentals, {
+        startDate: '2026-02-05T00:00:00.000Z',
+        endDate: '2026-02-15T00:00:00.000Z',
+      })?.id,
+    ).toBe('conflicting-rental');
   });
 
   it('allows extension period starting on previous rental end date', () => {

@@ -23,6 +23,22 @@ export const hasBookingConflict = (
   range: DateRange,
   excludeRentalId?: string,
 ): boolean =>
+  findBookingConflict(rentals, range, excludeRentalId) !== undefined;
+
+/** Returns the first active/upcoming rental that overlaps `range`. */
+export const findBookingConflict = (
+  rentals: Rental[],
+  range: DateRange,
+  excludeRentalId?: string,
+): Rental | undefined =>
   rentals
     .filter(r => r.status !== 'COMPLETED' && r.id !== excludeRentalId)
-    .some(r => rangesOverlap(range, { startDate: r.startDate, endDate: r.endDate }));
+    .find(r =>
+      rangesOverlap(range, { startDate: r.startDate, endDate: r.endDate }),
+    );
+
+export const bookingConflictService = {
+  hasBookingConflict,
+  findBookingConflict,
+  rangesOverlap,
+};

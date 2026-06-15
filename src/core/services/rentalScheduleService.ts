@@ -1,10 +1,11 @@
 import dayjs from 'dayjs';
 import { OPEN_ENDED_RENTAL_END_ISO } from '@core/constants/rental';
 import { repositories } from '@core/database/repositoryRegistry';
+import { formatDateTimeAmPm } from '@core/helpers/date';
 import { deriveRentalPaymentStatus } from '@core/helpers/rentalPayments';
 import type { AssignRentalInput } from '@features/rentals/types/assignRental';
 import type { Rental } from '@core/types/domain';
-import { hasBookingConflict } from './bookingConflictService';
+import { findBookingConflict } from './bookingConflictService';
 import { calculateRentalBillingPreview } from './rentalBillingService';
 import {
   deriveCarStatus,
@@ -15,6 +16,19 @@ import {
 export type ScheduledRentalResult =
   | { success: true; rental: Rental }
   | { success: false; error: string };
+
+const buildBookingConflictError = async (conflict: Rental): Promise<string> => {
+  const customer = await repositories.customers.getCustomerById(
+    conflict.customerId,
+  );
+  const customerName = customer?.name ?? 'another customer';
+
+  return `This car is already booked for ${customerName} from ${formatDateTimeAmPm(
+    conflict.startDate,
+  )} to ${formatDateTimeAmPm(
+    conflict.endDate,
+  )}. Please choose a different car or date range.`;
+};
 
 /**
  * Creates a rental contract and installment payments from assignment-style input.
@@ -50,15 +64,17 @@ export const createScheduledRental = async (
 
   const rentals = await repositories.rentals.getRentals();
   const carRentals = rentals.filter(r => r.carId === input.carId);
+  const bookingConflict = findBookingConflict(
+    carRentals,
+    { startDate: input.startDate, endDate: endIso },
+    options?.excludeConflictRentalId,
+  );
 
-  if (
-    hasBookingConflict(
-      carRentals,
-      { startDate: input.startDate, endDate: endIso },
-      options?.excludeConflictRentalId,
-    )
-  ) {
-    return { success: false, error: 'Booking dates conflict with an existing rental' };
+  if (bookingConflict) {
+    return {
+      success: false,
+      error: await buildBookingConflictError(bookingConflict),
+    };
   }
 
   const now = dayjs();
@@ -82,24 +98,24 @@ export const createScheduledRental = async (
 
   const createdPayments = [];
   if (!input.openEnded) {
-  for (let i = 0; i < preview.installments.length; i++) {
-    const installment = preview.installments[i];
-    const collectNow = i === 0 && input.collectFirstPaymentOnAssignment;
-    const payment = await repositories.payments.addPayment({
-      rentalId: rental.id,
-      customerId: input.customerId,
-      carId: input.carId,
-      amount: installment.amount,
-      status: collectNow ? 'DONE' : 'PENDING',
-      dueDate: installment.dueDate,
-      installmentIndex: installment.index,
-      label: installment.label,
-      periodStart: installment.periodStart,
-      periodEnd: installment.periodEnd,
-      paidAt: collectNow ? new Date().toISOString() : undefined,
-    });
-    createdPayments.push(payment);
-  }
+    for (let i = 0; i < preview.installments.length; i++) {
+      const installment = preview.installments[i];
+      const collectNow = i === 0 && input.collectFirstPaymentOnAssignment;
+      const payment = await repositories.payments.addPayment({
+        rentalId: rental.id,
+        customerId: input.customerId,
+        carId: input.carId,
+        amount: installment.amount,
+        status: collectNow ? 'DONE' : 'PENDING',
+        dueDate: installment.dueDate,
+        installmentIndex: installment.index,
+        label: installment.label,
+        periodStart: installment.periodStart,
+        periodEnd: installment.periodEnd,
+        paidAt: collectNow ? new Date().toISOString() : undefined,
+      });
+      createdPayments.push(payment);
+    }
   }
 
   const paymentStatus = deriveRentalPaymentStatus(createdPayments);
@@ -111,7 +127,9 @@ export const createScheduledRental = async (
 
   const car = await repositories.cars.getCarById(input.carId);
   if (car) {
-    const updatedRentals = await repositories.rentals.getRentalsByCarId(input.carId);
+    const updatedRentals = await repositories.rentals.getRentalsByCarId(
+      input.carId,
+    );
     await repositories.cars.updateCar({
       ...car,
       status: deriveCarStatus(car, updatedRentals),
