@@ -192,9 +192,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-RMSHRentals/Pods-RMSHRentals-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-RMSHRentals/Pods-RMSHRentals-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -256,9 +260,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-RMSHRentals/Pods-RMSHRentals-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-RMSHRentals/Pods-RMSHRentals-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -288,7 +296,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = RGB6J7UV7V;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = RMSHRentals/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
@@ -302,8 +310,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = org.demo.RMSHRentals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rmshr.rentals;
 				PRODUCT_NAME = RMSHRentals;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -338,8 +345,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.rmshr.rentals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rmshr.rentals;
 				PRODUCT_NAME = RMSHRentals;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "RMSHRentals App Store Profile";

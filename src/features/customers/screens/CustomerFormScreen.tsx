@@ -3,7 +3,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Switch, Text } from 'react-native-paper';
+import { HelperText, Switch, Text } from 'react-native-paper';
 import { useForm } from 'react-hook-form';
 import type { CustomersStackParamList } from '@app/navigation/types';
 import { spacing } from '@app/theme';
@@ -48,6 +48,7 @@ export const CustomerFormScreen = () => {
   const [documents, setDocuments] = useState<string[]>([]);
   const [isBlacklisted, setBlacklisted] = useState(false);
   const [isReadingLicense, setReadingLicense] = useState(false);
+  const [licenseImageError, setLicenseImageError] = useState<string | null>(null);
 
   useEffect(() => {
     if (existing) {
@@ -130,9 +131,21 @@ export const CustomerFormScreen = () => {
     [applyLicenseAutofill, showToast, t],
   );
 
+  const handleLicenseImagesChange = useCallback(
+    (images: string[]) => {
+      setLicenseImages(images);
+      if (images.length > 0 && licenseImageError) {
+        setLicenseImageError(null);
+      }
+    },
+    [licenseImageError],
+  );
+
   const onSubmit = handleSubmit(async values => {
     if (!licenseImages.length) {
-      showToast(t('customers.drivingLicenseRequired'), { type: 'error' });
+      const message = t('customers.drivingLicenseRequired');
+      setLicenseImageError(message);
+      showToast(message, { type: 'error' });
       return;
     }
 
@@ -162,10 +175,15 @@ export const CustomerFormScreen = () => {
       <Text variant="titleMedium">{t('customers.drivingLicense')}</Text>
       <MediaUploader
         images={licenseImages}
-        onChange={setLicenseImages}
+        onChange={handleLicenseImagesChange}
         onImagesAdded={handleLicenseImagesAdded}
         maxImages={1}
       />
+      {licenseImageError ? (
+        <HelperText type="error" visible>
+          {licenseImageError}
+        </HelperText>
+      ) : null}
       {isReadingLicense ? (
         <Text style={styles.helperText}>{t('customers.licenseAutofillReading')}</Text>
       ) : null}

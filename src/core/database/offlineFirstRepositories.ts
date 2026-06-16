@@ -29,6 +29,7 @@ import type {
   Rental,
 } from '@core/types/domain';
 import { saveEntityWithCloudSync } from './offlineFirstRepositoryHelpers';
+import { cloudEntityWriteService } from '@core/sync/services/cloudEntityWriteService';
 
 class OfflineFirstCarRepository implements ICarRepository {
   getCars = () => asyncStorageCarRepository.getCars();
@@ -48,6 +49,10 @@ class OfflineFirstCarRepository implements ICarRepository {
       syncedCar => asyncStorageCarRepository.updateCar(syncedCar),
       previousCar,
     );
+  };
+  deleteCar = async (id: string) => {
+    await asyncStorageCarRepository.deleteCar(id);
+    await cloudEntityWriteService.deleteEntity(FIRESTORE_COLLECTION_NAMES.CARS, id);
   };
 }
 

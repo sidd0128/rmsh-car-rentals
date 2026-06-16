@@ -44,4 +44,30 @@ export const cloudEntityWriteService = {
     await useCloudSyncStore.getState().refreshPendingSync();
     return entity;
   },
+
+  async deleteEntity(
+    collectionName: FirestoreCollectionName,
+    entityId: string,
+  ): Promise<void> {
+    if (!isFirebaseConfigured() || !getCurrentFirebaseUser()) {
+      return;
+    }
+
+    const online = await networkConnectivityService.isOnline();
+    if (online) {
+      try {
+        await firestoreDocumentSyncService.deleteDocument(collectionName, entityId);
+        return;
+      } catch {
+        // Keep the local delete authoritative and retry cloud deletion later.
+      }
+    }
+
+    await syncOutboxRepository.enqueue({
+      collectionName,
+      operation: 'delete',
+      payload: { id: entityId },
+    });
+    await useCloudSyncStore.getState().refreshPendingSync();
+  },
 };

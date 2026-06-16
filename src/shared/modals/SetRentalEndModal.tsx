@@ -40,7 +40,11 @@ export const SetRentalEndModal = forwardRef<SetRentalEndModalRef, SetRentalEndMo
     useImperativeHandle(ref, () => ({
       open: source => {
         setRental(source);
-        const suggested = dayjs().add(7, 'day');
+        const defaultEnd = dayjs().add(7, 'day');
+        const rentalStart = dayjs(source.startDate);
+        const suggested = defaultEnd.isBefore(rentalStart)
+          ? rentalStart.add(1, 'day')
+          : defaultEnd;
         setEndDatePart(suggested.toDate());
         setEndTimePart(suggested.toDate());
         sheetRef.current?.open();

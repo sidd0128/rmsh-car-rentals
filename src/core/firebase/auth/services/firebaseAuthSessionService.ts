@@ -1,5 +1,8 @@
-import { performAppLogout } from '@core/storage/performAppLogout';
-import { getCurrentFirebaseUser } from './firebaseAuthService';
+import {
+  getCurrentFirebaseUser,
+  signOutFirebaseUser,
+} from './firebaseAuthService';
+import { resetDomainStores } from '@core/storage/resetDomainStores';
 import {
   isSessionRelatedFirebaseError,
   isTokenRefreshFailure,
@@ -34,7 +37,8 @@ export const getValidFirebaseIdToken = async (
  * Signs the user out and resets auth UI state when the session cannot be recovered.
  */
 export const handleUnrecoverableAuthSession = async (): Promise<void> => {
-  await performAppLogout();
+  await signOutFirebaseUser();
+  resetDomainStores();
   useFirebaseAuthStore.getState().markSessionExpired(
     'Your session expired. Please sign in again.',
   );

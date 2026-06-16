@@ -30,5 +30,36 @@ target 'RMSHRentals' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    app_root = File.expand_path('..', __dir__)
+    hermes_cli_path = File.join(
+      app_root,
+      'node_modules',
+      'hermes-compiler',
+      'hermesc',
+      'osx-bin',
+      'hermesc',
+    )
+
+    pods_target_support_files = File.join(
+      __dir__,
+      'Pods',
+      'Target Support Files',
+      'Pods-RMSHRentals',
+      'Pods-RMSHRentals.*.xcconfig',
+    )
+
+    Dir.glob(pods_target_support_files).each do |xcconfig_path|
+      xcconfig = File.read(xcconfig_path)
+      hermes_setting = "HERMES_CLI_PATH = #{hermes_cli_path}"
+
+      updated_xcconfig = if xcconfig.match?(/^HERMES_CLI_PATH = .+$/)
+        xcconfig.gsub(/^HERMES_CLI_PATH = .+$/, hermes_setting)
+      else
+        "#{xcconfig.rstrip}\n#{hermes_setting}\n"
+      end
+
+      File.write(xcconfig_path, updated_xcconfig)
+    end
   end
 end

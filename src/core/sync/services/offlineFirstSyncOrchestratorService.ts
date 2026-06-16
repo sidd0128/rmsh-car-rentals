@@ -24,12 +24,63 @@ import { cloudMediaSyncService } from './cloudMediaSyncService';
 import { networkConnectivityService } from './networkConnectivityService';
 import { syncMetadataRepository } from '../repositories/syncMetadataRepository';
 import { syncOutboxRepository } from '../repositories/syncOutboxRepository';
+import type { FirestoreCollectionName } from '@core/firebase/constants/firestoreCollectionNames';
+import type { SyncOutboxEntry } from '../types/syncTypes';
 
 export interface CloudSyncResult {
   success: boolean;
   skipped: boolean;
   message: string;
 }
+
+type SyncableEntity = {
+  id: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+const getPendingUpsertIds = (
+  entries: SyncOutboxEntry[],
+  collectionName: FirestoreCollectionName,
+): Set<string> =>
+  new Set(
+    entries
+      .filter(entry => entry.collectionName === collectionName && entry.operation === 'upsert')
+      .map(entry => String(entry.payload.id))
+      .filter(Boolean),
+  );
+
+const keepLocalItemsMissingRemotely = <T extends SyncableEntity>(
+  localItems: T[],
+  remoteItems: T[],
+  hasSyncedBefore: boolean,
+  pendingUpsertIds: Set<string>,
+): T[] => {
+  if (!hasSyncedBefore) {
+    return localItems;
+  }
+
+  const remoteIds = new Set(remoteItems.map(item => item.id));
+  return localItems.filter(
+    item => remoteIds.has(item.id) || pendingUpsertIds.has(item.id),
+  );
+};
+
+const mergeRemoteWithLocalDeletions = <T extends SyncableEntity>(
+  localItems: T[],
+  remoteItems: T[],
+  hasSyncedBefore: boolean,
+  pendingUpsertIds: Set<string>,
+): T[] =>
+  mergeEntityListsByTimestamp(
+    keepLocalItemsMissingRemotely(
+      localItems,
+      remoteItems,
+      hasSyncedBefore,
+      pendingUpsertIds,
+    ),
+    remoteItems,
+  );
 
 /**
  * Coordinates bidirectional sync: Firestore ↔ AsyncStorage.
@@ -131,6 +182,12 @@ export const offlineFirstSyncOrchestratorService = {
 
   /** Downloads Firestore data and merges into AsyncStorage (newer timestamp wins). */
   async pullRemoteIntoLocal(): Promise<void> {
+    const [{ lastSyncedAt }, outboxEntries] = await Promise.all([
+      syncMetadataRepository.get(),
+      syncOutboxRepository.getAll(),
+    ]);
+    const hasSyncedBefore = Boolean(lastSyncedAt);
+
     const [
       remoteCars,
       remoteCustomers,
@@ -190,9 +247,52 @@ export const offlineFirstSyncOrchestratorService = {
       remoteAccidents.map(accident => [accident.id, accident]),
     );
 
+    const mergedCars = mergeRemoteWithLocalDeletions(
+      localCars,
+      remoteCars,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.CARS),
+    );
+    const mergedCustomers = mergeRemoteWithLocalDeletions(
+      localCustomers,
+      remoteCustomers,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.CUSTOMERS),
+    );
+    const mergedRentals = mergeRemoteWithLocalDeletions(
+      localRentals,
+      remoteRentals,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.RENTALS),
+    );
+    const mergedFines = mergeRemoteWithLocalDeletions(
+      localFines,
+      remoteFines,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.FINES),
+    );
+    const mergedAccidents = mergeRemoteWithLocalDeletions(
+      localAccidents,
+      remoteAccidents,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.ACCIDENTS),
+    );
+    const mergedPayments = mergeRemoteWithLocalDeletions(
+      localPayments,
+      remotePayments,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.PAYMENTS),
+    );
+    const mergedBookingRequests = mergeRemoteWithLocalDeletions(
+      localBookingRequests,
+      remoteBookingRequests,
+      hasSyncedBefore,
+      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS),
+    );
+
     await Promise.all([
       asyncStorageCarRepository.replaceAll(
-        mergeEntityListsByTimestamp(localCars, remoteCars).map(car =>
+        mergedCars.map(car =>
           cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
             FIRESTORE_COLLECTION_NAMES.CARS,
             cloudMediaSyncService.mergeRemoteMediaUrls(
@@ -204,23 +304,20 @@ export const offlineFirstSyncOrchestratorService = {
         ),
       ),
       asyncStorageCustomerRepository.replaceAll(
-        mergeEntityListsByTimestamp(localCustomers, remoteCustomers).map(
-          customer =>
-            cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+        mergedCustomers.map(customer =>
+          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+            FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+            cloudMediaSyncService.mergeRemoteMediaUrls(
               FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-              cloudMediaSyncService.mergeRemoteMediaUrls(
-                FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-                customer,
-                remoteCustomerById.get(customer.id),
-              ),
+              customer,
+              remoteCustomerById.get(customer.id),
             ),
+          ),
         ),
       ),
-      asyncStorageRentalRepository.replaceAll(
-        mergeEntityListsByTimestamp(localRentals, remoteRentals),
-      ),
+      asyncStorageRentalRepository.replaceAll(mergedRentals),
       asyncStorageFineRepository.replaceAll(
-        mergeEntityListsByTimestamp(localFines, remoteFines).map(fine =>
+        mergedFines.map(fine =>
           cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
             FIRESTORE_COLLECTION_NAMES.FINES,
             cloudMediaSyncService.mergeRemoteMediaUrls(
@@ -232,27 +329,19 @@ export const offlineFirstSyncOrchestratorService = {
         ),
       ),
       asyncStorageAccidentRepository.replaceAll(
-        mergeEntityListsByTimestamp(localAccidents, remoteAccidents).map(
-          accident =>
-            cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+        mergedAccidents.map(accident =>
+          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+            FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+            cloudMediaSyncService.mergeRemoteMediaUrls(
               FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-              cloudMediaSyncService.mergeRemoteMediaUrls(
-                FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-                accident,
-                remoteAccidentById.get(accident.id),
-              ),
+              accident,
+              remoteAccidentById.get(accident.id),
             ),
+          ),
         ),
       ),
-      asyncStoragePaymentRepository.replaceAll(
-        mergeEntityListsByTimestamp(localPayments, remotePayments),
-      ),
-      asyncStorageBookingRequestRepository.replaceAll(
-        mergeEntityListsByTimestamp(
-          localBookingRequests,
-          remoteBookingRequests,
-        ),
-      ),
+      asyncStoragePaymentRepository.replaceAll(mergedPayments),
+      asyncStorageBookingRequestRepository.replaceAll(mergedBookingRequests),
     ]);
   },
 

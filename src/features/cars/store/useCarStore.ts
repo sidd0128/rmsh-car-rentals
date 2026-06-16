@@ -12,6 +12,7 @@ interface CarState {
   hydrate: () => Promise<void>;
   addCar: (payload: CreateCarPayload) => Promise<Car>;
   updateCar: (car: Car) => Promise<void>;
+  deleteCar: (id: string) => Promise<void>;
   getCarById: (id: string) => Car | undefined;
 }
 
@@ -42,6 +43,11 @@ export const useCarStore = create<CarState>((set, get) => ({
     await repositories.cars.updateCar(car);
     const savedCar = await repositories.cars.getCarById(car.id);
     set({ cars: get().cars.map(c => (c.id === car.id ? savedCar ?? car : c)) });
+  },
+
+  deleteCar: async id => {
+    await repositories.cars.deleteCar(id);
+    set({ cars: get().cars.filter(car => car.id !== id) });
   },
 
   getCarById: id => get().cars.find(c => c.id === id),

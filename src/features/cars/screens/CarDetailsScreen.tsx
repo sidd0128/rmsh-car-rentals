@@ -3,7 +3,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useRef } from 'react';
 import dayjs from 'dayjs';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CarsStackParamList } from '@app/navigation/types';
 import { spacing, typography } from '@app/theme';
@@ -14,6 +14,8 @@ import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useAccidentStore } from '@features/accidents/store/useAccidentStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { useFineStore } from '@features/fines/store/useFineStore';
+import { usePaymentStore } from '@features/payments/store/usePaymentStore';
+import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
@@ -38,7 +40,10 @@ export const CarDetailsScreen = () => {
   const customers = useCustomerStore(s => s.customers);
   const fines = useFineStore(s => s.fines);
   const accidents = useAccidentStore(s => s.accidents);
+  const rentals = useRentalStore(s => s.rentals);
+  const payments = usePaymentStore(s => s.payments);
   const cars = useCarStore(s => s.cars);
+  const deleteCar = useCarStore(s => s.deleteCar);
   const assignmentRef = useRef<AssignmentModalRef>(null);
   const setEndRef = useRef<SetRentalEndModalRef>(null);
   const { hydrateAll } = useHydrateStores();
@@ -62,6 +67,7 @@ export const CarDetailsScreen = () => {
   );
 
   const activeRental = car?.currentBooking;
+  const nextFutureBooking = car?.futureBookings[0];
 
   const onFinePress = useCallback(
     (fineId: string) => navigation.navigate('FineDetails', { fineId }),
@@ -77,6 +83,51 @@ export const CarDetailsScreen = () => {
     const cid = car?.currentBooking?.customerId;
     return cid ? customers.find(c => c.id === cid) : undefined;
   }, [car, customers]);
+
+  const handleDeleteCar = useCallback(() => {
+    if (!car) {
+      return;
+    }
+
+    const linkedRentalCount = rentals.filter(rental => rental.carId === car.id).length;
+    const linkedPaymentCount = payments.filter(payment => payment.carId === car.id).length;
+    const linkedFineCount = fines.filter(fine => fine.carId === car.id).length;
+    const linkedAccidentCount = accidents.filter(accident => accident.carId === car.id).length;
+    const linkedRecordCount =
+      linkedRentalCount + linkedPaymentCount + linkedFineCount + linkedAccidentCount;
+
+    if (linkedRecordCount > 0) {
+      Alert.alert(
+        t('cars.deleteBlockedTitle'),
+        t('cars.deleteBlockedMessage', {
+          rentals: linkedRentalCount,
+          payments: linkedPaymentCount,
+          fines: linkedFineCount,
+          accidents: linkedAccidentCount,
+        }),
+      );
+      return;
+    }
+
+    Alert.alert(t('cars.deleteTitle'), t('cars.deleteMessage', { car: car.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('cars.deleteConfirm'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteCar(car.id);
+            navigation.goBack();
+          } catch (error) {
+            Alert.alert(
+              t('cars.deleteFailedTitle'),
+              error instanceof Error ? error.message : t('common.notAvailable'),
+            );
+          }
+        },
+      },
+    ]);
+  }, [accidents, car, deleteCar, fines, navigation, payments, rentals, t]);
 
   if (!car) {
     return (
@@ -151,10 +202,24 @@ export const CarDetailsScreen = () => {
             fullWidth
           />
         ) : null}
+        {!activeRental && nextFutureBooking ? (
+          <AppButton
+            label={t('cars.endUpcomingBooking')}
+            variant="outline"
+            onPress={() => setEndRef.current?.open(nextFutureBooking)}
+            fullWidth
+          />
+        ) : null}
         <AppButton
           label={t('cars.editCar')}
           variant="outline"
           onPress={() => navigation.navigate('CarForm', { carId: car.id })}
+          fullWidth
+        />
+        <AppButton
+          label={t('cars.deleteCar')}
+          variant="danger"
+          onPress={handleDeleteCar}
           fullWidth
         />
       </View>

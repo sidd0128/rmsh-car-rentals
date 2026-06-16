@@ -1,10 +1,124 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Production: only signed-in Firebase Auth users can read/write rental data.
-    match /{collection}/{document} {
-      allow read, write: if request.auth != null
-        && collection in ['cars', 'customers', 'rentals', 'fines', 'accidents', 'payments'];
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function hasRole(role) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc().data.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isLinkedCustomer(customerId) {
+      return hasRole('customer') && userDoc().data.customerId == customerId;
+    }
+
+    function autoAcceptNewBookingRequests() {
+      return exists(/databases/$(database)/documents/appSettings/global)
+        && get(/databases/$(database)/documents/appSettings/global)
+          .data.autoAcceptNewBookingRequests == true;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == 'customer'
+        && request.resource.data.customerId is string;
+      allow update, delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow get: if isAdmin() || isLinkedCustomer(customerId);
+
+      // Needed by the client-only signup flow to locate an unclaimed profile by
+      // license/email after Auth account creation. For production, move signup
+      // to a Cloud Function and remove this broad list permission.
+      allow list: if signedIn();
+
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.authUid == request.auth.uid
+          && request.resource.data.role == 'customer'
+          && request.resource.data.accountStatus == 'claimed'
+        );
+
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.accountStatus != 'claimed'
+          && !('authUid' in resource.data)
+          && request.resource.data.authUid == request.auth.uid
+          && request.resource.data.accountStatus == 'claimed'
+          && request.resource.data.role == 'customer'
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    match /cars/{carId} {
+      allow read: if isAdmin() || hasRole('customer');
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (
+          hasRole('customer')
+          && autoAcceptNewBookingRequests()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'currentBooking', 'futureBookings', 'updatedAt'])
+        );
+    }
+
+    match /rentals/{rentalId} {
+      allow read: if isAdmin() || isLinkedCustomer(resource.data.customerId);
+      allow create: if isAdmin()
+        || (
+          isLinkedCustomer(request.resource.data.customerId)
+          && autoAcceptNewBookingRequests()
+        );
+      allow update, delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || isLinkedCustomer(resource.data.customerId);
+      allow create: if isAdmin()
+        || (
+          isLinkedCustomer(request.resource.data.customerId)
+          && autoAcceptNewBookingRequests()
+        );
+      allow update, delete: if isAdmin();
+    }
+
+    match /bookingRequests/{requestId} {
+      allow read: if isAdmin() || isLinkedCustomer(resource.data.customerId);
+      allow create: if isLinkedCustomer(request.resource.data.customerId)
+        && request.resource.data.status == 'PENDING';
+      allow update, delete: if isAdmin();
+    }
+
+    match /appSettings/{settingsId} {
+      allow read: if isAdmin() || hasRole('customer');
+      allow write: if isAdmin();
+    }
+
+    match /fines/{fineId} {
+      allow read: if isAdmin() || isLinkedCustomer(resource.data.customerId);
+      allow write: if isAdmin();
+    }
+
+    match /accidents/{accidentId} {
+      allow read: if isAdmin() || isLinkedCustomer(resource.data.customerId);
+      allow write: if isAdmin();
     }
   }
 }
