@@ -29,6 +29,14 @@ service cloud.firestore {
           .data.autoAcceptNewBookingRequests == true;
     }
 
+    function isClaimableCustomerProfile() {
+      return !('authUid' in resource.data)
+        && (
+          !('accountStatus' in resource.data)
+          || resource.data.accountStatus == 'unclaimed'
+        );
+    }
+
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create: if signedIn()
@@ -39,11 +47,16 @@ service cloud.firestore {
     }
 
     match /customers/{customerId} {
-      allow get: if isAdmin() || isLinkedCustomer(customerId);
-
       // Needed by the client-only signup flow to locate an unclaimed profile by
       // license/email after Auth account creation. For production, move signup
-      // to a Cloud Function and remove this broad list permission.
+      // to a Cloud Function and remove these broad customer lookup permissions.
+      allow get: if isAdmin()
+        || isLinkedCustomer(customerId)
+        || (
+          signedIn()
+          && isClaimableCustomerProfile()
+        );
+
       allow list: if signedIn();
 
       allow create: if isAdmin()
@@ -57,8 +70,7 @@ service cloud.firestore {
       allow update: if isAdmin()
         || (
           signedIn()
-          && resource.data.accountStatus != 'claimed'
-          && !('authUid' in resource.data)
+          && isClaimableCustomerProfile()
           && request.resource.data.authUid == request.auth.uid
           && request.resource.data.accountStatus == 'claimed'
           && request.resource.data.role == 'customer'

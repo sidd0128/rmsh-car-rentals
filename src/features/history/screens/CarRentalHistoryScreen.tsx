@@ -25,6 +25,7 @@ import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { FilterBottomSheet, FilterBottomSheetRef } from '@shared/bottomSheets/FilterBottomSheet';
 import { AppButton, EmptyState } from '@shared/ui';
 import { useTranslation } from '@core/i18n';
+import { SignedRentalAgreementDocuments } from '@features/rentals/components/SignedRentalAgreementDocuments';
 
 const MONTH_KEYS = [
   'january',
@@ -169,6 +170,16 @@ export const CarRentalHistoryScreen = () => {
             duration: formatRentalDurationWeeks(rental.startDate, rental.endDate),
           })}
         </Text>
+        {rental.rentalAgreement?.signedDocuments?.length ? (
+          <View style={styles.signedAgreementWrap}>
+            <Text style={typography.bodySmall}>
+              {t('rentalAgreements.signedRentalAgreement')}
+            </Text>
+            <SignedRentalAgreementDocuments
+              documents={rental.rentalAgreement.signedDocuments}
+            />
+          </View>
+        ) : null}
       </View>
     );
   };
@@ -271,6 +282,10 @@ const styles = StyleSheet.create({
   },
   duration: {
     ...typography.label,
+  },
+  signedAgreementWrap: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
   },
   freeLabel: {
     ...typography.label,

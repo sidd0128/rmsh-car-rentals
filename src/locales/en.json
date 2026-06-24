@@ -240,6 +240,14 @@
     "saveEndDateTime": "Save end date & time",
     "setEndFailedTitle": "Could not update end date"
   },
+  "rentalAgreements": {
+    "signedRentalAgreement": "Signed rental agreement",
+    "signedRentalAgreements": "Signed rental agreements",
+    "noSignedDocuments": "No signed rental agreement uploaded yet.",
+    "uploadedAt": "Uploaded {{datetime}}",
+    "openFailedTitle": "Could not open document",
+    "openFailedMessage": "This signed agreement link cannot be opened on this device."
+  },
   "history": {
     "title": "Rental history",
     "subtitle": "Select a car to view rentals month by month.",

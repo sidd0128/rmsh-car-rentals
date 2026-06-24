@@ -10,6 +10,19 @@ export type BookingRequestStatus = 'PENDING' | 'APPROVED' | 'DECLINED';
 /** How recurring rent is charged for a rental contract. */
 export type BillingFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
+export interface RentalAgreementUpload {
+  url: MediaUri;
+  fileName: string;
+  contentType: string;
+  uploadedAt: string;
+}
+
+export interface RentalAgreementDocument {
+  sourcePdfUrl?: MediaUri;
+  signedDocuments: RentalAgreementUpload[];
+  updatedAt?: string;
+}
+
 export interface PriceConfiguration {
   id: string;
   label: string;
@@ -38,6 +51,7 @@ export interface Rental {
   rentDueWeekday?: number;
   /** 1–28 rent due day of month when billingFrequency is MONTHLY. */
   rentDueDayOfMonth?: number;
+  rentalAgreement?: RentalAgreementDocument;
   notes?: string;
   createdAt: string;
   updatedAt: string;

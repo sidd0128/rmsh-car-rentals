@@ -39,6 +39,7 @@ import { CustomerFineHistory } from '../components/CustomerFineHistory';
 import { CustomerPaymentHistory } from '../components/CustomerPaymentHistory';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
+import { SignedRentalAgreementDocuments } from '@features/rentals/components/SignedRentalAgreementDocuments';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
 
@@ -390,6 +391,49 @@ export const CustomerProfileScreen = () => {
           <TimelineView items={timeline} />
         </ScreenSection>
 
+        <ScreenSection title={t('rentalAgreements.signedRentalAgreements')}>
+          {customerRentals.some(
+            rental => rental.rentalAgreement?.signedDocuments?.length,
+          ) ? (
+            customerRentals.map(rental => {
+              const signedDocuments = rental.rentalAgreement?.signedDocuments ?? [];
+              if (!signedDocuments.length) {
+                return null;
+              }
+
+              const rentalCar = carsById.get(rental.carId);
+              return (
+                <View
+                  key={rental.id}
+                  style={[
+                    screenStyles.insetPanel,
+                    styles.signedAgreementCard,
+                    {
+                      backgroundColor: colors.surfaceElevated,
+                      borderColor: colors.borderLight,
+                    },
+                  ]}
+                >
+                  <Text style={typography.body}>
+                    {rentalCar?.name ?? t('common.car')}
+                  </Text>
+                  <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+                    {t('history.rentalLinePeriod', {
+                      start: formatDateTimeAmPm(rental.startDate),
+                      end: formatRentalEndDisplay(rental.endDate),
+                    })}
+                  </Text>
+                  <SignedRentalAgreementDocuments documents={signedDocuments} />
+                </View>
+              );
+            })
+          ) : (
+            <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+              {t('rentalAgreements.noSignedDocuments')}
+            </Text>
+          )}
+        </ScreenSection>
+
         {SHOW_PAYMENTS_UI ? (
           <ScreenSection title={t('customers.paymentHistory')}>
             <CustomerPaymentHistory payments={customerPayments} />
@@ -486,6 +530,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   activeRentalCard: {
+    marginBottom: spacing.md,
+  },
+  signedAgreementCard: {
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
 });
