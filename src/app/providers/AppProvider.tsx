@@ -10,6 +10,7 @@ import { ThemeProvider } from '@contextApis/theme/ThemeProvider';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
+import { pushNotificationService } from '@core/notifications/pushNotificationService';
 import { offlineFirstSyncOrchestratorService } from '@core/sync/services/offlineFirstSyncOrchestratorService';
 import {
   startCloudSyncConnectivityListener,
@@ -131,6 +132,33 @@ export const AppProvider = () => {
     const unsubscribe = startCloudSyncConnectivityListener();
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated') {
+      return undefined;
+    }
+
+    let cleanup: (() => void) | undefined;
+    let mounted = true;
+
+    pushNotificationService
+      .initialize()
+      .then(unsubscribe => {
+        if (mounted) {
+          cleanup = unsubscribe;
+          return;
+        }
+        unsubscribe();
+      })
+      .catch(error => {
+        handleError(error, 'AppProvider.pushNotificationService.initialize');
+      });
+
+    return () => {
+      mounted = false;
+      cleanup?.();
+    };
+  }, [authStatus]);
 
   const firebaseConfigured = isFirebaseConfigured();
   const waitingForAuth = firebaseConfigured && authStatus === 'initializing';

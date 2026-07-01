@@ -15,6 +15,7 @@ import { wipeAllAppData } from '@core/data/wipeAllAppData';
 import { formatDateTime } from '@core/helpers/date';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useTranslation } from '@core/i18n';
+import { pushNotificationService } from '@core/notifications/pushNotificationService';
 import { useCloudSyncStore } from '@core/store/useCloudSyncStore';
 import { performAppLogout } from '@core/storage/performAppLogout';
 import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore';
@@ -59,6 +60,9 @@ export const SettingsScreen = () => {
     firebaseConfigured && authStatus === 'authenticated' && hasPendingSync;
   const [wipingAll, setWipingAll] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] =
+    useState(false);
+  const [savingPushPreference, setSavingPushPreference] = useState(false);
 
   const formatCloudWipeSummary = (
     cloudSkipped: boolean,
@@ -77,6 +81,10 @@ export const SettingsScreen = () => {
   useFocusEffect(
     useCallback(() => {
       refreshPendingSync().catch(() => undefined);
+      pushNotificationService
+        .isEnabled()
+        .then(setPushNotificationsEnabled)
+        .catch(() => undefined);
     }, [refreshPendingSync]),
   );
 
@@ -161,6 +169,22 @@ export const SettingsScreen = () => {
     });
   };
 
+  const handlePushNotificationToggle = (enabled: boolean) => {
+    setSavingPushPreference(true);
+    pushNotificationService
+      .setEnabled(enabled)
+      .then(() => {
+        setPushNotificationsEnabled(enabled);
+      })
+      .catch(error => {
+        Alert.alert(
+          t('settings.pushNotificationsFailedTitle'),
+          error instanceof Error ? error.message : t('auth.errors.generic'),
+        );
+      })
+      .finally(() => setSavingPushPreference(false));
+  };
+
   return (
     <ScreenLayout onRefresh={handleSync} refreshing={isSyncing}>
       <Text style={typography.h2}>{t('settings.title')}</Text>
@@ -210,6 +234,25 @@ export const SettingsScreen = () => {
             value={appSettings?.autoAcceptNewBookingRequests === true}
             onValueChange={handleAutoAcceptToggle}
             disabled={settingsSaving}
+          />
+        </View>
+        <View style={styles.switchRow}>
+          <View style={styles.switchCopy}>
+            <Text style={typography.h4}>
+              {t('settings.bookingPushNotifications')}
+            </Text>
+            <Text style={[styles.syncHint, { color: colors.textMuted }]}>
+              {t('settings.bookingPushNotificationsDesc')}
+            </Text>
+          </View>
+          <Switch
+            value={pushNotificationsEnabled}
+            onValueChange={handlePushNotificationToggle}
+            disabled={
+              savingPushPreference ||
+              !firebaseConfigured ||
+              authStatus !== 'authenticated'
+            }
           />
         </View>
       </View>

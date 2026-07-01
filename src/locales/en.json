@@ -410,6 +410,9 @@
     "autoAcceptBookingRequests": "Auto accept new request bookings",
     "autoAcceptBookingRequestsDesc": "When enabled, customer booking requests become bookings immediately.",
     "bookingRequestsSettingFailedTitle": "Could not update booking setting",
+    "bookingPushNotifications": "Booking request push notifications",
+    "bookingPushNotificationsDesc": "Show phone notifications when new booking requests arrive, including when the app is in the background.",
+    "pushNotificationsFailedTitle": "Could not update push notifications",
     "account": "Account",
     "signedInAs": "Signed in as {{email}}",
     "signOut": "Sign out",
@@ -458,6 +461,8 @@
     "approveMessage": "This will create the booking and payment schedule for the selected car.",
     "declineTitle": "Decline booking request?",
     "declineMessage": "The request will stay in the request list as declined and no booking will be created.",
+    "newRequestNotification": "New booking request from {{customer}} for {{car}}.",
+    "newRequestsNotification": "{{count}} new booking requests received.",
     "actionFailedTitle": "Could not update request"
   },
   "media": {

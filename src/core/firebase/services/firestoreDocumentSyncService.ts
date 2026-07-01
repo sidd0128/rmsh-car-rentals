@@ -3,7 +3,10 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  orderBy,
+  query,
   setDoc,
+  where,
 } from 'firebase/firestore';
 import type { FirestoreCollectionName } from '@core/firebase/constants/firestoreCollectionNames';
 import { executeWithFreshFirebaseSession } from '@core/firebase/auth/services/firebaseAuthSessionService';
@@ -37,6 +40,34 @@ export const firestoreDocumentSyncService = {
 
     return executeWithFreshFirebaseSession(async () => {
       const snapshot = await getDocs(collection(db, collectionName));
+      return snapshot.docs.map(documentSnapshot => ({
+        id: documentSnapshot.id,
+        ...(documentSnapshot.data() as Omit<T, 'id'>),
+      })) as T[];
+    });
+  },
+
+  async fetchDocumentsUpdatedSince<T extends SyncableDocument>(
+    collectionName: FirestoreCollectionName,
+    updatedAfter: string | null,
+  ): Promise<T[]> {
+    if (!updatedAfter) {
+      return this.fetchAllDocuments<T>(collectionName);
+    }
+
+    const db = getFirestoreDatabaseOrNull();
+    if (!db) {
+      return [];
+    }
+
+    return executeWithFreshFirebaseSession(async () => {
+      const snapshot = await getDocs(
+        query(
+          collection(db, collectionName),
+          where('updatedAt', '>', updatedAfter),
+          orderBy('updatedAt', 'asc'),
+        ),
+      );
       return snapshot.docs.map(documentSnapshot => ({
         id: documentSnapshot.id,
         ...(documentSnapshot.data() as Omit<T, 'id'>),

@@ -11,6 +11,13 @@ Thumbs.db
 !.env.example
 src/core/config/env.generated.ts
 
+# Firebase / Apple signing secrets
+ios/certificates/
+*.p8
+*.cer
+*.mobileprovision
+ios/GoogleService-Info copy.plist
+
 # Node
 node_modules/
 npm-debug.log*

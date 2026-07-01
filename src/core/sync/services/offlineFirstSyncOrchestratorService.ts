@@ -52,18 +52,14 @@ const getPendingUpsertIds = (
 
 const keepLocalItemsMissingRemotely = <T extends SyncableEntity>(
   localItems: T[],
-  remoteItems: T[],
-  hasSyncedBefore: boolean,
-  pendingUpsertIds: Set<string>,
+  _remoteItems: T[],
+  _hasSyncedBefore: boolean,
+  _pendingUpsertIds: Set<string>,
 ): T[] => {
-  if (!hasSyncedBefore) {
-    return localItems;
-  }
-
-  const remoteIds = new Set(remoteItems.map(item => item.id));
-  return localItems.filter(
-    item => remoteIds.has(item.id) || pendingUpsertIds.has(item.id),
-  );
+  // Incremental sync fetches only changed remote docs, so absence from a remote
+  // result set does not mean the document was deleted. Deletes are propagated
+  // explicitly through the outbox delete operation.
+  return localItems;
 };
 
 const mergeRemoteWithLocalDeletions = <T extends SyncableEntity>(
@@ -81,6 +77,17 @@ const mergeRemoteWithLocalDeletions = <T extends SyncableEntity>(
     ),
     remoteItems,
   );
+
+const changedSince = <T extends SyncableEntity>(
+  items: T[],
+  lastSyncedAt: string | null,
+): T[] => {
+  if (!lastSyncedAt) {
+    return items;
+  }
+
+  return items.filter(item => (item.updatedAt ?? item.createdAt) > lastSyncedAt);
+};
 
 /**
  * Coordinates bidirectional sync: Firestore ↔ AsyncStorage.
@@ -125,8 +132,9 @@ export const offlineFirstSyncOrchestratorService = {
 
     try {
       await this.processOutbox();
-      await this.pullRemoteIntoLocal();
-      await this.pushLocalOnlyDocuments();
+      const { lastSyncedAt } = await syncMetadataRepository.get();
+      await this.pullRemoteIntoLocal(lastSyncedAt);
+      await this.pushChangedLocalDocuments(lastSyncedAt);
       await syncMetadataRepository.setLastSyncedAt();
       return {
         success: true,
@@ -181,12 +189,13 @@ export const offlineFirstSyncOrchestratorService = {
   },
 
   /** Downloads Firestore data and merges into AsyncStorage (newer timestamp wins). */
-  async pullRemoteIntoLocal(): Promise<void> {
+  async pullRemoteIntoLocal(lastSyncedAtOverride?: string | null): Promise<void> {
     const [{ lastSyncedAt }, outboxEntries] = await Promise.all([
       syncMetadataRepository.get(),
       syncOutboxRepository.getAll(),
     ]);
-    const hasSyncedBefore = Boolean(lastSyncedAt);
+    const syncCursor = lastSyncedAtOverride ?? lastSyncedAt;
+    const hasSyncedBefore = Boolean(syncCursor);
 
     const [
       remoteCars,
@@ -197,26 +206,33 @@ export const offlineFirstSyncOrchestratorService = {
       remotePayments,
       remoteBookingRequests,
     ] = await Promise.all([
-      firestoreDocumentSyncService.fetchAllDocuments<Car>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<Car>(
         FIRESTORE_COLLECTION_NAMES.CARS,
+        syncCursor,
       ),
-      firestoreDocumentSyncService.fetchAllDocuments<Customer>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<Customer>(
         FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+        syncCursor,
       ),
-      firestoreDocumentSyncService.fetchAllDocuments<Rental>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<Rental>(
         FIRESTORE_COLLECTION_NAMES.RENTALS,
+        syncCursor,
       ),
-      firestoreDocumentSyncService.fetchAllDocuments<Fine>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<Fine>(
         FIRESTORE_COLLECTION_NAMES.FINES,
+        syncCursor,
       ),
-      firestoreDocumentSyncService.fetchAllDocuments<AccidentRecord>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<AccidentRecord>(
         FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+        syncCursor,
       ),
-      firestoreDocumentSyncService.fetchAllDocuments<PaymentRecord>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<PaymentRecord>(
         FIRESTORE_COLLECTION_NAMES.PAYMENTS,
+        syncCursor,
       ),
-      firestoreDocumentSyncService.fetchAllDocuments<BookingRequest>(
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<BookingRequest>(
         FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+        syncCursor,
       ),
     ]);
 
@@ -345,8 +361,8 @@ export const offlineFirstSyncOrchestratorService = {
     ]);
   },
 
-  /** Uploads local documents that may not exist remotely yet (after merge). */
-  async pushLocalOnlyDocuments(): Promise<void> {
+  /** Uploads local documents changed since the previous successful sync. */
+  async pushChangedLocalDocuments(lastSyncedAt: string | null): Promise<void> {
     const [cars, customers, rentals, fines, accidents, payments] =
       await Promise.all([
         asyncStorageCarRepository.getCars(),
@@ -358,7 +374,7 @@ export const offlineFirstSyncOrchestratorService = {
       ]);
 
     await Promise.all([
-      ...cars.map(async car =>
+      ...changedSince(cars, lastSyncedAt).map(async car =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.CARS,
           cloudMediaSyncService.stripLocalMediaUrisForCloud(
@@ -371,7 +387,7 @@ export const offlineFirstSyncOrchestratorService = {
           ),
         ),
       ),
-      ...customers.map(async customer =>
+      ...changedSince(customers, lastSyncedAt).map(async customer =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
           cloudMediaSyncService.stripLocalMediaUrisForCloud(
@@ -384,13 +400,13 @@ export const offlineFirstSyncOrchestratorService = {
           ),
         ),
       ),
-      ...rentals.map(rental =>
+      ...changedSince(rentals, lastSyncedAt).map(rental =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.RENTALS,
           rental,
         ),
       ),
-      ...fines.map(async fine =>
+      ...changedSince(fines, lastSyncedAt).map(async fine =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.FINES,
           cloudMediaSyncService.stripLocalMediaUrisForCloud(
@@ -403,7 +419,7 @@ export const offlineFirstSyncOrchestratorService = {
           ),
         ),
       ),
-      ...accidents.map(async accident =>
+      ...changedSince(accidents, lastSyncedAt).map(async accident =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
           cloudMediaSyncService.stripLocalMediaUrisForCloud(
@@ -416,7 +432,7 @@ export const offlineFirstSyncOrchestratorService = {
           ),
         ),
       ),
-      ...payments.map(payment =>
+      ...changedSince(payments, lastSyncedAt).map(payment =>
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.PAYMENTS,
           payment,

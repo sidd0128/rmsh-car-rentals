@@ -1,4 +1,4 @@
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import type {
   DocumentData,
   QueryDocumentSnapshot,
@@ -34,7 +34,11 @@ export const bookingRequestCloudService = {
     }
 
     return onSnapshot(
-      collection(db, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS),
+      query(
+        collection(db, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS),
+        where('status', '==', 'PENDING'),
+        orderBy('updatedAt', 'desc'),
+      ),
       snapshot => {
         onSynced(mapBookingRequestDocuments(snapshot.docs));
       },

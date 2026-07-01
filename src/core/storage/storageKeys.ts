@@ -11,6 +11,8 @@ export const STORAGE_KEYS = {
   SYNC_OUTBOX: '@rmsh/sync_outbox',
   /** Last successful cloud sync timestamp */
   SYNC_METADATA: '@rmsh/sync_metadata',
+  PUSH_NOTIFICATIONS_ENABLED: '@rmsh/push_notifications_enabled',
+  PUSH_NOTIFICATION_TOKEN: '@rmsh/push_notification_token',
   THEME_MODE: '@rmsh/theme_mode',
   LANGUAGE: '@rmsh/language',
 } as const;
