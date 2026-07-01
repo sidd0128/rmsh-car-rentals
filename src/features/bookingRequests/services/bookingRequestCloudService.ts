@@ -1,4 +1,4 @@
-import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import type {
   DocumentData,
   QueryDocumentSnapshot,
@@ -16,6 +16,14 @@ const mapBookingRequestDocuments = (
     id: documentSnapshot.id,
     ...(documentSnapshot.data() as Omit<BookingRequest, 'id'>),
   })) as BookingRequest[];
+
+const sortBookingRequestsByNewest = (
+  bookingRequests: BookingRequest[],
+): BookingRequest[] =>
+  [...bookingRequests].sort(
+    (a, b) =>
+      new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime(),
+  );
 
 export const bookingRequestCloudService = {
   getAll(): Promise<BookingRequest[]> {
@@ -37,10 +45,9 @@ export const bookingRequestCloudService = {
       query(
         collection(db, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS),
         where('status', '==', 'PENDING'),
-        orderBy('updatedAt', 'desc'),
       ),
       snapshot => {
-        onSynced(mapBookingRequestDocuments(snapshot.docs));
+        onSynced(sortBookingRequestsByNewest(mapBookingRequestDocuments(snapshot.docs)));
       },
       error => {
         onError?.(error);

@@ -4,6 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { HistoryStackParamList } from '@app/navigation/types';
 import { spacing, typography } from '@app/theme';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
@@ -24,6 +25,7 @@ export const HistoryCarsListScreen = () => {
   const customers = useCustomerStore(s => s.customers);
   const { hydrateAll } = useHydrateStores();
   const { listNumColumns, horizontalPadding } = useDeviceLayout();
+  const insets = useSafeAreaInsets();
 
   const renderItem = useCallback(
     ({ item }: { item: (typeof filteredCars)[0] }) => {
@@ -44,7 +46,15 @@ export const HistoryCarsListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.toolbar, { paddingHorizontal: horizontalPadding }]}>
+      <View
+        style={[
+          styles.toolbar,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: insets.top + spacing.md,
+          },
+        ]}
+      >
         <Text style={typography.h2}>{t('history.title')}</Text>
         <Text style={typography.bodySmall}>{t('history.subtitle')}</Text>
         <SearchHeader
@@ -81,7 +91,6 @@ const styles = StyleSheet.create({
   },
   toolbar: {
     gap: spacing.sm,
-    paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
 });
