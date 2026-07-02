@@ -14,6 +14,7 @@ export const STORAGE_KEYS = {
   SYNC_METADATA: '@rmsh/sync_metadata',
   PUSH_NOTIFICATIONS_ENABLED: '@rmsh/push_notifications_enabled',
   PUSH_NOTIFICATION_TOKEN: '@rmsh/push_notification_token',
+  PUSH_NOTIFICATION_DEVICE_ID: '@rmsh/push_notification_device_id',
   THEME_MODE: '@rmsh/theme_mode',
   LANGUAGE: '@rmsh/language',
 } as const;
