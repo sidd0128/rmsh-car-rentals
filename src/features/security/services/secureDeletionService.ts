@@ -1,5 +1,6 @@
 import { repositories } from '@core/database/repositoryRegistry';
 import { todayISO } from '@core/helpers/date';
+import { t } from '@core/i18n';
 import {
   getCurrentFirebaseUser,
   reauthenticateCurrentUserWithPassword,
@@ -91,7 +92,7 @@ const buildCarImpact = async (carId: string): Promise<DeletionImpact> => {
     ]);
 
   if (!car) {
-    throw new Error('This car was not found.');
+    throw new Error(t('security.secureDelete.carNotFound'));
   }
 
   const linkedRentals = rentals.filter(rental => rental.carId === car.id);
@@ -142,7 +143,7 @@ const buildCustomerImpact = async (
     ]);
 
   if (!customer) {
-    throw new Error('This customer was not found.');
+    throw new Error(t('security.secureDelete.customerNotFound'));
   }
 
   const linkedRentals = rentals.filter(
@@ -236,11 +237,11 @@ export const secureDeletionService = {
     const trimmedReason = reason?.trim() ?? '';
 
     if (impact.requiresReauthentication && !trimmedReason) {
-      throw new Error('Please enter a reason for this deletion.');
+      throw new Error(t('security.secureDelete.reasonRequired'));
     }
 
     if (impact.requiresReauthentication && !password?.trim()) {
-      throw new Error('Please enter your password to confirm this deletion.');
+      throw new Error(t('security.secureDelete.passwordRequired'));
     }
 
     const user = impact.requiresReauthentication
@@ -253,8 +254,7 @@ export const secureDeletionService = {
       targetId: impact.targetId,
       targetLabel: impact.targetLabel,
       reason:
-        trimmedReason ||
-        'Deleted without linked history; password and reason were not required.',
+        trimmedReason || t('security.secureDelete.defaultNoHistoryReason'),
       deletedByUid: user?.uid,
       deletedByEmail: user?.email ?? undefined,
       deletedAt,

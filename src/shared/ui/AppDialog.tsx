@@ -8,12 +8,26 @@ interface AppDialogProps {
   children?: ReactNode;
   actions?: ReactNode;
   onDismiss?: () => void;
+  dismissOnBackdrop?: boolean;
 }
 
 export const AppDialog = memo<AppDialogProps>(
-  ({ visible, title, message, children, actions, onDismiss }) => (
+  ({
+    visible,
+    title,
+    message,
+    children,
+    actions,
+    onDismiss,
+    dismissOnBackdrop = false,
+  }) => (
     <Portal>
-      <Dialog visible={visible} onDismiss={onDismiss}>
+      <Dialog
+        visible={visible}
+        dismissable={dismissOnBackdrop}
+        dismissableBackButton={dismissOnBackdrop}
+        onDismiss={dismissOnBackdrop ? onDismiss : () => undefined}
+      >
         {title ? <Dialog.Title>{title}</Dialog.Title> : null}
         {message || children ? (
           <Dialog.Content>{children ?? <Text>{message}</Text>}</Dialog.Content>

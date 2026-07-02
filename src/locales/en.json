@@ -454,6 +454,73 @@
     "accidentRecords": "Accident Records",
     "accidentRecordsDesc": "Damage tracking and blacklist flags"
   },
+  "security": {
+    "secureDelete": {
+      "title": "Delete {{target}}?",
+      "target": {
+        "car": "car",
+        "customer": "customer",
+        "record": "record"
+      },
+      "deleteAction": "Delete",
+      "loadDetailsFailed": "Could not load deletion details.",
+      "deleteFailed": "Could not delete this record.",
+      "carNotFound": "This car was not found.",
+      "customerNotFound": "This customer was not found.",
+      "reasonRequired": "Please enter a reason for this deletion.",
+      "passwordRequired": "Please enter your password to confirm this deletion.",
+      "defaultNoHistoryReason": "Deleted without linked history; password and reason were not required.",
+      "counts": {
+        "cars": "Cars",
+        "customers": "Customers",
+        "rentals": "Rentals",
+        "payments": "Payments",
+        "fines": "Fines",
+        "accidents": "Accidents",
+        "bookingRequests": "Booking requests"
+      },
+      "highRiskTitle": "High-risk deletion",
+      "safeCleanupTitle": "Safe cleanup",
+      "highRiskMessage": "This will permanently delete the selected record and linked history, then queue the same changes for Firebase.",
+      "safeCleanupMessage": "No linked history was found. This delete is simpler, but it will still be recorded in the audit log.",
+      "selectedRecord": "Selected record",
+      "noLinkedHistory": "No linked history found",
+      "loadingDetails": "Loading deletion details...",
+      "noDetails": "No details available.",
+      "confirmAuthority": "Confirm authority",
+      "confirmAuthorityMessage": "Enter your password and a clear reason. This reason is saved in the audit log.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Explain why this record is being deleted"
+    },
+    "auditLog": {
+      "title": "Deletion audit log",
+      "subtitle": "Review secure deletion records saved for operational and security accountability.",
+      "emptyTitle": "No deletion records",
+      "emptyDescription": "Secure deletion activity will appear here.",
+      "unknownUser": "Unknown user",
+      "removed": "Removed: {{counts}}",
+      "target": {
+        "car": "Car",
+        "customer": "Customer"
+      },
+      "counts": {
+        "cars_one": "{{count}} car",
+        "cars_other": "{{count}} cars",
+        "customers_one": "{{count}} customer",
+        "customers_other": "{{count}} customers",
+        "rentals_one": "{{count}} rental",
+        "rentals_other": "{{count}} rentals",
+        "payments_one": "{{count}} payment",
+        "payments_other": "{{count}} payments",
+        "fines_one": "{{count}} fine",
+        "fines_other": "{{count}} fines",
+        "accidents_one": "{{count}} accident",
+        "accidents_other": "{{count}} accidents",
+        "bookingRequests_one": "{{count}} booking request",
+        "bookingRequests_other": "{{count}} booking requests"
+      }
+    }
+  },
   "bookingRequests": {
     "title": "Booking requests",
     "subtitle": "Review customer requests before they become active bookings.",

@@ -1,8 +1,10 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { spacing, typography } from '@app/theme';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { radius, spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
+import { useTranslation } from '@core/i18n';
 import type { DeletionTargetType } from '@core/types/domain';
 import { AppButton, AppDialog, AppInput } from '@shared/ui';
 import {
@@ -18,12 +20,13 @@ interface SecureDeleteDialogProps {
   onDeleted: () => void | Promise<void>;
 }
 
-const formatCountLine = (label: string, count: number): string | null =>
-  count > 0 ? `${label}: ${count}` : null;
+const buildCountRow = (label: string, count: number) =>
+  count > 0 ? { label, count } : null;
 
 export const SecureDeleteDialog = memo<SecureDeleteDialogProps>(
   ({ visible, targetType, targetId, onCancel, onDeleted }) => {
     const { colors } = useThemeContext();
+    const { t } = useTranslation();
     const [summary, setSummary] = useState<DeletionImpactSummary | null>(null);
     const [password, setPassword] = useState('');
     const [reason, setReason] = useState('');
@@ -48,27 +51,48 @@ export const SecureDeleteDialog = memo<SecureDeleteDialogProps>(
           setError(
             loadError instanceof Error
               ? loadError.message
-              : 'Could not load deletion details.',
+              : t('security.secureDelete.loadDetailsFailed'),
           );
         })
         .finally(() => setLoadingSummary(false));
-    }, [targetId, targetType, visible]);
+    }, [t, targetId, targetType, visible]);
 
-    const countLines = useMemo(() => {
+    const countRows = useMemo(() => {
       if (!summary) {
         return [];
       }
 
       return [
-        formatCountLine('Cars', summary.counts.cars),
-        formatCountLine('Customers', summary.counts.customers),
-        formatCountLine('Rentals', summary.counts.rentals),
-        formatCountLine('Payments', summary.counts.payments),
-        formatCountLine('Fines', summary.counts.fines),
-        formatCountLine('Accidents', summary.counts.accidents),
-        formatCountLine('Booking requests', summary.counts.bookingRequests),
-      ].filter((line): line is string => Boolean(line));
-    }, [summary]);
+        buildCountRow(
+          t('security.secureDelete.counts.cars'),
+          summary.counts.cars,
+        ),
+        buildCountRow(
+          t('security.secureDelete.counts.customers'),
+          summary.counts.customers,
+        ),
+        buildCountRow(
+          t('security.secureDelete.counts.rentals'),
+          summary.counts.rentals,
+        ),
+        buildCountRow(
+          t('security.secureDelete.counts.payments'),
+          summary.counts.payments,
+        ),
+        buildCountRow(
+          t('security.secureDelete.counts.fines'),
+          summary.counts.fines,
+        ),
+        buildCountRow(
+          t('security.secureDelete.counts.accidents'),
+          summary.counts.accidents,
+        ),
+        buildCountRow(
+          t('security.secureDelete.counts.bookingRequests'),
+          summary.counts.bookingRequests,
+        ),
+      ].filter((row): row is { label: string; count: number } => Boolean(row));
+    }, [summary, t]);
 
     const requiresReauthentication = summary?.requiresReauthentication === true;
     const canDelete =
@@ -97,95 +121,219 @@ export const SecureDeleteDialog = memo<SecureDeleteDialogProps>(
         setError(
           deleteError instanceof Error
             ? deleteError.message
-            : 'Could not delete this record.',
+            : t('security.secureDelete.deleteFailed'),
         );
       } finally {
         setDeleting(false);
       }
     };
 
+    const targetLabel = summary
+      ? t(
+          summary.targetType === 'CAR'
+            ? 'security.secureDelete.target.car'
+            : 'security.secureDelete.target.customer',
+        )
+      : t('security.secureDelete.target.record');
+
     return (
       <AppDialog
         visible={visible}
-        title="Confirm secure deletion"
+        title={t('security.secureDelete.title', { target: targetLabel })}
         onDismiss={deleting ? undefined : onCancel}
         actions={
-          <>
+          <View style={styles.actions}>
             <AppButton
-              label="Cancel"
+              label={t('common.cancel')}
               variant="outline"
               onPress={onCancel}
               disabled={deleting}
+              style={styles.actionButton}
             />
             <AppButton
-              label="Delete"
+              label={t('security.secureDelete.deleteAction')}
               variant="danger"
               onPress={handleDelete}
               loading={deleting}
               disabled={!canDelete}
+              style={styles.actionButton}
             />
-          </>
+          </View>
         }
       >
         <View style={styles.content}>
-          <Text style={[typography.body, { color: colors.error }]}>
-            {requiresReauthentication
-              ? 'This permanently deletes the selected record and linked history from this app and queues the same deletion for Firebase.'
-              : 'This record has no linked history. It can be deleted without password confirmation, and the deletion will still be logged.'}
-          </Text>
+          <View
+            style={[
+              styles.warningPanel,
+              {
+                backgroundColor: colors.errorBg,
+                borderColor: colors.error,
+              },
+            ]}
+          >
+            <View
+              style={[styles.warningIcon, { backgroundColor: colors.error }]}
+            >
+              <Icon
+                name="shield-alert-outline"
+                size={22}
+                color={colors.textInverse}
+              />
+            </View>
+            <View style={styles.warningText}>
+              <Text style={[typography.h4, { color: colors.error }]}>
+                {requiresReauthentication
+                  ? t('security.secureDelete.highRiskTitle')
+                  : t('security.secureDelete.safeCleanupTitle')}
+              </Text>
+              <Text style={[typography.bodySmall, { color: colors.text }]}>
+                {requiresReauthentication
+                  ? t('security.secureDelete.highRiskMessage')
+                  : t('security.secureDelete.safeCleanupMessage')}
+              </Text>
+            </View>
+          </View>
+
           {summary ? (
             <View
               style={[
                 styles.summaryBox,
                 {
-                  backgroundColor: colors.errorBg,
-                  borderColor: colors.error,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderLight,
                 },
               ]}
             >
+              <Text style={[typography.caption, { color: colors.textMuted }]}>
+                {t('security.secureDelete.selectedRecord')}
+              </Text>
               <Text style={typography.h4}>{summary.targetLabel}</Text>
-              {countLines.map(line => (
-                <Text key={line} style={typography.bodySmall}>
-                  {line}
-                </Text>
-              ))}
+              <View style={styles.countGrid}>
+                {countRows.map(row => (
+                  <View
+                    key={row.label}
+                    style={[
+                      styles.countRow,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.borderLight,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        typography.bodySmall,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {row.label}
+                    </Text>
+                    <Text style={styles.countValue}>{row.count}</Text>
+                  </View>
+                ))}
+              </View>
               {!requiresReauthentication ? (
-                <Text style={typography.bodySmall}>
-                  No linked history found.
-                </Text>
+                <View
+                  style={[
+                    styles.noHistoryPill,
+                    { backgroundColor: colors.successBg },
+                  ]}
+                >
+                  <Icon
+                    name="check-circle-outline"
+                    size={16}
+                    color={colors.success}
+                  />
+                  <Text style={[typography.caption, { color: colors.success }]}>
+                    {t('security.secureDelete.noLinkedHistory')}
+                  </Text>
+                </View>
               ) : null}
             </View>
           ) : (
-            <Text style={typography.bodySmall}>
-              {loadingSummary
-                ? 'Loading deletion details...'
-                : 'No details available.'}
-            </Text>
+            <View
+              style={[
+                styles.summaryBox,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderLight,
+                },
+              ]}
+            >
+              <Text
+                style={[typography.bodySmall, { color: colors.textSecondary }]}
+              >
+                {loadingSummary
+                  ? t('security.secureDelete.loadingDetails')
+                  : t('security.secureDelete.noDetails')}
+              </Text>
+            </View>
           )}
+
           {requiresReauthentication ? (
-            <>
+            <View
+              style={[
+                styles.formPanel,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderLight,
+                },
+              ]}
+            >
+              <Text style={typography.h4}>
+                {t('security.secureDelete.confirmAuthority')}
+              </Text>
+              <Text
+                style={[typography.bodySmall, { color: colors.textSecondary }]}
+              >
+                {t('security.secureDelete.confirmAuthorityMessage')}
+              </Text>
               <AppInput
-                label="Password"
+                label={t('auth.password')}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
                 enablePasswordToggle
                 autoCapitalize="none"
                 autoComplete="password"
+                containerStyle={styles.formField}
               />
               <AppInput
-                label="Reason"
+                label={t('security.secureDelete.reason')}
                 value={reason}
                 onChangeText={setReason}
                 multiline
-                placeholder="Explain why this record is being deleted"
+                placeholder={t('security.secureDelete.reasonPlaceholder')}
+                containerStyle={styles.formField}
               />
-            </>
+            </View>
           ) : null}
+
           {error ? (
-            <Text style={[typography.bodySmall, { color: colors.error }]}>
-              {error}
-            </Text>
+            <View
+              style={[
+                styles.errorBox,
+                {
+                  backgroundColor: colors.errorBg,
+                  borderColor: colors.error,
+                },
+              ]}
+            >
+              <Icon
+                name="alert-circle-outline"
+                size={18}
+                color={colors.error}
+              />
+              <Text
+                style={[
+                  typography.bodySmall,
+                  styles.errorText,
+                  { color: colors.error },
+                ]}
+              >
+                {error}
+              </Text>
+            </View>
           ) : null}
         </View>
       </AppDialog>
@@ -197,10 +345,82 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.md,
   },
+  warningPanel: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  warningIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  warningText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
   summaryBox: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.md,
     padding: spacing.md,
+    gap: spacing.sm,
+  },
+  countGrid: {
     gap: spacing.xs,
+  },
+  countRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  countValue: {
+    ...typography.body,
+    fontWeight: '700',
+  },
+  noHistoryPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  formPanel: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  formField: {
+    marginBottom: 0,
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+  },
+  errorText: {
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  actionButton: {
+    flex: 1,
   },
 });
