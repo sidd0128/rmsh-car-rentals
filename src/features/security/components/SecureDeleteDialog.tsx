@@ -141,6 +141,7 @@ export const SecureDeleteDialog = memo<SecureDeleteDialogProps>(
         visible={visible}
         title={t('security.secureDelete.title', { target: targetLabel })}
         onDismiss={deleting ? undefined : onCancel}
+        scrollable
         actions={
           <View style={styles.actions}>
             <AppButton
