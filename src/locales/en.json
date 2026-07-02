@@ -504,20 +504,34 @@
         "customer": "Customer"
       },
       "counts": {
-        "cars_one": "{{count}} car",
-        "cars_other": "{{count}} cars",
-        "customers_one": "{{count}} customer",
-        "customers_other": "{{count}} customers",
-        "rentals_one": "{{count}} rental",
-        "rentals_other": "{{count}} rentals",
-        "payments_one": "{{count}} payment",
-        "payments_other": "{{count}} payments",
-        "fines_one": "{{count}} fine",
-        "fines_other": "{{count}} fines",
-        "accidents_one": "{{count}} accident",
-        "accidents_other": "{{count}} accidents",
-        "bookingRequests_one": "{{count}} booking request",
-        "bookingRequests_other": "{{count}} booking requests"
+        "cars": {
+          "one": "{{count}} car",
+          "other": "{{count}} cars"
+        },
+        "customers": {
+          "one": "{{count}} customer",
+          "other": "{{count}} customers"
+        },
+        "rentals": {
+          "one": "{{count}} rental",
+          "other": "{{count}} rentals"
+        },
+        "payments": {
+          "one": "{{count}} payment",
+          "other": "{{count}} payments"
+        },
+        "fines": {
+          "one": "{{count}} fine",
+          "other": "{{count}} fines"
+        },
+        "accidents": {
+          "one": "{{count}} accident",
+          "other": "{{count}} accidents"
+        },
+        "bookingRequests": {
+          "one": "{{count}} booking request",
+          "other": "{{count}} booking requests"
+        }
       }
     }
   },
