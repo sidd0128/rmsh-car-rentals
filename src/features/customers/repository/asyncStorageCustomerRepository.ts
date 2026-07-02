@@ -41,6 +41,11 @@ class AsyncStorageCustomerRepository
   async updateCustomer(customer: Customer): Promise<void> {
     await this.save({ ...customer, updatedAt: todayISO() });
   }
+
+  deleteCustomer(id: string): Promise<void> {
+    return this.delete(id);
+  }
 }
 
-export const asyncStorageCustomerRepository = new AsyncStorageCustomerRepository();
+export const asyncStorageCustomerRepository =
+  new AsyncStorageCustomerRepository();

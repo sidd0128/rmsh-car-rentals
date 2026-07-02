@@ -8,11 +8,13 @@ import { storageService } from '@core/storage/storageService';
 import { resetDomainStores } from '@core/storage/resetDomainStores';
 import type {
   AccidentRecord,
+  BookingRequest,
   Car,
   Customer,
   Fine,
   PaymentRecord,
   Rental,
+  DeletionAuditLog,
 } from '@core/types/domain';
 import type { SyncOutboxEntry } from '@core/sync/types/syncTypes';
 
@@ -23,6 +25,7 @@ const ALL_COLLECTIONS: FirestoreCollectionName[] = [
   FIRESTORE_COLLECTION_NAMES.FINES,
   FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
   FIRESTORE_COLLECTION_NAMES.PAYMENTS,
+  FIRESTORE_COLLECTION_NAMES.DELETION_AUDIT_LOGS,
 ];
 
 const ZUSTAND_PERSIST_KEYS = ['@rmsh/car-filter-prefs'] as const;
@@ -36,9 +39,9 @@ export interface WipeAllAppDataResult {
 const deleteAllInCollection = async (
   collectionName: FirestoreCollectionName,
 ): Promise<number> => {
-  const documents = await firestoreDocumentSyncService.fetchAllDocuments<{ id: string }>(
-    collectionName,
-  );
+  const documents = await firestoreDocumentSyncService.fetchAllDocuments<{
+    id: string;
+  }>(collectionName);
   await Promise.all(
     documents.map(document =>
       firestoreDocumentSyncService.deleteDocument(collectionName, document.id),
@@ -55,6 +58,11 @@ const clearLocalDomainStorage = async (): Promise<void> => {
     storageService.setItem<Fine[]>(STORAGE_KEYS.FINES, []),
     storageService.setItem<AccidentRecord[]>(STORAGE_KEYS.ACCIDENTS, []),
     storageService.setItem<PaymentRecord[]>(STORAGE_KEYS.PAYMENTS, []),
+    storageService.setItem<BookingRequest[]>(STORAGE_KEYS.BOOKING_REQUESTS, []),
+    storageService.setItem<DeletionAuditLog[]>(
+      STORAGE_KEYS.DELETION_AUDIT_LOGS,
+      [],
+    ),
     storageService.setItem(STORAGE_KEYS.SYNC_METADATA, { lastSyncedAt: null }),
     storageService.setItem<SyncOutboxEntry[]>(STORAGE_KEYS.SYNC_OUTBOX, []),
     ...ZUSTAND_PERSIST_KEYS.map(key => storageService.removeItem(key)),
@@ -66,13 +74,17 @@ const clearLocalDomainStorage = async (): Promise<void> => {
  * Keeps you logged in; does not clear Firebase Auth session keys.
  */
 export const wipeAllAppData = async (): Promise<WipeAllAppDataResult> => {
-  const cloudDeletedByCollection: Partial<Record<FirestoreCollectionName, number>> = {};
+  const cloudDeletedByCollection: Partial<
+    Record<FirestoreCollectionName, number>
+  > = {};
   let cloudSkipped = true;
 
   if (isFirebaseConfigured() && getCurrentFirebaseUser()) {
     cloudSkipped = false;
     for (const collectionName of ALL_COLLECTIONS) {
-      cloudDeletedByCollection[collectionName] = await deleteAllInCollection(collectionName);
+      cloudDeletedByCollection[collectionName] = await deleteAllInCollection(
+        collectionName,
+      );
     }
   }
 

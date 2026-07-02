@@ -8,7 +8,8 @@ import { resetDomainStores } from '@core/storage/resetDomainStores';
  * Car status and bookings are derived on the next store hydrate from rentals.
  */
 export const loadDemoSeedData = async (): Promise<void> => {
-  const { cars, customers, rentals, fines, accidents, payments } = buildFullDemoSeed();
+  const { cars, customers, rentals, fines, accidents, payments } =
+    buildFullDemoSeed();
 
   await Promise.all([
     storageService.setItem(STORAGE_KEYS.CARS, cars),
@@ -17,6 +18,7 @@ export const loadDemoSeedData = async (): Promise<void> => {
     storageService.setItem(STORAGE_KEYS.FINES, fines),
     storageService.setItem(STORAGE_KEYS.ACCIDENTS, accidents),
     storageService.setItem(STORAGE_KEYS.PAYMENTS, payments),
+    storageService.setItem(STORAGE_KEYS.BOOKING_REQUESTS, []),
   ]);
 
   resetDomainStores();

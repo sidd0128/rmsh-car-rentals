@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   ACCIDENTS: '@rmsh/accidents',
   PAYMENTS: '@rmsh/payments',
   BOOKING_REQUESTS: '@rmsh/booking_requests',
+  DELETION_AUDIT_LOGS: '@rmsh/deletion_audit_logs',
   APP_SETTINGS: '@rmsh/app_settings',
   /** Pending Firestore writes while offline */
   SYNC_OUTBOX: '@rmsh/sync_outbox',

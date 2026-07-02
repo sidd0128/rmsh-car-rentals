@@ -34,6 +34,10 @@ const accidentRecordsIcon = (props: ListIconProps) => (
   <List.Icon {...props} icon="car-emergency" />
 );
 
+const securityLogIcon = (props: ListIconProps) => (
+  <List.Icon {...props} icon="shield-alert-outline" />
+);
+
 export const SettingsScreen = () => {
   const { t } = useTranslation();
   const { language, options: languageOptions, setLanguage } = useLanguage();
@@ -368,6 +372,12 @@ export const SettingsScreen = () => {
           description={t('settings.accidentRecordsDesc')}
           left={accidentRecordsIcon}
           onPress={() => navigation.navigate('AccidentsList')}
+        />
+        <List.Item
+          title="Deletion audit log"
+          description="Review deleted cars, customers, linked records, users, and reasons."
+          left={securityLogIcon}
+          onPress={() => navigation.navigate('DeletionAuditLogs')}
         />
       </View>
     </ScreenLayout>

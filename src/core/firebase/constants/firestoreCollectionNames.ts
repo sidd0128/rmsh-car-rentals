@@ -10,6 +10,7 @@ export const FIRESTORE_COLLECTION_NAMES = {
   ACCIDENTS: 'accidents',
   PAYMENTS: 'payments',
   BOOKING_REQUESTS: 'bookingRequests',
+  DELETION_AUDIT_LOGS: 'deletionAuditLogs',
   APP_SETTINGS: 'appSettings',
 } as const;
 

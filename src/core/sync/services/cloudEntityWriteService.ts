@@ -3,45 +3,88 @@ import { firestoreDocumentSyncService } from '@core/firebase/services/firestoreD
 import { isFirebaseConfigured } from '@core/firebase/config/firebaseAppConfig';
 import { getCurrentFirebaseUser } from '@core/firebase/auth/services/firebaseAuthService';
 import { useCloudSyncStore } from '@core/store/useCloudSyncStore';
+import { logError } from '@error/errorLogger';
 import { syncOutboxRepository } from '../repositories/syncOutboxRepository';
+import type { SyncOutboxEntry } from '../types/syncTypes';
 import { cloudMediaSyncService } from './cloudMediaSyncService';
 import { networkConnectivityService } from './networkConnectivityService';
 
 type IdentifiableEntity = { id: string };
 
+const entryIsStillPending = async (entryId: string): Promise<boolean> => {
+  const entries = await syncOutboxRepository.getAll();
+  return entries.some(entry => entry.id === entryId);
+};
+
+const flushQueuedEntityMutation = async (
+  entry: SyncOutboxEntry,
+): Promise<void> => {
+  const online = await networkConnectivityService.isOnline();
+  if (!online) {
+    return;
+  }
+
+  if (!(await entryIsStillPending(entry.id))) {
+    return;
+  }
+
+  if (entry.operation === 'delete') {
+    await firestoreDocumentSyncService.deleteDocument(
+      entry.collectionName,
+      String(entry.payload.id),
+    );
+  } else {
+    const cloudReadyPayload = await cloudMediaSyncService.prepareEntityForCloud(
+      entry.collectionName,
+      entry.payload as IdentifiableEntity,
+      { showUploadErrors: false },
+    );
+    if (!(await entryIsStillPending(entry.id))) {
+      return;
+    }
+
+    await firestoreDocumentSyncService.upsertDocument(
+      entry.collectionName,
+      cloudMediaSyncService.stripLocalMediaUrisForCloud(
+        entry.collectionName,
+        cloudReadyPayload,
+      ),
+    );
+  }
+
+  await syncOutboxRepository.remove(entry.id);
+  await useCloudSyncStore.getState().refreshPendingSync();
+};
+
+const scheduleQueuedEntityMutationFlush = (entry: SyncOutboxEntry): void => {
+  flushQueuedEntityMutation(entry).catch(error => {
+    logError(error, {
+      source: 'cloudEntityWriteService.flushQueuedEntityMutation',
+    });
+  });
+};
+
 /**
- * After a local AsyncStorage write, pushes the entity to Firestore or queues it for later.
+ * After a local AsyncStorage write, queues the exact entity mutation for cloud sync.
+ * User-facing writes should not wait for network, media upload, or Firestore latency.
  */
 export const cloudEntityWriteService = {
   async upsertEntity<T extends IdentifiableEntity>(
     collectionName: FirestoreCollectionName,
     entity: T,
-    previousEntity?: T,
+    _previousEntity?: T,
   ): Promise<T> {
     if (!isFirebaseConfigured() || !getCurrentFirebaseUser()) {
       return entity;
     }
 
-    const online = await networkConnectivityService.isOnline();
-    if (online) {
-      const cloudReadyEntity = await cloudMediaSyncService.prepareEntityForCloud(
-        collectionName,
-        entity,
-      );
-      await firestoreDocumentSyncService.upsertDocument(
-        collectionName,
-        cloudMediaSyncService.stripLocalMediaUrisForCloud(collectionName, cloudReadyEntity),
-      );
-      await cloudMediaSyncService.deleteRemovedRemoteMedia(previousEntity, cloudReadyEntity);
-      return cloudReadyEntity;
-    }
-
-    await syncOutboxRepository.enqueue({
+    const entry = await syncOutboxRepository.enqueue({
       collectionName,
       operation: 'upsert',
       payload: entity as unknown as Record<string, unknown>,
     });
     await useCloudSyncStore.getState().refreshPendingSync();
+    scheduleQueuedEntityMutationFlush(entry);
     return entity;
   },
 
@@ -53,21 +96,12 @@ export const cloudEntityWriteService = {
       return;
     }
 
-    const online = await networkConnectivityService.isOnline();
-    if (online) {
-      try {
-        await firestoreDocumentSyncService.deleteDocument(collectionName, entityId);
-        return;
-      } catch {
-        // Keep the local delete authoritative and retry cloud deletion later.
-      }
-    }
-
-    await syncOutboxRepository.enqueue({
+    const entry = await syncOutboxRepository.enqueue({
       collectionName,
       operation: 'delete',
       payload: { id: entityId },
     });
     await useCloudSyncStore.getState().refreshPendingSync();
+    scheduleQueuedEntityMutationFlush(entry);
   },
 };

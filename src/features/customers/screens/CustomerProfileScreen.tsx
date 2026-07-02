@@ -40,6 +40,7 @@ import { CustomerPaymentHistory } from '../components/CustomerPaymentHistory';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { SignedRentalAgreementDocuments } from '@features/rentals/components/SignedRentalAgreementDocuments';
+import { SecureDeleteDialog } from '@features/security/components/SecureDeleteDialog';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
 
@@ -62,6 +63,7 @@ export const CustomerProfileScreen = () => {
   const { hydrateAll } = useHydrateStores();
   const assignmentRef = useRef<AssignmentModalRef>(null);
   const [endingRentalId, setEndingRentalId] = useState<string | null>(null);
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -396,7 +398,8 @@ export const CustomerProfileScreen = () => {
             rental => rental.rentalAgreement?.signedDocuments?.length,
           ) ? (
             customerRentals.map(rental => {
-              const signedDocuments = rental.rentalAgreement?.signedDocuments ?? [];
+              const signedDocuments =
+                rental.rentalAgreement?.signedDocuments ?? [];
               if (!signedDocuments.length) {
                 return null;
               }
@@ -417,7 +420,12 @@ export const CustomerProfileScreen = () => {
                   <Text style={typography.body}>
                     {rentalCar?.name ?? t('common.car')}
                   </Text>
-                  <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+                  <Text
+                    style={[
+                      typography.bodySmall,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     {t('history.rentalLinePeriod', {
                       start: formatDateTimeAmPm(rental.startDate),
                       end: formatRentalEndDisplay(rental.endDate),
@@ -428,7 +436,9 @@ export const CustomerProfileScreen = () => {
               );
             })
           ) : (
-            <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+            <Text
+              style={[typography.bodySmall, { color: colors.textSecondary }]}
+            >
               {t('rentalAgreements.noSignedDocuments')}
             </Text>
           )}
@@ -480,12 +490,29 @@ export const CustomerProfileScreen = () => {
           fullWidth
           style={styles.editBtn}
         />
+        <AppButton
+          label="Delete customer"
+          variant="danger"
+          onPress={() => setDeleteDialogVisible(true)}
+          fullWidth
+        />
       </ScreenLayout>
 
       <AssignmentModal
         ref={assignmentRef}
         onSuccess={() => {
           hydrateAll().catch(() => undefined);
+        }}
+      />
+      <SecureDeleteDialog
+        visible={deleteDialogVisible}
+        targetType="CUSTOMER"
+        targetId={customer.id}
+        onCancel={() => setDeleteDialogVisible(false)}
+        onDeleted={async () => {
+          setDeleteDialogVisible(false);
+          await hydrateAll();
+          navigation.goBack();
         }}
       />
     </View>

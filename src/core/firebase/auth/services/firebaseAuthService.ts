@@ -2,11 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
 import {
   Auth,
+  EmailAuthProvider,
   User,
   createUserWithEmailAndPassword,
   getReactNativePersistence,
   initializeAuth,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
@@ -30,7 +32,8 @@ export const initializeFirebaseAuth = (): Auth | null => {
     return firebaseAuth;
   }
 
-  firebaseApp = getApps().length > 0 ? getApp() : initializeApp(FIREBASE_WEB_CONFIG);
+  firebaseApp =
+    getApps().length > 0 ? getApp() : initializeApp(FIREBASE_WEB_CONFIG);
 
   firebaseAuth = initializeAuth(firebaseApp, {
     persistence: getReactNativePersistence(AsyncStorage),
@@ -88,4 +91,17 @@ export const signOutFirebaseUser = () => {
     return Promise.resolve();
   }
   return signOut(auth);
+};
+
+export const reauthenticateCurrentUserWithPassword = async (
+  password: string,
+): Promise<User> => {
+  const user = getCurrentFirebaseUser();
+  if (!user?.email) {
+    throw new Error('Please sign in again before deleting records.');
+  }
+
+  const credential = EmailAuthProvider.credential(user.email, password);
+  const result = await reauthenticateWithCredential(user, credential);
+  return result.user;
 };

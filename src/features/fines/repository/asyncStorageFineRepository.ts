@@ -5,7 +5,10 @@ import { STORAGE_KEYS } from '@core/storage/storageKeys';
 import type { CreateFinePayload, Fine } from '@core/types/domain';
 import type { IFineRepository } from './IFineRepository';
 
-class AsyncStorageFineRepository extends BaseLocalRepository<Fine> implements IFineRepository {
+class AsyncStorageFineRepository
+  extends BaseLocalRepository<Fine>
+  implements IFineRepository
+{
   constructor() {
     super(STORAGE_KEYS.FINES);
   }
@@ -16,13 +19,22 @@ class AsyncStorageFineRepository extends BaseLocalRepository<Fine> implements IF
 
   async addFine(payload: CreateFinePayload): Promise<Fine> {
     const now = todayISO();
-    const fine: Fine = { ...payload, id: createId(), createdAt: now, updatedAt: now };
+    const fine: Fine = {
+      ...payload,
+      id: createId(),
+      createdAt: now,
+      updatedAt: now,
+    };
     await this.save(fine);
     return fine;
   }
 
   async updateFine(fine: Fine): Promise<void> {
     await this.save({ ...fine, updatedAt: todayISO() });
+  }
+
+  async deleteFine(id: string): Promise<void> {
+    await this.delete(id);
   }
 }
 

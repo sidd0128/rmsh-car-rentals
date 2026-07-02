@@ -10,11 +10,13 @@ import { asyncStorageCustomerRepository } from '@features/customers/repository/a
 import { asyncStorageFineRepository } from '@features/fines/repository/asyncStorageFineRepository';
 import { asyncStoragePaymentRepository } from '@features/payments/repository/asyncStoragePaymentRepository';
 import { asyncStorageRentalRepository } from '@features/rentals/repository/asyncStorageRentalRepository';
+import { asyncStorageDeletionAuditLogRepository } from '@features/security/repository/asyncStorageDeletionAuditLogRepository';
 import type {
   AccidentRecord,
   BookingRequest,
   Car,
   Customer,
+  DeletionAuditLog,
   Fine,
   PaymentRecord,
   Rental,
@@ -45,7 +47,11 @@ const getPendingUpsertIds = (
 ): Set<string> =>
   new Set(
     entries
-      .filter(entry => entry.collectionName === collectionName && entry.operation === 'upsert')
+      .filter(
+        entry =>
+          entry.collectionName === collectionName &&
+          entry.operation === 'upsert',
+      )
       .map(entry => String(entry.payload.id))
       .filter(Boolean),
   );
@@ -86,8 +92,15 @@ const changedSince = <T extends SyncableEntity>(
     return items;
   }
 
-  return items.filter(item => (item.updatedAt ?? item.createdAt) > lastSyncedAt);
+  return items.filter(
+    item => (item.updatedAt ?? item.createdAt) > lastSyncedAt,
+  );
 };
+
+const shouldMergeRemoteCollection = <T>(
+  remoteItems: T[],
+  hasSyncedBefore: boolean,
+): boolean => !hasSyncedBefore || remoteItems.length > 0;
 
 /**
  * Coordinates bidirectional sync: Firestore ↔ AsyncStorage.
@@ -189,7 +202,9 @@ export const offlineFirstSyncOrchestratorService = {
   },
 
   /** Downloads Firestore data and merges into AsyncStorage (newer timestamp wins). */
-  async pullRemoteIntoLocal(lastSyncedAtOverride?: string | null): Promise<void> {
+  async pullRemoteIntoLocal(
+    lastSyncedAtOverride?: string | null,
+  ): Promise<void> {
     const [{ lastSyncedAt }, outboxEntries] = await Promise.all([
       syncMetadataRepository.get(),
       syncOutboxRepository.getAll(),
@@ -205,6 +220,7 @@ export const offlineFirstSyncOrchestratorService = {
       remoteAccidents,
       remotePayments,
       remoteBookingRequests,
+      remoteDeletionAuditLogs,
     ] = await Promise.all([
       firestoreDocumentSyncService.fetchDocumentsUpdatedSince<Car>(
         FIRESTORE_COLLECTION_NAMES.CARS,
@@ -234,16 +250,231 @@ export const offlineFirstSyncOrchestratorService = {
         FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
         syncCursor,
       ),
+      firestoreDocumentSyncService.fetchDocumentsUpdatedSince<DeletionAuditLog>(
+        FIRESTORE_COLLECTION_NAMES.DELETION_AUDIT_LOGS,
+        syncCursor,
+      ),
     ]);
 
+    const mergeTasks: Promise<void>[] = [];
+
+    if (shouldMergeRemoteCollection(remoteCars, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localCars = await asyncStorageCarRepository.getCars();
+          const remoteCarById = new Map(remoteCars.map(car => [car.id, car]));
+          const mergedCars = mergeRemoteWithLocalDeletions(
+            localCars,
+            remoteCars,
+            hasSyncedBefore,
+            getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.CARS),
+          );
+          await asyncStorageCarRepository.replaceAll(
+            mergedCars.map(car =>
+              cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+                FIRESTORE_COLLECTION_NAMES.CARS,
+                cloudMediaSyncService.mergeRemoteMediaUrls(
+                  FIRESTORE_COLLECTION_NAMES.CARS,
+                  car,
+                  remoteCarById.get(car.id),
+                ),
+              ),
+            ),
+          );
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remoteCustomers, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localCustomers =
+            await asyncStorageCustomerRepository.getCustomers();
+          const remoteCustomerById = new Map(
+            remoteCustomers.map(customer => [customer.id, customer]),
+          );
+          const mergedCustomers = mergeRemoteWithLocalDeletions(
+            localCustomers,
+            remoteCustomers,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+            ),
+          );
+          await asyncStorageCustomerRepository.replaceAll(
+            mergedCustomers.map(customer =>
+              cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+                FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+                cloudMediaSyncService.mergeRemoteMediaUrls(
+                  FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+                  customer,
+                  remoteCustomerById.get(customer.id),
+                ),
+              ),
+            ),
+          );
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remoteRentals, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localRentals = await asyncStorageRentalRepository.getRentals();
+          const mergedRentals = mergeRemoteWithLocalDeletions(
+            localRentals,
+            remoteRentals,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.RENTALS,
+            ),
+          );
+          await asyncStorageRentalRepository.replaceAll(mergedRentals);
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remoteFines, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localFines = await asyncStorageFineRepository.getFines();
+          const remoteFineById = new Map(
+            remoteFines.map(fine => [fine.id, fine]),
+          );
+          const mergedFines = mergeRemoteWithLocalDeletions(
+            localFines,
+            remoteFines,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.FINES,
+            ),
+          );
+          await asyncStorageFineRepository.replaceAll(
+            mergedFines.map(fine =>
+              cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+                FIRESTORE_COLLECTION_NAMES.FINES,
+                cloudMediaSyncService.mergeRemoteMediaUrls(
+                  FIRESTORE_COLLECTION_NAMES.FINES,
+                  fine,
+                  remoteFineById.get(fine.id),
+                ),
+              ),
+            ),
+          );
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remoteAccidents, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localAccidents =
+            await asyncStorageAccidentRepository.getAccidents();
+          const remoteAccidentById = new Map(
+            remoteAccidents.map(accident => [accident.id, accident]),
+          );
+          const mergedAccidents = mergeRemoteWithLocalDeletions(
+            localAccidents,
+            remoteAccidents,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+            ),
+          );
+          await asyncStorageAccidentRepository.replaceAll(
+            mergedAccidents.map(accident =>
+              cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
+                FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+                cloudMediaSyncService.mergeRemoteMediaUrls(
+                  FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+                  accident,
+                  remoteAccidentById.get(accident.id),
+                ),
+              ),
+            ),
+          );
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remotePayments, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localPayments =
+            await asyncStoragePaymentRepository.getPayments();
+          const mergedPayments = mergeRemoteWithLocalDeletions(
+            localPayments,
+            remotePayments,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.PAYMENTS,
+            ),
+          );
+          await asyncStoragePaymentRepository.replaceAll(mergedPayments);
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remoteBookingRequests, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localBookingRequests =
+            await asyncStorageBookingRequestRepository.getBookingRequests();
+          const mergedBookingRequests = mergeRemoteWithLocalDeletions(
+            localBookingRequests,
+            remoteBookingRequests,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+            ),
+          );
+          await asyncStorageBookingRequestRepository.replaceAll(
+            mergedBookingRequests,
+          );
+        })(),
+      );
+    }
+
+    if (shouldMergeRemoteCollection(remoteDeletionAuditLogs, hasSyncedBefore)) {
+      mergeTasks.push(
+        (async () => {
+          const localDeletionAuditLogs =
+            await asyncStorageDeletionAuditLogRepository.getDeletionAuditLogs();
+          const mergedDeletionAuditLogs = mergeRemoteWithLocalDeletions(
+            localDeletionAuditLogs,
+            remoteDeletionAuditLogs,
+            hasSyncedBefore,
+            getPendingUpsertIds(
+              outboxEntries,
+              FIRESTORE_COLLECTION_NAMES.DELETION_AUDIT_LOGS,
+            ),
+          );
+          await asyncStorageDeletionAuditLogRepository.replaceAll(
+            mergedDeletionAuditLogs,
+          );
+        })(),
+      );
+    }
+
+    await Promise.all(mergeTasks);
+  },
+
+  /** Uploads local documents changed since the previous successful sync. */
+  async pushChangedLocalDocuments(lastSyncedAt: string | null): Promise<void> {
     const [
-      localCars,
-      localCustomers,
-      localRentals,
-      localFines,
-      localAccidents,
-      localPayments,
-      localBookingRequests,
+      cars,
+      customers,
+      rentals,
+      fines,
+      accidents,
+      payments,
+      deletionAuditLogs,
     ] = await Promise.all([
       asyncStorageCarRepository.getCars(),
       asyncStorageCustomerRepository.getCustomers(),
@@ -251,127 +482,8 @@ export const offlineFirstSyncOrchestratorService = {
       asyncStorageFineRepository.getFines(),
       asyncStorageAccidentRepository.getAccidents(),
       asyncStoragePaymentRepository.getPayments(),
-      asyncStorageBookingRequestRepository.getBookingRequests(),
+      asyncStorageDeletionAuditLogRepository.getDeletionAuditLogs(),
     ]);
-
-    const remoteCarById = new Map(remoteCars.map(car => [car.id, car]));
-    const remoteCustomerById = new Map(
-      remoteCustomers.map(customer => [customer.id, customer]),
-    );
-    const remoteFineById = new Map(remoteFines.map(fine => [fine.id, fine]));
-    const remoteAccidentById = new Map(
-      remoteAccidents.map(accident => [accident.id, accident]),
-    );
-
-    const mergedCars = mergeRemoteWithLocalDeletions(
-      localCars,
-      remoteCars,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.CARS),
-    );
-    const mergedCustomers = mergeRemoteWithLocalDeletions(
-      localCustomers,
-      remoteCustomers,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.CUSTOMERS),
-    );
-    const mergedRentals = mergeRemoteWithLocalDeletions(
-      localRentals,
-      remoteRentals,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.RENTALS),
-    );
-    const mergedFines = mergeRemoteWithLocalDeletions(
-      localFines,
-      remoteFines,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.FINES),
-    );
-    const mergedAccidents = mergeRemoteWithLocalDeletions(
-      localAccidents,
-      remoteAccidents,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.ACCIDENTS),
-    );
-    const mergedPayments = mergeRemoteWithLocalDeletions(
-      localPayments,
-      remotePayments,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.PAYMENTS),
-    );
-    const mergedBookingRequests = mergeRemoteWithLocalDeletions(
-      localBookingRequests,
-      remoteBookingRequests,
-      hasSyncedBefore,
-      getPendingUpsertIds(outboxEntries, FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS),
-    );
-
-    await Promise.all([
-      asyncStorageCarRepository.replaceAll(
-        mergedCars.map(car =>
-          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
-            FIRESTORE_COLLECTION_NAMES.CARS,
-            cloudMediaSyncService.mergeRemoteMediaUrls(
-              FIRESTORE_COLLECTION_NAMES.CARS,
-              car,
-              remoteCarById.get(car.id),
-            ),
-          ),
-        ),
-      ),
-      asyncStorageCustomerRepository.replaceAll(
-        mergedCustomers.map(customer =>
-          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
-            FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-            cloudMediaSyncService.mergeRemoteMediaUrls(
-              FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
-              customer,
-              remoteCustomerById.get(customer.id),
-            ),
-          ),
-        ),
-      ),
-      asyncStorageRentalRepository.replaceAll(mergedRentals),
-      asyncStorageFineRepository.replaceAll(
-        mergedFines.map(fine =>
-          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
-            FIRESTORE_COLLECTION_NAMES.FINES,
-            cloudMediaSyncService.mergeRemoteMediaUrls(
-              FIRESTORE_COLLECTION_NAMES.FINES,
-              fine,
-              remoteFineById.get(fine.id),
-            ),
-          ),
-        ),
-      ),
-      asyncStorageAccidentRepository.replaceAll(
-        mergedAccidents.map(accident =>
-          cloudMediaSyncService.stripLocalMediaUrisForLocalStore(
-            FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-            cloudMediaSyncService.mergeRemoteMediaUrls(
-              FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
-              accident,
-              remoteAccidentById.get(accident.id),
-            ),
-          ),
-        ),
-      ),
-      asyncStoragePaymentRepository.replaceAll(mergedPayments),
-      asyncStorageBookingRequestRepository.replaceAll(mergedBookingRequests),
-    ]);
-  },
-
-  /** Uploads local documents changed since the previous successful sync. */
-  async pushChangedLocalDocuments(lastSyncedAt: string | null): Promise<void> {
-    const [cars, customers, rentals, fines, accidents, payments] =
-      await Promise.all([
-        asyncStorageCarRepository.getCars(),
-        asyncStorageCustomerRepository.getCustomers(),
-        asyncStorageRentalRepository.getRentals(),
-        asyncStorageFineRepository.getFines(),
-        asyncStorageAccidentRepository.getAccidents(),
-        asyncStoragePaymentRepository.getPayments(),
-      ]);
 
     await Promise.all([
       ...changedSince(cars, lastSyncedAt).map(async car =>
@@ -436,6 +548,12 @@ export const offlineFirstSyncOrchestratorService = {
         firestoreDocumentSyncService.upsertDocument(
           FIRESTORE_COLLECTION_NAMES.PAYMENTS,
           payment,
+        ),
+      ),
+      ...changedSince(deletionAuditLogs, lastSyncedAt).map(log =>
+        firestoreDocumentSyncService.upsertDocument(
+          FIRESTORE_COLLECTION_NAMES.DELETION_AUDIT_LOGS,
+          log,
         ),
       ),
     ]);

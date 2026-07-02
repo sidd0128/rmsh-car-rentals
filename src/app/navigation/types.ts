@@ -41,6 +41,7 @@ export type SettingsStackParamList = {
   FinesList: undefined;
   AccidentsList: undefined;
   AccidentForm: undefined;
+  DeletionAuditLogs: undefined;
 } & FineFlowParamList &
   AccidentFlowParamList;
 

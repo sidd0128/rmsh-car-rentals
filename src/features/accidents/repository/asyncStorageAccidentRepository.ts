@@ -28,6 +28,11 @@ class AsyncStorageAccidentRepository
     await this.save(record);
     return record;
   }
+
+  async deleteAccident(id: string): Promise<void> {
+    await this.delete(id);
+  }
 }
 
-export const asyncStorageAccidentRepository = new AsyncStorageAccidentRepository();
+export const asyncStorageAccidentRepository =
+  new AsyncStorageAccidentRepository();

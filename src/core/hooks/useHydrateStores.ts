@@ -10,6 +10,7 @@ import { useFineStore } from '@features/fines/store/useFineStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { useAppSettingsStore } from '@features/dashboard/store/useAppSettingsStore';
+import { useDeletionAuditLogStore } from '@features/security/store/useDeletionAuditLogStore';
 
 export const useHydrateStores = () => {
   const hydrateAll = useCallback(async () => {
@@ -21,6 +22,7 @@ export const useHydrateStores = () => {
       useAccidentStore.getState().hydrate(),
       usePaymentStore.getState().hydrate(),
       useBookingRequestStore.getState().hydrate(),
+      useDeletionAuditLogStore.getState().hydrate(),
       useAppSettingsStore.getState().hydrate(),
     ]);
   }, []);

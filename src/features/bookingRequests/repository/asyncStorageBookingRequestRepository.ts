@@ -22,6 +22,10 @@ class AsyncStorageBookingRequestRepository
   async saveBookingRequest(request: BookingRequest): Promise<void> {
     await this.save(request);
   }
+
+  async deleteBookingRequest(id: string): Promise<void> {
+    await this.delete(id);
+  }
 }
 
 export const asyncStorageBookingRequestRepository =

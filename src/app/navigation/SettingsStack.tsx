@@ -9,6 +9,7 @@ import { FineDetailsScreen } from '@features/fines/screens/FineDetailsScreen';
 import { FineFormScreen } from '@features/fines/screens/FineFormScreen';
 import { FinesListScreen } from '@features/fines/screens/FinesListScreen';
 import { SettingsScreen } from '@features/dashboard/screens/SettingsScreen';
+import { DeletionAuditLogsScreen } from '@features/security/screens/DeletionAuditLogsScreen';
 import type { SettingsStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -23,45 +24,50 @@ export const SettingsStack = () => {
         headerTintColor: colors.primary,
       }}
     >
-    <Stack.Screen
-      name="SettingsHome"
-      component={SettingsScreen}
-      options={{ title: i18n.t('navigation.more') }}
-    />
-    <Stack.Screen
-      name="FinesList"
-      component={FinesListScreen}
-      options={{ title: i18n.t('navigation.fines') }}
-    />
-    <Stack.Screen
-      name="FineDetails"
-      component={FineDetailsScreen}
-      options={{ title: i18n.t('navigation.fineDetails') }}
-    />
-    <Stack.Screen
-      name="FineForm"
-      component={FineFormScreen}
-      options={({ route }) => ({
-        title: route.params?.fineId
-          ? i18n.t('navigation.editFine')
-          : i18n.t('navigation.addFine'),
-      })}
-    />
-    <Stack.Screen
-      name="AccidentsList"
-      component={AccidentsListScreen}
-      options={{ title: i18n.t('navigation.accidents') }}
-    />
-    <Stack.Screen
-      name="AccidentDetails"
-      component={AccidentDetailsScreen}
-      options={{ title: i18n.t('navigation.accidentReport') }}
-    />
-    <Stack.Screen
-      name="AccidentForm"
-      component={AccidentFormScreen}
-      options={{ title: i18n.t('navigation.reportAccident') }}
-    />
+      <Stack.Screen
+        name="SettingsHome"
+        component={SettingsScreen}
+        options={{ title: i18n.t('navigation.more') }}
+      />
+      <Stack.Screen
+        name="FinesList"
+        component={FinesListScreen}
+        options={{ title: i18n.t('navigation.fines') }}
+      />
+      <Stack.Screen
+        name="FineDetails"
+        component={FineDetailsScreen}
+        options={{ title: i18n.t('navigation.fineDetails') }}
+      />
+      <Stack.Screen
+        name="FineForm"
+        component={FineFormScreen}
+        options={({ route }) => ({
+          title: route.params?.fineId
+            ? i18n.t('navigation.editFine')
+            : i18n.t('navigation.addFine'),
+        })}
+      />
+      <Stack.Screen
+        name="AccidentsList"
+        component={AccidentsListScreen}
+        options={{ title: i18n.t('navigation.accidents') }}
+      />
+      <Stack.Screen
+        name="AccidentDetails"
+        component={AccidentDetailsScreen}
+        options={{ title: i18n.t('navigation.accidentReport') }}
+      />
+      <Stack.Screen
+        name="AccidentForm"
+        component={AccidentFormScreen}
+        options={{ title: i18n.t('navigation.reportAccident') }}
+      />
+      <Stack.Screen
+        name="DeletionAuditLogs"
+        component={DeletionAuditLogsScreen}
+        options={{ title: 'Deletion audit log' }}
+      />
     </Stack.Navigator>
   );
 };

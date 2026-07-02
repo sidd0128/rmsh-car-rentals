@@ -5,6 +5,7 @@
 import { FIRESTORE_COLLECTION_NAMES } from '@core/firebase/constants/firestoreCollectionNames';
 import type { IAccidentRepository } from '@features/accidents/repository/IAccidentRepository';
 import { asyncStorageAccidentRepository } from '@features/accidents/repository/asyncStorageAccidentRepository';
+import type { IBookingRequestRepository } from '@features/bookingRequests/repository/IBookingRequestRepository';
 import { asyncStorageBookingRequestRepository } from '@features/bookingRequests/repository/asyncStorageBookingRequestRepository';
 import type { ICarRepository } from '@features/cars/repository/ICarRepository';
 import { asyncStorageCarRepository } from '@features/cars/repository/asyncStorageCarRepository';
@@ -16,14 +17,19 @@ import type { IPaymentRepository } from '@features/payments/repository/IPaymentR
 import { asyncStoragePaymentRepository } from '@features/payments/repository/asyncStoragePaymentRepository';
 import type { IRentalRepository } from '@features/rentals/repository/IRentalRepository';
 import { asyncStorageRentalRepository } from '@features/rentals/repository/asyncStorageRentalRepository';
+import type { IDeletionAuditLogRepository } from '@features/security/repository/IDeletionAuditLogRepository';
+import { asyncStorageDeletionAuditLogRepository } from '@features/security/repository/asyncStorageDeletionAuditLogRepository';
 import type {
   Car,
+  BookingRequest,
   CreateAccidentPayload,
   CreateCarPayload,
   CreateCustomerPayload,
+  CreateDeletionAuditLogPayload,
   CreateFinePayload,
   CreateRentalPayload,
   Customer,
+  DeletionAuditLog,
   Fine,
   PaymentRecord,
   Rental,
@@ -52,7 +58,10 @@ class OfflineFirstCarRepository implements ICarRepository {
   };
   deleteCar = async (id: string) => {
     await asyncStorageCarRepository.deleteCar(id);
-    await cloudEntityWriteService.deleteEntity(FIRESTORE_COLLECTION_NAMES.CARS, id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.CARS,
+      id,
+    );
   };
 }
 
@@ -78,6 +87,13 @@ class OfflineFirstCustomerRepository implements ICustomerRepository {
       previousCustomer,
     );
   };
+  deleteCustomer = async (id: string) => {
+    await asyncStorageCustomerRepository.deleteCustomer(id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.CUSTOMERS,
+      id,
+    );
+  };
 }
 
 class OfflineFirstRentalRepository implements IRentalRepository {
@@ -99,7 +115,10 @@ class OfflineFirstRentalRepository implements IRentalRepository {
   };
   deleteRental = async (id: string) => {
     await asyncStorageRentalRepository.deleteRental(id);
-    await cloudEntityWriteService.deleteEntity(FIRESTORE_COLLECTION_NAMES.RENTALS, id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.RENTALS,
+      id,
+    );
   };
 }
 
@@ -123,6 +142,13 @@ class OfflineFirstFineRepository implements IFineRepository {
       previousFine,
     );
   };
+  deleteFine = async (id: string) => {
+    await asyncStorageFineRepository.deleteFine(id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.FINES,
+      id,
+    );
+  };
 }
 
 class OfflineFirstAccidentRepository implements IAccidentRepository {
@@ -133,6 +159,13 @@ class OfflineFirstAccidentRepository implements IAccidentRepository {
       () => asyncStorageAccidentRepository.addAccident(payload),
       accident => asyncStorageAccidentRepository.save(accident),
     );
+  deleteAccident = async (id: string) => {
+    await asyncStorageAccidentRepository.deleteAccident(id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.ACCIDENTS,
+      id,
+    );
+  };
 }
 
 class OfflineFirstPaymentRepository implements IPaymentRepository {
@@ -152,8 +185,25 @@ class OfflineFirstPaymentRepository implements IPaymentRepository {
   };
   deletePayment = async (id: string) => {
     await asyncStoragePaymentRepository.deletePayment(id);
-    await cloudEntityWriteService.deleteEntity(FIRESTORE_COLLECTION_NAMES.PAYMENTS, id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.PAYMENTS,
+      id,
+    );
   };
+}
+
+class OfflineFirstDeletionAuditLogRepository
+  implements IDeletionAuditLogRepository
+{
+  getDeletionAuditLogs = () =>
+    asyncStorageDeletionAuditLogRepository.getDeletionAuditLogs();
+  addDeletionAuditLog = (payload: CreateDeletionAuditLogPayload) =>
+    saveEntityWithCloudSync(
+      FIRESTORE_COLLECTION_NAMES.DELETION_AUDIT_LOGS,
+      () => asyncStorageDeletionAuditLogRepository.addDeletionAuditLog(payload),
+    );
+  replaceAll = (logs: DeletionAuditLog[]) =>
+    asyncStorageDeletionAuditLogRepository.replaceAll(logs);
 }
 
 export const offlineFirstCarRepository = new OfflineFirstCarRepository();
@@ -165,5 +215,22 @@ export const offlineFirstAccidentRepository =
   new OfflineFirstAccidentRepository();
 export const offlineFirstPaymentRepository =
   new OfflineFirstPaymentRepository();
-export const offlineFirstBookingRequestRepository =
-  asyncStorageBookingRequestRepository;
+export const offlineFirstDeletionAuditLogRepository =
+  new OfflineFirstDeletionAuditLogRepository();
+export const offlineFirstBookingRequestRepository = {
+  getBookingRequests: () =>
+    asyncStorageBookingRequestRepository.getBookingRequests(),
+  getBookingRequestById: (id: string) =>
+    asyncStorageBookingRequestRepository.getBookingRequestById(id),
+  saveBookingRequest: (request: BookingRequest) =>
+    asyncStorageBookingRequestRepository.saveBookingRequest(request),
+  deleteBookingRequest: async (id: string) => {
+    await asyncStorageBookingRequestRepository.deleteBookingRequest(id);
+    await cloudEntityWriteService.deleteEntity(
+      FIRESTORE_COLLECTION_NAMES.BOOKING_REQUESTS,
+      id,
+    );
+  },
+  replaceAll: (requests: BookingRequest[]) =>
+    asyncStorageBookingRequestRepository.replaceAll(requests),
+} satisfies IBookingRequestRepository;

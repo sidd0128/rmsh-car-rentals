@@ -9,6 +9,17 @@ export type PaymentStatus = 'PENDING' | 'DONE' | 'NOT_PAID';
 export type BookingRequestStatus = 'PENDING' | 'APPROVED' | 'DECLINED';
 /** How recurring rent is charged for a rental contract. */
 export type BillingFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type DeletionTargetType = 'CAR' | 'CUSTOMER';
+
+export interface DeletedRecordCounts {
+  cars: number;
+  customers: number;
+  rentals: number;
+  payments: number;
+  fines: number;
+  accidents: number;
+  bookingRequests: number;
+}
 
 export interface RentalAgreementUpload {
   url: MediaUri;
@@ -175,6 +186,21 @@ export interface AppSettings {
   updatedAt?: string;
 }
 
+export interface DeletionAuditLog {
+  id: string;
+  targetType: DeletionTargetType;
+  targetId: string;
+  targetLabel: string;
+  reason: string;
+  deletedByUid?: string;
+  deletedByEmail?: string;
+  deletedAt: string;
+  deletedCounts: DeletedRecordCounts;
+  targetSnapshot: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type CreateCarPayload = Omit<
   Car,
   | 'id'
@@ -218,5 +244,10 @@ export type CreateFinePayload = Omit<Fine, 'id' | 'createdAt' | 'updatedAt'>;
 
 export type CreateAccidentPayload = Omit<
   AccidentRecord,
+  'id' | 'createdAt' | 'updatedAt'
+>;
+
+export type CreateDeletionAuditLogPayload = Omit<
+  DeletionAuditLog,
   'id' | 'createdAt' | 'updatedAt'
 >;

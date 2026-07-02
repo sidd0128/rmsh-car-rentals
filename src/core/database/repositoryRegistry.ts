@@ -9,6 +9,7 @@ import type { ICustomerRepository } from '@features/customers/repository/ICustom
 import type { IFineRepository } from '@features/fines/repository/IFineRepository';
 import type { IPaymentRepository } from '@features/payments/repository/IPaymentRepository';
 import type { IRentalRepository } from '@features/rentals/repository/IRentalRepository';
+import type { IDeletionAuditLogRepository } from '@features/security/repository/IDeletionAuditLogRepository';
 import {
   offlineFirstAccidentRepository,
   offlineFirstBookingRequestRepository,
@@ -17,6 +18,7 @@ import {
   offlineFirstFineRepository,
   offlineFirstPaymentRepository,
   offlineFirstRentalRepository,
+  offlineFirstDeletionAuditLogRepository,
 } from './offlineFirstRepositories';
 
 export const repositories = {
@@ -26,6 +28,8 @@ export const repositories = {
   fines: offlineFirstFineRepository as IFineRepository,
   accidents: offlineFirstAccidentRepository as IAccidentRepository,
   payments: offlineFirstPaymentRepository as IPaymentRepository,
+  deletionAuditLogs:
+    offlineFirstDeletionAuditLogRepository as IDeletionAuditLogRepository,
   bookingRequests:
     offlineFirstBookingRequestRepository as IBookingRequestRepository,
 };

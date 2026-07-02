@@ -5,4 +5,5 @@ export interface ICustomerRepository {
   getCustomerById(id: string): Promise<Customer | undefined>;
   addCustomer(payload: CreateCustomerPayload): Promise<Customer>;
   updateCustomer(customer: Customer): Promise<void>;
+  deleteCustomer(id: string): Promise<void>;
 }
