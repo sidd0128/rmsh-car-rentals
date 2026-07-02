@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useDebouncedValue } from '@reusable';
+import { useDebouncedValue } from '@core/hooks/useDebouncedValue';
 import { useCustomerStore } from '../store/useCustomerStore';
 
 export const useFilteredCustomers = () => {

@@ -22,12 +22,12 @@ import { useFirebaseAuthStore } from '@features/auth/store/useFirebaseAuthStore'
 import { useBookingRequestRealtimeSync } from '@features/bookingRequests/hooks/useBookingRequestRealtimeSync';
 import { NetworkGate } from '@network/NetworkGate';
 import { NetworkProvider } from '@network/NetworkProvider';
-import { GlobalUiHost } from '@shared/ui/GlobalUiHost';
+import { GlobalUiHost } from '@shared/ui';
 import { AuthGate } from './AuthGate';
 
-const renderPaperIcon = (props: React.ComponentProps<typeof MaterialCommunityIcons>) => (
-  <MaterialCommunityIcons {...props} />
-);
+const renderPaperIcon = (
+  props: React.ComponentProps<typeof MaterialCommunityIcons>,
+) => <MaterialCommunityIcons {...props} />;
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -101,7 +101,8 @@ export const AppProvider = () => {
         setDataReady(false);
 
         if (firebaseConfigured && isAuthenticated) {
-          const syncResult = await offlineFirstSyncOrchestratorService.syncWithCloud();
+          const syncResult =
+            await offlineFirstSyncOrchestratorService.syncWithCloud();
           useCloudSyncStore.setState({ lastMessage: syncResult.message });
           await useCloudSyncStore.getState().refreshMetadata();
         }

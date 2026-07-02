@@ -12,8 +12,7 @@ import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { screenStyles } from '@shared/layouts/screenStyles';
-import { EmptyState, StatusBadge } from '@shared/ui';
-import { SearchHeader } from '@reusable';
+import { EmptyState, SearchHeader, StatusBadge } from '@shared/ui';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useFilteredCustomers } from '../hooks/useFilteredCustomers';
 import { useCustomerRentalInfo } from '../hooks/useCustomerRentalInfo';
@@ -71,7 +70,9 @@ const CustomerRow = ({
             : ''}
         </Text>
       ) : (
-        <Text style={typography.bodySmall}>{t('customers.noActiveRental')}</Text>
+        <Text style={typography.bodySmall}>
+          {t('customers.noActiveRental')}
+        </Text>
       )}
     </Pressable>
   );
@@ -80,7 +81,8 @@ const CustomerRow = ({
 export const CustomersListScreen = () => {
   const { t } = useTranslation();
   const { colors } = useThemeContext();
-  const navigation = useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<CustomersStackParamList>>();
   const filtered = useFilteredCustomers();
   const searchQuery = useCustomerStore(s => s.searchQuery);
   const setSearchQuery = useCustomerStore(s => s.setSearchQuery);
@@ -91,7 +93,9 @@ export const CustomersListScreen = () => {
     ({ item }: { item: (typeof filtered)[0] }) => (
       <CustomerRow
         customerId={item.id}
-        onPress={() => navigation.navigate('CustomerProfile', { customerId: item.id })}
+        onPress={() =>
+          navigation.navigate('CustomerProfile', { customerId: item.id })
+        }
       />
     ),
     [navigation],
@@ -119,12 +123,17 @@ export const CustomersListScreen = () => {
           ]}
           onRefresh={hydrateAll}
           refreshing={false}
-          ListEmptyComponent={<EmptyState title={t('customers.listEmptyTitle')} />}
+          ListEmptyComponent={
+            <EmptyState title={t('customers.listEmptyTitle')} />
+          }
         />
       </View>
       <FAB
         icon="plus"
-        style={[styles.fab, { right: horizontalPadding, backgroundColor: colors.primary }]}
+        style={[
+          styles.fab,
+          { right: horizontalPadding, backgroundColor: colors.primary },
+        ]}
         onPress={() => navigation.navigate('CustomerForm', {})}
         color={colors.textInverse}
       />

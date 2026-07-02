@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
-import { CollapsibleSection } from '@reusable';
-import { summarizeMonthTimeline, type MonthTimelineEntry } from '@core/helpers/rentalHistory';
+import { CollapsibleSection } from '@shared/ui';
+import {
+  summarizeMonthTimeline,
+  type MonthTimelineEntry,
+} from '@core/helpers/rentalHistory';
 import { useTranslation } from '@core/i18n';
 
 interface HistoryMonthAccordionProps {
@@ -19,7 +22,10 @@ export const HistoryMonthAccordion = memo<HistoryMonthAccordionProps>(
     return (
       <CollapsibleSection
         title={monthLabel}
-        subtitle={t('history.monthSummary', { rentals: rentalCount, free: freeCount })}
+        subtitle={t('history.monthSummary', {
+          rentals: rentalCount,
+          free: freeCount,
+        })}
         expanded={expanded}
         onToggle={onToggle}
       >

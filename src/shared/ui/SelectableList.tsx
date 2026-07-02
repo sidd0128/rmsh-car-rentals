@@ -14,11 +14,12 @@ type BaseSelectableListProps<T extends string> = {
   style?: object;
 };
 
-type SingleSelectableListProps<T extends string> = BaseSelectableListProps<T> & {
-  mode?: 'single';
-  selected: T;
-  onChange: (value: T) => void;
-};
+type SingleSelectableListProps<T extends string> =
+  BaseSelectableListProps<T> & {
+    mode?: 'single';
+    selected: T;
+    onChange: (value: T) => void;
+  };
 
 type MultiSelectableListProps<T extends string> = BaseSelectableListProps<T> & {
   mode: 'multiple';
@@ -57,7 +58,9 @@ function SelectableListInner<T extends string>(props: SelectableListProps<T>) {
           <Checkbox.Item
             key={opt.value}
             label={opt.label}
-            status={props.selected.includes(opt.value) ? 'checked' : 'unchecked'}
+            status={
+              props.selected.includes(opt.value) ? 'checked' : 'unchecked'
+            }
             disabled={opt.disabled}
             onPress={() => toggleMultiValue(opt.value)}
           />
@@ -68,7 +71,10 @@ function SelectableListInner<T extends string>(props: SelectableListProps<T>) {
 
   return (
     <View style={[styles.options, style]}>
-      <RadioButton.Group onValueChange={value => props.onChange(value as T)} value={props.selected}>
+      <RadioButton.Group
+        onValueChange={value => props.onChange(value as T)}
+        value={props.selected}
+      >
         {options.map(opt => (
           <RadioButton.Item
             key={opt.value}

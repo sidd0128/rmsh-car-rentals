@@ -12,14 +12,14 @@ import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { CarCard } from '@features/cars/components/CarCard';
 import { screenStyles } from '@shared/layouts/screenStyles';
-import { EmptyState } from '@shared/ui';
-import { SearchHeader } from '@reusable';
+import { EmptyState, SearchHeader } from '@shared/ui';
 import { useHistoryFilteredCars } from '../hooks/useHistoryFilteredCars';
 import { useTranslation } from '@core/i18n';
 
 export const HistoryCarsListScreen = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation<NativeStackNavigationProp<HistoryStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<HistoryStackParamList>>();
   const [searchQuery, setSearchQuery] = useState('');
   const filteredCars = useHistoryFilteredCars(searchQuery);
   const customers = useCustomerStore(s => s.customers);
@@ -37,7 +37,9 @@ export const HistoryCarsListScreen = () => {
           customer={customer}
           totalPaid={0}
           hidePaymentInfo
-          onPress={() => navigation.navigate('CarRentalHistory', { carId: item.id })}
+          onPress={() =>
+            navigation.navigate('CarRentalHistory', { carId: item.id })
+          }
         />
       );
     },

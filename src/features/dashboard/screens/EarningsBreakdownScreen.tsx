@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
+import { useDebouncedValue } from '@core/hooks/useDebouncedValue';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { formatCurrency } from '@core/utils/currency';
 import { useCarStore } from '@features/cars/store/useCarStore';
@@ -11,13 +12,10 @@ import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { screenStyles, LIST_BOTTOM_INSET } from '@shared/layouts/screenStyles';
-import {
-  EarningsCarSectionHeader,
-  EarningsHireCard,
-  SearchHeader,
-  useDebouncedValue,
-} from '@reusable';
+import { SearchHeader } from '@shared/ui';
 import { computeFleetTotalPaid } from '@core/helpers/rentalPayments';
+import { EarningsCarSectionHeader } from '../components/EarningsCarSectionHeader';
+import { EarningsHireCard } from '../components/EarningsHireCard';
 import { buildCarEarningsSections } from '../helpers/buildCarEarningsSections';
 import {
   buildEarningsListItems,
@@ -38,7 +36,9 @@ export const EarningsBreakdownScreen = () => {
   const { horizontalPadding } = useDeviceLayout();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCarId, setExpandedCarId] = useState<string | undefined>(undefined);
+  const [expandedCarId, setExpandedCarId] = useState<string | undefined>(
+    undefined,
+  );
   const debouncedSearch = useDebouncedValue(searchQuery, 250);
 
   const allSections = useMemo(
@@ -69,14 +69,20 @@ export const EarningsBreakdownScreen = () => {
   );
 
   const totalHires = useMemo(() => countTotalHires(allSections), [allSections]);
-  const visibleHires = useMemo(() => countVisibleHires(filteredSections), [filteredSections]);
+  const visibleHires = useMemo(
+    () => countVisibleHires(filteredSections),
+    [filteredSections],
+  );
 
-  const toggleCarSection = useCallback((carId: string) => {
-    if (isSearchActive) {
-      return;
-    }
-    setExpandedCarId(current => (current === carId ? undefined : carId));
-  }, [isSearchActive]);
+  const toggleCarSection = useCallback(
+    (carId: string) => {
+      if (isSearchActive) {
+        return;
+      }
+      setExpandedCarId(current => (current === carId ? undefined : carId));
+    },
+    [isSearchActive],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: EarningsListItem }) => {
@@ -115,21 +121,30 @@ export const EarningsBreakdownScreen = () => {
     () => (
       <View style={screenStyles.earningsHeader}>
         <Text style={[screenStyles.earningsLead, { color: colors.primary }]}>
-          {t('earnings.fleetTotalReceived', { amount: formatCurrency(fleetTotal) })}
+          {t('earnings.fleetTotalReceived', {
+            amount: formatCurrency(fleetTotal),
+          })}
         </Text>
-        <Text style={[screenStyles.earningsHint, { color: colors.textSecondary }]}>
+        <Text
+          style={[screenStyles.earningsHint, { color: colors.textSecondary }]}
+        >
           {t('earnings.breakdownHint')}
         </Text>
         {isSearchActive ? (
-          <Text style={[screenStyles.earningsMeta, { color: colors.textMuted }]}>
+          <Text
+            style={[screenStyles.earningsMeta, { color: colors.textMuted }]}
+          >
             {t('earnings.showingMatchingHires', {
               visible: visibleHires,
-              hireWord: visibleHires === 1 ? t('earnings.hire') : t('earnings.hires'),
+              hireWord:
+                visibleHires === 1 ? t('earnings.hire') : t('earnings.hires'),
               total: totalHires,
             })}
           </Text>
         ) : (
-          <Text style={[screenStyles.earningsMeta, { color: colors.textMuted }]}>
+          <Text
+            style={[screenStyles.earningsMeta, { color: colors.textMuted }]}
+          >
             {t('earnings.hiresAcrossCars', {
               count: totalHires,
               cars: allSections.length,
@@ -138,7 +153,15 @@ export const EarningsBreakdownScreen = () => {
         )}
       </View>
     ),
-    [fleetTotal, isSearchActive, visibleHires, totalHires, allSections.length, colors, t],
+    [
+      fleetTotal,
+      isSearchActive,
+      visibleHires,
+      totalHires,
+      allSections.length,
+      colors,
+      t,
+    ],
   );
 
   return (
@@ -165,7 +188,9 @@ export const EarningsBreakdownScreen = () => {
           extraData={{ expandedCarId, debouncedSearch }}
           ListEmptyComponent={
             <Text style={[styles.empty, { color: colors.textMuted }]}>
-              {isSearchActive ? t('earnings.noSearchResults') : t('earnings.noHiresYet')}
+              {isSearchActive
+                ? t('earnings.noSearchResults')
+                : t('earnings.noHiresYet')}
             </Text>
           }
         />

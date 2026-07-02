@@ -1,5 +1,11 @@
 import React, { memo } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { radius, spacing, typography } from '@app/theme';
@@ -59,7 +65,9 @@ export const CollapsibleSection = memo<CollapsibleSectionProps>(
             color={colors.primary}
           />
         </Pressable>
-        {expanded ? <View style={[styles.body, bodyStyle]}>{children}</View> : null}
+        {expanded ? (
+          <View style={[styles.body, bodyStyle]}>{children}</View>
+        ) : null}
       </View>
     );
   },

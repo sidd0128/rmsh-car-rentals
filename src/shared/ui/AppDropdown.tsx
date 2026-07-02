@@ -1,9 +1,14 @@
 import React, { memo, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Menu, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
-import { AppButton } from '@shared/ui/AppButton';
+import { AppButton } from './AppButton';
 import { SearchBar } from './SearchBar';
 
 const DEFAULT_SEARCHABLE_MIN_OPTIONS = 12;
@@ -51,8 +56,7 @@ function AppDropdownInner<T extends string>({
   const { height } = useWindowDimensions();
   const [visible, setVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const shouldShowSearch =
-    searchable || options.length >= searchableMinOptions;
+  const shouldShowSearch = searchable || options.length >= searchableMinOptions;
   const optionListMaxHeight =
     maxMenuHeight ?? Math.min(360, Math.max(180, height * 0.38));
 

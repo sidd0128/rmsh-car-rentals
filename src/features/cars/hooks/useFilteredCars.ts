@@ -3,7 +3,7 @@ import {
   carHasUpcomingBookingOnly,
   carIsReturningSoon,
 } from '@core/services/availabilityService';
-import { useDebouncedValue } from '@reusable';
+import { useDebouncedValue } from '@core/hooks/useDebouncedValue';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { useCarStore } from '../store/useCarStore';
 import { useCarFilterStore, type CarFilter } from '../store/useCarFilterStore';
@@ -21,7 +21,11 @@ const matchesSearch = (car: Car, query: string): boolean => {
   );
 };
 
-const matchesFilter = (car: Car, filter: CarFilter, rentals: Rental[]): boolean => {
+const matchesFilter = (
+  car: Car,
+  filter: CarFilter,
+  rentals: Rental[],
+): boolean => {
   if (filter === 'ALL') return true;
   if (filter === 'UPCOMING_BOOKING') {
     return carHasUpcomingBookingOnly(car, rentals);
@@ -42,7 +46,9 @@ export const useFilteredCars = () => {
   return useMemo(
     () =>
       cars.filter(
-        c => matchesFilter(c, filter, rentals) && matchesSearch(c, debouncedSearch),
+        c =>
+          matchesFilter(c, filter, rentals) &&
+          matchesSearch(c, debouncedSearch),
       ),
     [cars, rentals, filter, debouncedSearch],
   );

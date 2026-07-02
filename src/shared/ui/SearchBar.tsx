@@ -11,7 +11,14 @@ export interface SearchBarProps
 }
 
 export const SearchBar = memo<SearchBarProps>(
-  ({ value, onChangeText, placeholder = 'Search...', style, inputStyle, ...rest }) => {
+  ({
+    value,
+    onChangeText,
+    placeholder = 'Search...',
+    style,
+    inputStyle,
+    ...rest
+  }) => {
     const { colors } = useThemeContext();
 
     return (

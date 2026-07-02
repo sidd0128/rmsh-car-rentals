@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useDebouncedValue } from '@reusable';
+import { useDebouncedValue } from '@core/hooks/useDebouncedValue';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import type { Car } from '@core/types/domain';
 

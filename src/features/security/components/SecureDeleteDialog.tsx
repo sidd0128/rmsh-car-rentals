@@ -1,10 +1,10 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Dialog, Portal, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import type { DeletionTargetType } from '@core/types/domain';
-import { AppButton, AppInput } from '@shared/ui';
+import { AppButton, AppDialog, AppInput } from '@shared/ui';
 import {
   DeletionImpactSummary,
   secureDeletionService,
@@ -105,73 +105,12 @@ export const SecureDeleteDialog = memo<SecureDeleteDialogProps>(
     };
 
     return (
-      <Portal>
-        <Dialog visible={visible} onDismiss={deleting ? undefined : onCancel}>
-          <Dialog.Title>Confirm secure deletion</Dialog.Title>
-          <Dialog.Content>
-            <View style={styles.content}>
-              <Text style={[typography.body, { color: colors.error }]}>
-                {requiresReauthentication
-                  ? 'This permanently deletes the selected record and linked history from this app and queues the same deletion for Firebase.'
-                  : 'This record has no linked history. It can be deleted without password confirmation, and the deletion will still be logged.'}
-              </Text>
-              {summary ? (
-                <View
-                  style={[
-                    styles.summaryBox,
-                    {
-                      backgroundColor: colors.errorBg,
-                      borderColor: colors.error,
-                    },
-                  ]}
-                >
-                  <Text style={typography.h4}>{summary.targetLabel}</Text>
-                  {countLines.map(line => (
-                    <Text key={line} style={typography.bodySmall}>
-                      {line}
-                    </Text>
-                  ))}
-                  {!requiresReauthentication ? (
-                    <Text style={typography.bodySmall}>
-                      No linked history found.
-                    </Text>
-                  ) : null}
-                </View>
-              ) : (
-                <Text style={typography.bodySmall}>
-                  {loadingSummary
-                    ? 'Loading deletion details...'
-                    : 'No details available.'}
-                </Text>
-              )}
-              {requiresReauthentication ? (
-                <>
-                  <AppInput
-                    label="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    enablePasswordToggle
-                    autoCapitalize="none"
-                    autoComplete="password"
-                  />
-                  <AppInput
-                    label="Reason"
-                    value={reason}
-                    onChangeText={setReason}
-                    multiline
-                    placeholder="Explain why this record is being deleted"
-                  />
-                </>
-              ) : null}
-              {error ? (
-                <Text style={[typography.bodySmall, { color: colors.error }]}>
-                  {error}
-                </Text>
-              ) : null}
-            </View>
-          </Dialog.Content>
-          <Dialog.Actions>
+      <AppDialog
+        visible={visible}
+        title="Confirm secure deletion"
+        onDismiss={deleting ? undefined : onCancel}
+        actions={
+          <>
             <AppButton
               label="Cancel"
               variant="outline"
@@ -185,9 +124,71 @@ export const SecureDeleteDialog = memo<SecureDeleteDialogProps>(
               loading={deleting}
               disabled={!canDelete}
             />
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+          </>
+        }
+      >
+        <View style={styles.content}>
+          <Text style={[typography.body, { color: colors.error }]}>
+            {requiresReauthentication
+              ? 'This permanently deletes the selected record and linked history from this app and queues the same deletion for Firebase.'
+              : 'This record has no linked history. It can be deleted without password confirmation, and the deletion will still be logged.'}
+          </Text>
+          {summary ? (
+            <View
+              style={[
+                styles.summaryBox,
+                {
+                  backgroundColor: colors.errorBg,
+                  borderColor: colors.error,
+                },
+              ]}
+            >
+              <Text style={typography.h4}>{summary.targetLabel}</Text>
+              {countLines.map(line => (
+                <Text key={line} style={typography.bodySmall}>
+                  {line}
+                </Text>
+              ))}
+              {!requiresReauthentication ? (
+                <Text style={typography.bodySmall}>
+                  No linked history found.
+                </Text>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={typography.bodySmall}>
+              {loadingSummary
+                ? 'Loading deletion details...'
+                : 'No details available.'}
+            </Text>
+          )}
+          {requiresReauthentication ? (
+            <>
+              <AppInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                enablePasswordToggle
+                autoCapitalize="none"
+                autoComplete="password"
+              />
+              <AppInput
+                label="Reason"
+                value={reason}
+                onChangeText={setReason}
+                multiline
+                placeholder="Explain why this record is being deleted"
+              />
+            </>
+          ) : null}
+          {error ? (
+            <Text style={[typography.bodySmall, { color: colors.error }]}>
+              {error}
+            </Text>
+          ) : null}
+        </View>
+      </AppDialog>
     );
   },
 );

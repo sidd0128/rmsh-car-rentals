@@ -12,8 +12,8 @@ Design decisions and layer rules. For folder map and feature list, see [PROJECT_
 │ AppProvider, ThemeProvider, LanguageProvider │
 │ NetworkProvider, AuthGate, navigation        │
 ├──────────────────────────────────────────────┤
-│ Screens and reusable UI                      │
-│ features/*, shared/*, reusable/*             │
+│ Screens and shared UI                        │
+│ features/*, shared/*                         │
 ├──────────────────────────────────────────────┤
 │ Hooks and Zustand stores                     │
 │ filtered lists, form data, reactive cache    │
@@ -118,7 +118,7 @@ Modals that need full height, such as rental assignment or end-date editing, sit
 
 1. New business rules → `core/services` or `core/helpers` + tests.
 2. New entity → interface + asyncStorage repo + offline-first wrapper + store + register in `repositoryRegistry`.
-3. Cross-feature UI → `shared/ui` or `reusable/` (not copied per screen).
+3. Cross-feature UI → `shared/ui` (not copied per screen).
 4. Avoid duplicate persistence (Zustand persist + repository for same entity).
 5. New user-facing text → translation key in `src/locales/en.json`.
 6. New theme-aware UI → consume `useThemeContext()`.

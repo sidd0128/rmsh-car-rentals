@@ -1,4 +1,8 @@
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
@@ -10,15 +14,20 @@ import { spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { SHOW_PAYMENTS_UI } from '@core/constants/features';
-import { computeCarTotalPaid, getNextRentDueForCar } from '@core/helpers/rentalPayments';
+import {
+  computeCarTotalPaid,
+  getNextRentDueForCar,
+} from '@core/helpers/rentalPayments';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
-import { FilterBottomSheet, FilterBottomSheetRef } from '@shared/bottomSheets/FilterBottomSheet';
+import {
+  FilterBottomSheet,
+  FilterBottomSheetRef,
+} from '@shared/bottomSheets/FilterBottomSheet';
 import { screenStyles } from '@shared/layouts/screenStyles';
-import { EmptyState } from '@shared/ui';
-import { SearchHeader } from '@reusable';
+import { EmptyState, SearchHeader } from '@shared/ui';
 import { returnsSoonFilterDescription } from '@core/services/availabilityService';
 import { useCarFilterStore, type CarFilter } from '../store/useCarFilterStore';
 import { CarCard } from '../components/CarCard';
@@ -28,7 +37,8 @@ import { useTranslation } from '@core/i18n';
 export const CarsListScreen = () => {
   const { t } = useTranslation();
   const { colors } = useThemeContext();
-  const navigation = useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<CarsStackParamList>>();
   const route = useRoute<RouteProp<CarsStackParamList, 'CarsList'>>();
   const filteredCars = useFilteredCars();
   const customers = useCustomerStore(s => s.customers);
@@ -53,7 +63,9 @@ export const CarsListScreen = () => {
     [t],
   );
 
-  const activeFilterLabel = filterOptions.find(option => option.value === filter)?.label;
+  const activeFilterLabel = filterOptions.find(
+    option => option.value === filter,
+  )?.label;
 
   useFocusEffect(
     useCallback(() => {
@@ -159,7 +171,10 @@ export const CarsListScreen = () => {
       </View>
       <FAB
         icon="plus"
-        style={[styles.fab, { right: horizontalPadding, backgroundColor: colors.primary }]}
+        style={[
+          styles.fab,
+          { right: horizontalPadding, backgroundColor: colors.primary },
+        ]}
         onPress={() => navigation.navigate('CarForm', {})}
         color={colors.textInverse}
       />

@@ -1,11 +1,12 @@
 import React from 'react';
 import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
-import { Dialog, Portal, Snackbar, Text } from 'react-native-paper';
+import { Snackbar, Text } from 'react-native-paper';
 import { spacing } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { useLoaderStore } from '@zustand/useLoaderStore';
 import { useModalStore } from '@zustand/useModalStore';
 import { useToastStore } from '@zustand/useToastStore';
+import { AppDialog } from './AppDialog';
 import { AppButton } from './AppButton';
 
 export const GlobalUiHost = () => {
@@ -46,27 +47,25 @@ export const GlobalUiHost = () => {
 
   return (
     <>
-      <Portal>
-        <Dialog visible={Boolean(alert)} onDismiss={hideAlert}>
-          <Dialog.Title>{alert?.title}</Dialog.Title>
-          {alert?.message || alert?.content ? (
-            <Dialog.Content>
-              {alert.content ?? <Text>{alert.message}</Text>}
-            </Dialog.Content>
-          ) : null}
-          <Dialog.Actions>
-            <AppButton label={alert?.okText ?? 'OK'} onPress={handleAlertOk} />
-          </Dialog.Actions>
-        </Dialog>
+      <AppDialog
+        visible={Boolean(alert)}
+        title={alert?.title}
+        message={alert?.message}
+        onDismiss={hideAlert}
+        actions={
+          <AppButton label={alert?.okText ?? 'OK'} onPress={handleAlertOk} />
+        }
+      >
+        {alert?.content}
+      </AppDialog>
 
-        <Dialog visible={Boolean(modal)} onDismiss={handleModalCancel}>
-          <Dialog.Title>{modal?.title}</Dialog.Title>
-          {modal?.message || modal?.content ? (
-            <Dialog.Content>
-              {modal.content ?? <Text>{modal.message}</Text>}
-            </Dialog.Content>
-          ) : null}
-          <Dialog.Actions>
+      <AppDialog
+        visible={Boolean(modal)}
+        title={modal?.title}
+        message={modal?.message}
+        onDismiss={handleModalCancel}
+        actions={
+          <>
             {modal?.cancelText ? (
               <AppButton
                 label={modal.cancelText}
@@ -75,9 +74,11 @@ export const GlobalUiHost = () => {
               />
             ) : null}
             <AppButton label={modal?.okText ?? 'OK'} onPress={handleModalOk} />
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+          </>
+        }
+      >
+        {modal?.content}
+      </AppDialog>
 
       <Snackbar
         visible={toastVisible}

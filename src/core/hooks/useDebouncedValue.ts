@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 /**
  * Returns a lodash-debounced copy of `value` (default 300ms wait).
  */
-export const useDebouncedValue = <T,>(value: T, wait = 300): T => {
+export const useDebouncedValue = <T>(value: T, wait = 300): T => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   const debouncedSetter = useMemo(

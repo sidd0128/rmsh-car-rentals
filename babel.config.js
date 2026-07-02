@@ -19,7 +19,6 @@ module.exports = {
           '@features': path.join(src, 'features'),
           '@network': path.join(src, 'network'),
           '@zustand': path.join(src, 'zustand'),
-          '@reusable': path.join(src, 'reusable'),
           '@locales': path.join(src, 'locales'),
         },
       },

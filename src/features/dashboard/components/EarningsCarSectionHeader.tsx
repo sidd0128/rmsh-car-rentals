@@ -21,7 +21,10 @@ export interface EarningsCarSectionHeaderProps {
 export const EarningsCarSectionHeader = memo<EarningsCarSectionHeaderProps>(
   ({ carName, hireCount, totalPaid, totalPending, expanded, onPress }) => {
     const { colors } = useThemeContext();
-    const summaryParts = [hireLabel(hireCount), `${formatCurrency(totalPaid)} received`];
+    const summaryParts = [
+      hireLabel(hireCount),
+      `${formatCurrency(totalPaid)} received`,
+    ];
     if (totalPending > 0) {
       summaryParts.push(`${formatCurrency(totalPending)} pending`);
     }

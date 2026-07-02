@@ -3,8 +3,11 @@ import { StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from 'react-native-paper';
 import { calculateFilterSheetSnapHeight } from '@core/helpers/bottomSheetSnapHeight';
 import { useBottomSheetLayoutMetrics } from '@core/hooks/useBottomSheetLayoutMetrics';
-import { SelectableList, type SelectableListOption } from '@reusable';
-import { AppButton } from '@shared/ui/AppButton';
+import {
+  AppButton,
+  SelectableList,
+  type SelectableListOption,
+} from '@shared/ui';
 import { AppBottomSheet, AppBottomSheetRef } from './AppBottomSheet';
 import { spacing } from '@app/theme/spacing';
 import { typography } from '@app/theme/typography';
@@ -91,7 +94,9 @@ function FilterBottomSheetInner<T extends string>(
   );
 }
 
-export const FilterBottomSheet = forwardRef(FilterBottomSheetInner) as <T extends string>(
+export const FilterBottomSheet = forwardRef(FilterBottomSheetInner) as <
+  T extends string,
+>(
   props: FilterBottomSheetProps<T> & { ref?: React.Ref<FilterBottomSheetRef> },
 ) => React.ReactElement;
 
