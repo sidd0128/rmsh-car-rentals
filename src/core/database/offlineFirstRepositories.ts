@@ -97,6 +97,10 @@ class OfflineFirstRentalRepository implements IRentalRepository {
       async () => rental,
     );
   };
+  deleteRental = async (id: string) => {
+    await asyncStorageRentalRepository.deleteRental(id);
+    await cloudEntityWriteService.deleteEntity(FIRESTORE_COLLECTION_NAMES.RENTALS, id);
+  };
 }
 
 class OfflineFirstFineRepository implements IFineRepository {
@@ -145,6 +149,10 @@ class OfflineFirstPaymentRepository implements IPaymentRepository {
       FIRESTORE_COLLECTION_NAMES.PAYMENTS,
       async () => payment,
     );
+  };
+  deletePayment = async (id: string) => {
+    await asyncStoragePaymentRepository.deletePayment(id);
+    await cloudEntityWriteService.deleteEntity(FIRESTORE_COLLECTION_NAMES.PAYMENTS, id);
   };
 }
 

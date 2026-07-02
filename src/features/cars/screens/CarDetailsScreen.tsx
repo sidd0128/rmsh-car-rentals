@@ -68,6 +68,7 @@ export const CarDetailsScreen = () => {
 
   const activeRental = car?.currentBooking;
   const nextFutureBooking = car?.futureBookings[0];
+  const cancelUpcomingRental = useRentalStore(s => s.cancelUpcomingRental);
 
   const onFinePress = useCallback(
     (fineId: string) => navigation.navigate('FineDetails', { fineId }),
@@ -129,6 +130,37 @@ export const CarDetailsScreen = () => {
     ]);
   }, [accidents, car, deleteCar, fines, navigation, payments, rentals, t]);
 
+  const handleCancelUpcomingBooking = useCallback(() => {
+    if (!nextFutureBooking) {
+      return;
+    }
+
+    Alert.alert(
+      t('cars.cancelUpcomingBookingTitle'),
+      t('cars.cancelUpcomingBookingMessage', {
+        date: formatDateTimeAmPm(nextFutureBooking.startDate),
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('cars.cancelUpcomingBookingConfirm'),
+          style: 'destructive',
+          onPress: async () => {
+            const result = await cancelUpcomingRental(nextFutureBooking.id);
+            if (!result.success) {
+              Alert.alert(
+                t('cars.cancelUpcomingBookingFailedTitle'),
+                result.error,
+              );
+              return;
+            }
+            hydrateAll().catch(() => undefined);
+          },
+        },
+      ],
+    );
+  }, [cancelUpcomingRental, hydrateAll, nextFutureBooking, t]);
+
   if (!car) {
     return (
       <ScreenLayout>
@@ -138,7 +170,7 @@ export const CarDetailsScreen = () => {
   }
 
   const badge = carStatusToBadge(car.status);
-  const isCarAvailable = car.status === 'AVAILABLE';
+  const canAssignCar = !activeRental;
 
   return (
     <View style={styles.screen}>
@@ -187,7 +219,7 @@ export const CarDetailsScreen = () => {
       </ScreenSection>
 
       <View style={screenStyles.actions}>
-        {isCarAvailable ? (
+        {canAssignCar ? (
           <AppButton
             label={t('cars.assignCustomer')}
             onPress={() => assignmentRef.current?.open(car.id)}
@@ -204,9 +236,9 @@ export const CarDetailsScreen = () => {
         ) : null}
         {!activeRental && nextFutureBooking ? (
           <AppButton
-            label={t('cars.endUpcomingBooking')}
+            label={t('cars.cancelUpcomingBooking')}
             variant="outline"
-            onPress={() => setEndRef.current?.open(nextFutureBooking)}
+            onPress={handleCancelUpcomingBooking}
             fullWidth
           />
         ) : null}

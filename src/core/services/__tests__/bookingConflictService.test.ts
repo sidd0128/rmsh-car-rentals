@@ -72,4 +72,19 @@ describe('bookingConflictService', () => {
     });
     expect(conflict).toBe(false);
   });
+
+  it('allows a current-month rental before a later upcoming booking starts', () => {
+    const rentals = [
+      baseRental({
+        status: 'UPCOMING',
+        startDate: '2026-08-01T00:00:00.000Z',
+        endDate: '2026-08-31T00:00:00.000Z',
+      }),
+    ];
+    const conflict = hasBookingConflict(rentals, {
+      startDate: '2026-07-02T00:00:00.000Z',
+      endDate: '2026-07-31T23:59:59.000Z',
+    });
+    expect(conflict).toBe(false);
+  });
 });

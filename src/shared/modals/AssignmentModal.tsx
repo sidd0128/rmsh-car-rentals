@@ -125,13 +125,20 @@ export const AssignmentModal = forwardRef<
   const availableCarOptions = useMemo(
     () =>
       cars
-        .filter(c => c.status === 'AVAILABLE')
+        .filter(c => c.status !== 'ON_RENT')
         .map(c => ({
           label: c.name,
           value: c.id,
-          description: `${c.brand} ${c.model} · ${c.numberPlate}`,
+          description: c.futureBookings[0]
+            ? `${c.brand} ${c.model} · ${c.numberPlate} · ${t(
+                'cars.nextBooking',
+                {
+                  date: formatDateTimeAmPm(c.futureBookings[0].startDate),
+                },
+              )}`
+            : `${c.brand} ${c.model} · ${c.numberPlate}`,
         })),
-    [cars],
+    [cars, t],
   );
 
   const startDateTime = useMemo(

@@ -34,6 +34,10 @@ class AsyncStoragePaymentRepository
   async updatePayment(payment: PaymentRecord): Promise<void> {
     await this.save({ ...payment, updatedAt: todayISO() });
   }
+
+  async deletePayment(id: string): Promise<void> {
+    await this.delete(id);
+  }
 }
 
 export const asyncStoragePaymentRepository = new AsyncStoragePaymentRepository();

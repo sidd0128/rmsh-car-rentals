@@ -121,7 +121,7 @@ export const CustomerProfileScreen = () => {
   );
 
   const availableCarCount = useMemo(
-    () => cars.filter(candidate => candidate.status === 'AVAILABLE').length,
+    () => cars.filter(candidate => candidate.status !== 'ON_RENT').length,
     [cars],
   );
 
