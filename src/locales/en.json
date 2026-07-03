@@ -503,6 +503,30 @@
         "car": "Car",
         "customer": "Customer"
       },
+      "filters": {
+        "searchPlaceholder": "Search records, reason, user, or deleted items...",
+        "allTargets": "All records",
+        "allUsers": "All users",
+        "allDates": "All dates",
+        "today": "Today",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "customRange": "Custom range",
+        "newestFirst": "Newest first",
+        "oldestFirst": "Oldest first",
+        "targetButton": "Type: {{value}}",
+        "userButton": "User: {{value}}",
+        "dateButton": "Date: {{value}}",
+        "sortButton": "Sort: {{value}}",
+        "fromDate": "From {{date}}",
+        "toDate": "To {{date}}",
+        "resultCount": "Showing {{shown}} of {{filtered}} matching records ({{total}} total)",
+        "reset": "Reset",
+        "searchUsers": "Search users...",
+        "noUsersFound": "No users found",
+        "noResultsTitle": "No matching deletion records",
+        "noResultsDescription": "Try changing the search, user, type, or date filters."
+      },
       "counts": {
         "cars": {
           "one": "{{count}} car",
