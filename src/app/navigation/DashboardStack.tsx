@@ -6,6 +6,7 @@ import { BookingRequestsScreen } from '@features/bookingRequests/screens/Booking
 import { DashboardScreen } from '@features/dashboard/screens/DashboardScreen';
 import { EarningsBreakdownScreen } from '@features/dashboard/screens/EarningsBreakdownScreen';
 import { UpcomingEarningsScreen } from '@features/dashboard/screens/UpcomingEarningsScreen';
+import { RentDueScreen } from '@features/rentDue/screens/RentDueScreen';
 import type { DashboardStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<DashboardStackParamList>();
@@ -46,6 +47,15 @@ export const DashboardStack = () => {
         options={{
           headerShown: true,
           title: i18n.t('navigation.upcomingEarningsThisYear'),
+          headerBackTitle: i18n.t('navigation.dashboard'),
+        }}
+      />
+      <Stack.Screen
+        name="RentDue"
+        component={RentDueScreen}
+        options={{
+          headerShown: true,
+          title: i18n.t('navigation.rentDue'),
           headerBackTitle: i18n.t('navigation.dashboard'),
         }}
       />

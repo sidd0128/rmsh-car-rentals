@@ -10,6 +10,7 @@ import { computeUpcomingEarningsTotalForYear } from '@core/helpers/upcomingEarni
 import { formatCurrency } from '@core/utils/currency';
 import type { Rental } from '@core/types/domain';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
+import { getDuePendingRentPayments } from '@features/rentDue/helpers/rentDueSections';
 import { StatCard } from './StatCard';
 import { useTranslation } from '@core/i18n';
 
@@ -39,9 +40,19 @@ export const DashboardPaymentStatCards = ({
     }),
     [rentals, payments],
   );
+  const dueRentCount = useMemo(
+    () => getDuePendingRentPayments(payments).length,
+    [payments],
+  );
 
   return (
     <>
+      <StatCard
+        label={t('dashboard.rentDue')}
+        value={dueRentCount}
+        accent={colors.error}
+        onPress={() => navigation.navigate('RentDue')}
+      />
       <StatCard
         label={t('dashboard.totalEarnings')}
         value={formatCurrency(totalEarnings)}

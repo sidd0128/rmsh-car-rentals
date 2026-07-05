@@ -47,6 +47,7 @@
     "addCustomer": "Add Customer",
     "earningsBreakdown": "Earnings breakdown",
     "upcomingEarningsThisYear": "Upcoming earnings this year",
+    "rentDue": "Rent due",
     "bookingRequests": "Booking requests",
     "fines": "Fines",
     "fineDetails": "Fine details",
@@ -107,6 +108,7 @@
     "newBookingRequests": "New booking requests",
     "totalEarnings": "Total Earnings",
     "upcomingEarningsThisYear": "Upcoming earnings this year",
+    "rentDue": "Rent due",
     "recentBookings": "Recent Bookings",
     "recentBookingsHint": "{{count}} most recently created bookings",
     "noBookingsYet": "No bookings yet."
@@ -403,6 +405,21 @@
     "selectYear": "Select year",
     "contractLine": "Contract {{amount}} · {{startDate}} – {{endDate}}",
     "installmentFallback": "Installment"
+  },
+  "rentDue": {
+    "totalDue": "Due now {{amount}}",
+    "hint": "Pending rent installments due today or earlier, grouped by their scheduled rent day.",
+    "duePaymentCount_one": "{{count}} rent payment due",
+    "duePaymentCount_other": "{{count}} rent payments due",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "markSelectedPaid": "Mark selected paid",
+    "selectAllDay": "Select all",
+    "clearDay": "Clear",
+    "sectionMeta": "{{count}} due · {{amount}}",
+    "contractLine": "Contract {{amount}} · {{startDate}} – {{endDate}}",
+    "installmentFallback": "Installment",
+    "noDuePayments": "No rent payments are due right now."
   },
   "settings": {
     "title": "More",
