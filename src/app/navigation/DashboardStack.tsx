@@ -4,8 +4,6 @@ import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import i18n from '@core/i18n';
 import { BookingRequestsScreen } from '@features/bookingRequests/screens/BookingRequestsScreen';
 import { DashboardScreen } from '@features/dashboard/screens/DashboardScreen';
-import { EarningsBreakdownScreen } from '@features/dashboard/screens/EarningsBreakdownScreen';
-import { UpcomingEarningsScreen } from '@features/dashboard/screens/UpcomingEarningsScreen';
 import { RentDueScreen } from '@features/rentDue/screens/RentDueScreen';
 import type { DashboardStackParamList } from './types';
 
@@ -24,29 +22,11 @@ export const DashboardStack = () => {
     >
       <Stack.Screen name="DashboardHome" component={DashboardScreen} />
       <Stack.Screen
-        name="EarningsBreakdown"
-        component={EarningsBreakdownScreen}
-        options={{
-          headerShown: true,
-          title: i18n.t('navigation.earningsBreakdown'),
-          headerBackTitle: i18n.t('navigation.dashboard'),
-        }}
-      />
-      <Stack.Screen
         name="BookingRequests"
         component={BookingRequestsScreen}
         options={{
           headerShown: true,
           title: i18n.t('navigation.bookingRequests'),
-          headerBackTitle: i18n.t('navigation.dashboard'),
-        }}
-      />
-      <Stack.Screen
-        name="UpcomingEarnings"
-        component={UpcomingEarningsScreen}
-        options={{
-          headerShown: true,
-          title: i18n.t('navigation.upcomingEarningsThisYear'),
           headerBackTitle: i18n.t('navigation.dashboard'),
         }}
       />

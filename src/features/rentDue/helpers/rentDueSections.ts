@@ -1,14 +1,17 @@
-import dayjs from 'dayjs';
 import i18n from '@core/i18n';
-import { installmentDueDay, sortPaymentsByDueDate } from '@core/helpers/paymentInstallment';
-import type { PaymentRecord } from '@core/types/domain';
+import { paymentsForRental } from '@core/helpers/rentalPayments';
+import type { PaymentRecord, Rental } from '@core/types/domain';
+
+export type RentDueRosterItem = {
+  rental: Rental;
+  nextPayment?: PaymentRecord;
+};
 
 export type RentDueDaySection = {
   key: string;
   weekdayIndex: number;
   title: string;
-  totalAmount: number;
-  payments: PaymentRecord[];
+  items: RentDueRosterItem[];
 };
 
 const WEEKDAY_KEYS = [
@@ -24,49 +27,45 @@ const WEEKDAY_KEYS = [
 const weekdayTitle = (weekdayIndex: number): string =>
   i18n.t(`billing.weekdays.${WEEKDAY_KEYS[weekdayIndex]}`);
 
-export const getDuePendingRentPayments = (
+const nextPendingPaymentForRental = (
+  rentalId: string,
   payments: PaymentRecord[],
-  asOf: Date | string = new Date(),
-): PaymentRecord[] => {
-  const endOfToday = dayjs(asOf).endOf('day');
-  return sortPaymentsByDueDate(
-    payments.filter(
-      payment =>
-        payment.status === 'PENDING' &&
-        !installmentDueDay(payment).isAfter(endOfToday, 'day'),
-    ),
-  );
-};
+): PaymentRecord | undefined =>
+  paymentsForRental(rentalId, payments).find(payment => payment.status === 'PENDING');
 
-export const groupDueRentPaymentsByWeekday = (
+export const getRentDayRosterItems = (
+  rentals: Rental[],
   payments: PaymentRecord[],
-  asOf: Date | string = new Date(),
+): RentDueRosterItem[] =>
+  rentals
+    .filter(rental => rental.status === 'ACTIVE' && rental.rentDueWeekday != null)
+    .map(rental => ({
+      rental,
+      nextPayment: nextPendingPaymentForRental(rental.id, payments),
+    }));
+
+export const groupRentRosterByWeekday = (
+  rentals: Rental[],
+  payments: PaymentRecord[],
 ): RentDueDaySection[] => {
-  const byWeekday = new Map<number, PaymentRecord[]>();
+  const byWeekday = new Map<number, RentDueRosterItem[]>();
 
-  for (const payment of getDuePendingRentPayments(payments, asOf)) {
-    const weekdayIndex = installmentDueDay(payment).day();
+  for (const item of getRentDayRosterItems(rentals, payments)) {
+    const weekdayIndex = item.rental.rentDueWeekday;
+    if (weekdayIndex == null) {
+      continue;
+    }
     const bucket = byWeekday.get(weekdayIndex) ?? [];
-    bucket.push(payment);
+    bucket.push(item);
     byWeekday.set(weekdayIndex, bucket);
   }
 
   return [...byWeekday.entries()]
     .sort(([a], [b]) => a - b)
-    .map(([weekdayIndex, dayPayments]) => ({
+    .map(([weekdayIndex, items]) => ({
       key: `weekday-${weekdayIndex}`,
       weekdayIndex,
       title: weekdayTitle(weekdayIndex),
-      payments: dayPayments,
-      totalAmount: dayPayments.reduce((sum, payment) => sum + payment.amount, 0),
+      items,
     }));
 };
-
-export const computeDueRentTotal = (
-  payments: PaymentRecord[],
-  asOf: Date | string = new Date(),
-): number =>
-  getDuePendingRentPayments(payments, asOf).reduce(
-    (sum, payment) => sum + payment.amount,
-    0,
-  );

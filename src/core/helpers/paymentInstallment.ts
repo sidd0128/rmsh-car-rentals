@@ -3,8 +3,6 @@ import i18n from '@core/i18n';
 import type { PaymentRecord, PaymentStatus } from '@core/types/domain';
 import { formatDate } from './date';
 
-export type PaymentInstallmentAction = 'received' | 'not_paid';
-
 /** Calendar day when an installment is due (falls back to createdAt for legacy rows). */
 export const installmentDueDay = (
   payment: Pick<PaymentRecord, 'dueDate' | 'createdAt'>,

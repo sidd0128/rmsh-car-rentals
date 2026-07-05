@@ -8,7 +8,6 @@ export type {
 } from './AppDropdown';
 export { CollapsibleSection } from './CollapsibleSection';
 export type { CollapsibleSectionProps } from './CollapsibleSection';
-export { PaymentInstallmentActions } from './PaymentInstallmentActions';
 export { AppInput, ControlledAppInput } from './AppInput';
 export { SearchBar } from './SearchBar';
 export type { SearchBarProps } from './SearchBar';

@@ -24,12 +24,12 @@ import { formatDate } from '@core/helpers/date';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
+import { usePaymentStore } from '@features/payments/store/usePaymentStore';
+import { getRentDayRosterItems } from '@features/rentDue/helpers/rentDueSections';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { screenStyles } from '@shared/layouts/screenStyles';
 import { StatCard } from '../components/StatCard';
-import { DashboardPaymentStatCards } from '../components/DashboardPaymentStatCards';
-import { SHOW_PAYMENTS_UI } from '@core/constants/features';
 import { getPendingBookingRequestCount } from '@features/bookingRequests/helpers/bookingRequestSelectors';
 import { useBookingRequestStore } from '@features/bookingRequests/store/useBookingRequestStore';
 import dayjs from 'dayjs';
@@ -49,6 +49,7 @@ export const DashboardScreen = () => {
   const cars = useCarStore(s => s.cars);
   const customers = useCustomerStore(s => s.customers);
   const rentals = useRentalStore(s => s.rentals);
+  const payments = usePaymentStore(s => s.payments);
   const bookingRequests = useBookingRequestStore(s => s.bookingRequests);
   const { hydrateAll } = useHydrateStores();
 
@@ -68,6 +69,7 @@ export const DashboardScreen = () => {
       .slice(0, RECENT_BOOKINGS_LIMIT);
     const pendingBookingRequests =
       getPendingBookingRequestCount(bookingRequests);
+    const rentRosterCount = getRentDayRosterItems(rentals, payments).length;
 
     return {
       available,
@@ -76,8 +78,9 @@ export const DashboardScreen = () => {
       returningSoon,
       recent,
       pendingBookingRequests,
+      rentRosterCount,
     };
-  }, [bookingRequests, cars, rentals]);
+  }, [bookingRequests, cars, payments, rentals]);
 
   const onRefresh = useCallback(() => hydrateAll(), [hydrateAll]);
 
@@ -124,9 +127,12 @@ export const DashboardScreen = () => {
           accent={colors.primary}
           onPress={() => navigation.navigate('BookingRequests')}
         />
-        {SHOW_PAYMENTS_UI ? (
-          <DashboardPaymentStatCards rentals={rentals} navigation={navigation} />
-        ) : null}
+        <StatCard
+          label={t('dashboard.rentDue')}
+          value={stats.rentRosterCount}
+          accent={colors.error}
+          onPress={() => navigation.navigate('RentDue')}
+        />
       </View>
 
       <Text style={[typography.h3, styles.recentHeading]}>

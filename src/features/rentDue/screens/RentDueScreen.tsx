@@ -3,28 +3,23 @@ import { SectionList, StyleSheet, View } from 'react-native';
 import { Checkbox, Text } from 'react-native-paper';
 import { spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
-import { formatDate } from '@core/helpers/date';
-import { formatInstallmentDueLabel } from '@core/helpers/paymentInstallment';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useTranslation } from '@core/i18n';
-import type { PaymentRecord } from '@core/types/domain';
-import { formatCurrency } from '@core/utils/currency';
-import { useCarStore } from '@features/cars/store/useCarStore';
 import { useCustomerStore } from '@features/customers/store/useCustomerStore';
 import { usePaymentInstallmentActions } from '@features/payments/hooks/usePaymentInstallmentActions';
 import { usePaymentStore } from '@features/payments/store/usePaymentStore';
 import { useRentalStore } from '@features/rentals/store/useRentalStore';
 import { LIST_BOTTOM_INSET, screenStyles } from '@shared/layouts/screenStyles';
-import { AppButton, PaymentInstallmentActions } from '@shared/ui';
+import { AppButton } from '@shared/ui';
 import {
-  computeDueRentTotal,
-  groupDueRentPaymentsByWeekday,
+  groupRentRosterByWeekday,
   type RentDueDaySection,
+  type RentDueRosterItem,
 } from '../helpers/rentDueSections';
 
 type RentDueListSection = RentDueDaySection & {
-  data: PaymentRecord[];
+  data: RentDueRosterItem[];
 };
 
 const SectionSpacer = () => <View style={styles.sectionSpacer} />;
@@ -37,33 +32,23 @@ export const RentDueScreen = () => {
   const payments = usePaymentStore(s => s.payments);
   const rentals = useRentalStore(s => s.rentals);
   const customers = useCustomerStore(s => s.customers);
-  const cars = useCarStore(s => s.cars);
-  const { actingId, actingKind, runAction, runBulkReceived, bulkActingIds } =
+  const { actingId, runReceived, runBulkReceived, bulkActingIds } =
     usePaymentInstallmentActions();
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
 
   const sections = useMemo<RentDueListSection[]>(
     () =>
-      groupDueRentPaymentsByWeekday(payments).map(section => ({
+      groupRentRosterByWeekday(rentals, payments).map(section => ({
         ...section,
-        data: section.payments,
+        data: section.items,
       })),
-    [payments],
+    [payments, rentals],
   );
 
-  const dueTotal = useMemo(() => computeDueRentTotal(payments), [payments]);
-  const dueCount = useMemo(
+  const rosterCount = useMemo(
     () => sections.reduce((sum, section) => sum + section.data.length, 0),
     [sections],
   );
-  const selectedTotal = useMemo(
-    () =>
-      payments
-        .filter(payment => selectedPaymentIds.includes(payment.id))
-        .reduce((sum, payment) => sum + payment.amount, 0),
-    [payments, selectedPaymentIds],
-  );
-
   const selectedIdSet = useMemo(
     () => new Set(selectedPaymentIds),
     [selectedPaymentIds],
@@ -93,44 +78,30 @@ export const RentDueScreen = () => {
 
   const onReceived = useCallback(
     (paymentId: string) => {
-      runAction(paymentId, 'received')
+      runReceived(paymentId)
         .then(() => {
           setSelectedPaymentIds(current => current.filter(id => id !== paymentId));
         })
         .catch(() => undefined);
     },
-    [runAction],
-  );
-
-  const onNotPaid = useCallback(
-    (paymentId: string) => {
-      runAction(paymentId, 'not_paid')
-        .then(() => {
-          setSelectedPaymentIds(current => current.filter(id => id !== paymentId));
-        })
-        .catch(() => undefined);
-    },
-    [runAction],
+    [runReceived],
   );
 
   const markSelectedReceived = useCallback(async () => {
-    const idsToMark = selectedPaymentIds.filter(id =>
-      payments.some(payment => payment.id === id && payment.status === 'PENDING'),
-    );
-    if (idsToMark.length === 0) {
+    if (selectedPaymentIds.length === 0) {
       return;
     }
-    await runBulkReceived(idsToMark);
-    setSelectedPaymentIds(current => current.filter(id => !idsToMark.includes(id)));
-  }, [payments, runBulkReceived, selectedPaymentIds]);
+    await runBulkReceived(selectedPaymentIds);
+    setSelectedPaymentIds([]);
+  }, [runBulkReceived, selectedPaymentIds]);
 
   const renderItem = useCallback(
-    ({ item }: { item: PaymentRecord }) => {
-      const rental = rentals.find(r => r.id === item.rentalId);
-      const customer = customers.find(c => c.id === item.customerId);
-      const car = cars.find(c => c.id === item.carId);
-      const selected = selectedIdSet.has(item.id);
-      const busy = bulkActingIds.includes(item.id);
+    ({ item }: { item: RentDueRosterItem }) => {
+      const paymentId = item.nextPayment?.id;
+      const customer = customers.find(c => c.id === item.rental.customerId);
+      const selected = paymentId ? selectedIdSet.has(paymentId) : false;
+      const busy = paymentId ? bulkActingIds.includes(paymentId) : false;
+      const cannotReceive = !paymentId || busy;
 
       return (
         <View
@@ -143,57 +114,40 @@ export const RentDueScreen = () => {
           <View style={styles.cardHeader}>
             <Checkbox.Android
               status={selected ? 'checked' : 'unchecked'}
-              onPress={() => togglePayment(item.id)}
-              disabled={busy}
+              onPress={() => {
+                if (paymentId) {
+                  togglePayment(paymentId);
+                }
+              }}
+              disabled={cannotReceive}
             />
-            <View style={styles.cardTitle}>
-              <Text style={typography.h4}>
-                {customer?.name ?? t('common.customer')}
-              </Text>
-              <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                {car?.name ?? t('common.car')}
-              </Text>
-            </View>
-            <Text style={[styles.amount, { color: colors.primary }]}>
-              {formatCurrency(item.amount)}
+            <Text style={[typography.h4, styles.customerName]}>
+              {customer?.name ?? t('common.customer')}
             </Text>
+            <AppButton
+              label={t('common.received')}
+              onPress={() => {
+                if (paymentId) {
+                  onReceived(paymentId);
+                }
+              }}
+              disabled={!paymentId}
+              loading={
+                paymentId != null &&
+                (actingId === paymentId || busy)
+              }
+              style={styles.receivedButton}
+            />
           </View>
-          <Text style={[styles.installment, { color: colors.textSecondary }]}>
-            {item.label ?? t('rentDue.installmentFallback')}
-          </Text>
-          <Text style={[styles.dueLine, { color: colors.primary }]}>
-            {formatInstallmentDueLabel(item)}
-          </Text>
-          {rental ? (
-            <Text style={typography.caption}>
-              {t('rentDue.contractLine', {
-                amount: formatCurrency(rental.agreedPrice),
-                startDate: formatDate(rental.startDate),
-                endDate: formatDate(rental.endDate),
-              })}
-            </Text>
-          ) : null}
-          <PaymentInstallmentActions
-            status={item.status}
-            paymentId={item.id}
-            actingId={busy ? item.id : actingId}
-            actingKind={busy ? 'received' : actingKind}
-            onReceived={onReceived}
-            onNotPaid={onNotPaid}
-          />
         </View>
       );
     },
     [
       actingId,
-      actingKind,
       bulkActingIds,
-      cars,
       colors,
       customers,
-      onNotPaid,
       onReceived,
-      rentals,
       selectedIdSet,
       t,
       togglePayment,
@@ -202,7 +156,9 @@ export const RentDueScreen = () => {
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: RentDueListSection }) => {
-      const sectionPaymentIds = section.data.map(payment => payment.id);
+      const sectionPaymentIds = section.data
+        .map(item => item.nextPayment?.id)
+        .filter((id): id is string => Boolean(id));
       const selectedCount = sectionPaymentIds.filter(id =>
         selectedIdSet.has(id),
       ).length;
@@ -221,10 +177,7 @@ export const RentDueScreen = () => {
               {section.title}
             </Text>
             <Text style={[styles.sectionMeta, { color: colors.textSecondary }]}>
-              {t('rentDue.sectionMeta', {
-                count: section.data.length,
-                amount: formatCurrency(section.totalAmount),
-              })}
+              {t('rentDue.sectionMeta', { count: section.data.length })}
             </Text>
           </View>
           <AppButton
@@ -244,17 +197,17 @@ export const RentDueScreen = () => {
     () => (
       <View style={screenStyles.earningsHeader}>
         <Text style={[screenStyles.earningsLead, { color: colors.primary }]}>
-          {t('rentDue.totalDue', { amount: formatCurrency(dueTotal) })}
+          {t('rentDue.title')}
         </Text>
         <Text style={[screenStyles.earningsHint, { color: colors.textSecondary }]}>
           {t('rentDue.hint')}
         </Text>
         <Text style={[screenStyles.earningsMeta, { color: colors.textMuted }]}>
-          {t('rentDue.duePaymentCount', { count: dueCount })}
+          {t('rentDue.rosterCount', { count: rosterCount })}
         </Text>
       </View>
     ),
-    [colors, dueCount, dueTotal, t],
+    [colors, rosterCount, t],
   );
 
   return (
@@ -262,14 +215,9 @@ export const RentDueScreen = () => {
       <View style={[styles.topBar, { paddingHorizontal: horizontalPadding }]}>
         {listHeader}
         <View style={styles.bulkBar}>
-          <View style={styles.bulkCopy}>
-            <Text style={[styles.bulkTitle, { color: colors.text }]}>
-              {t('rentDue.selectedCount', { count: selectedPaymentIds.length })}
-            </Text>
-            <Text style={[styles.bulkAmount, { color: colors.textSecondary }]}>
-              {formatCurrency(selectedTotal)}
-            </Text>
-          </View>
+          <Text style={[styles.bulkTitle, { color: colors.text }]}>
+            {t('rentDue.selectedCount', { count: selectedPaymentIds.length })}
+          </Text>
           <AppButton
             label={t('rentDue.markSelectedPaid')}
             onPress={markSelectedReceived}
@@ -280,7 +228,7 @@ export const RentDueScreen = () => {
       </View>
       <SectionList
         sections={sections}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.rental.id}
         renderItem={renderItem}
         renderSectionHeader={renderSectionHeader}
         stickySectionHeadersEnabled
@@ -313,16 +261,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  bulkCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
   bulkTitle: {
     ...typography.label,
-  },
-  bulkAmount: {
-    ...typography.caption,
-    marginTop: spacing.xxs,
+    flex: 1,
   },
   bulkButton: {
     minWidth: 150,
@@ -365,18 +306,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  cardTitle: {
+  customerName: {
     flex: 1,
     minWidth: 0,
   },
-  installment: {
-    ...typography.bodySmall,
-    marginTop: spacing.xs,
-  },
-  dueLine: {
-    ...typography.label,
-  },
-  amount: {
-    ...typography.h4,
+  receivedButton: {
+    minWidth: 112,
   },
 });

@@ -45,8 +45,6 @@
     "customerProfile": "Customer Profile",
     "editCustomer": "Edit Customer",
     "addCustomer": "Add Customer",
-    "earningsBreakdown": "Earnings breakdown",
-    "upcomingEarningsThisYear": "Upcoming earnings this year",
     "rentDue": "Rent due",
     "bookingRequests": "Booking requests",
     "fines": "Fines",
@@ -106,8 +104,6 @@
     "upcomingBookings": "Upcoming Bookings",
     "customers": "Customers",
     "newBookingRequests": "New booking requests",
-    "totalEarnings": "Total Earnings",
-    "upcomingEarningsThisYear": "Upcoming earnings this year",
     "rentDue": "Rent due",
     "recentBookings": "Recent Bookings",
     "recentBookingsHint": "{{count}} most recently created bookings",
@@ -232,7 +228,6 @@
   },
   "rentals": {
     "noPaymentSchedule": "No payment schedule",
-    "paymentsNotPaid": "{{count}} payments not paid",
     "paidInFull": "Paid in full",
     "paymentPending": "Payment pending",
     "paymentsReceived": "{{paid}} of {{total}} received",
@@ -383,43 +378,19 @@
       "saturday": "Saturday"
     }
   },
-  "earnings": {
-    "searchPlaceholder": "Search customer, car, or dates...",
-    "fleetTotalReceived": "Fleet total received: {{amount}}",
-    "breakdownHint": "Totals reflect customer payments per rental. Tap a car to expand hires.",
-    "showingMatchingHires": "Showing {{visible}} matching {{hireWord}} of {{total}} total",
-    "hire": "hire",
-    "hires": "hires",
-    "hiresAcrossCars": "{{count}} hires across {{cars}} cars",
-    "noSearchResults": "No hires match your search.",
-    "noHiresYet": "No rental hires recorded yet.",
-    "agreed": "Agreed",
-    "receivedMetric": "Received"
-  },
-  "upcomingEarnings": {
-    "yearDue": "{{year}} · Due {{amount}}",
-    "hint": "Pending rent installments grouped by month. Mark received when paid, or not paid to flag the customer.",
-    "upcomingPaymentsInYear_one": "{{count}} upcoming payment in {{year}}",
-    "upcomingPaymentsInYear_other": "{{count}} upcoming payments in {{year}}",
-    "noPendingForYear": "No pending payments for {{year}}.",
-    "selectYear": "Select year",
-    "contractLine": "Contract {{amount}} · {{startDate}} – {{endDate}}",
-    "installmentFallback": "Installment"
-  },
   "rentDue": {
-    "totalDue": "Due now {{amount}}",
-    "hint": "Pending rent installments due today or earlier, grouped by their scheduled rent day.",
-    "duePaymentCount_one": "{{count}} rent payment due",
-    "duePaymentCount_other": "{{count}} rent payments due",
+    "title": "Rent day roster",
+    "hint": "Active customers grouped by the rent weekday selected when the car was assigned.",
+    "rosterCount_one": "{{count}} customer on the roster",
+    "rosterCount_other": "{{count}} customers on the roster",
     "selectedCount_one": "{{count}} selected",
     "selectedCount_other": "{{count}} selected",
     "markSelectedPaid": "Mark selected paid",
     "selectAllDay": "Select all",
     "clearDay": "Clear",
-    "sectionMeta": "{{count}} due · {{amount}}",
-    "contractLine": "Contract {{amount}} · {{startDate}} – {{endDate}}",
-    "installmentFallback": "Installment",
-    "noDuePayments": "No rent payments are due right now."
+    "sectionMeta_one": "{{count}} customer",
+    "sectionMeta_other": "{{count}} customers",
+    "noDuePayments": "No active rentals have a selected rent weekday."
   },
   "settings": {
     "title": "More",

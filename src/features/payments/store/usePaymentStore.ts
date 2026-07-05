@@ -11,7 +11,6 @@ interface PaymentState {
   payments: PaymentRecord[];
   hydrate: () => Promise<void>;
   markPaymentReceived: (paymentId: string) => Promise<void>;
-  markPaymentNotPaid: (paymentId: string) => Promise<void>;
 }
 
 const syncRentalPaymentStatus = async (rentalId: string): Promise<void> => {
@@ -56,18 +55,4 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     await refreshStores();
   },
 
-  markPaymentNotPaid: async paymentId => {
-    const payment = get().payments.find(p => p.id === paymentId);
-    if (!payment || payment.status === 'NOT_PAID') {
-      return;
-    }
-    const updated: PaymentRecord = {
-      ...payment,
-      status: 'NOT_PAID',
-      paidAt: undefined,
-    };
-    await repositories.payments.updatePayment(updated);
-    await syncRentalPaymentStatus(payment.rentalId);
-    await refreshStores();
-  },
 }));

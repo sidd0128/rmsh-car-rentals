@@ -31,8 +31,6 @@ export type HistoryStackParamList = {
 
 export type DashboardStackParamList = {
   DashboardHome: undefined;
-  EarningsBreakdown: undefined;
-  UpcomingEarnings: undefined;
   RentDue: undefined;
   BookingRequests: undefined;
 };
