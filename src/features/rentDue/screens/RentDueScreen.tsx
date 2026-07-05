@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { Checkbox, Text } from 'react-native-paper';
-import { spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
+import { formatDateTimeAmPm } from '@core/helpers/date';
+import { formatRentalEndDisplay } from '@core/helpers/rentalDisplay';
 import { useDeviceLayout } from '@core/hooks/useDeviceLayout';
 import { useHydrateStores } from '@core/hooks/useHydrateStores';
 import { useTranslation } from '@core/i18n';
@@ -23,6 +25,15 @@ type RentDueListSection = RentDueDaySection & {
 };
 
 const SectionSpacer = () => <View style={styles.sectionSpacer} />;
+const CARD_CONTENT_INDENT = 88;
+
+const initialsForName = (name: string): string =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('') || '?';
 
 export const RentDueScreen = () => {
   const { t } = useTranslation();
@@ -99,19 +110,42 @@ export const RentDueScreen = () => {
     ({ item }: { item: RentDueRosterItem }) => {
       const paymentId = item.nextPayment?.id;
       const customer = customers.find(c => c.id === item.rental.customerId);
+      const customerName = customer?.name ?? t('common.customer');
+      const rentalPayments = payments.filter(
+        payment => payment.rentalId === item.rental.id,
+      );
+      const hasPayments = rentalPayments.length > 0;
       const selected = paymentId ? selectedIdSet.has(paymentId) : false;
       const busy = paymentId ? bulkActingIds.includes(paymentId) : false;
       const cannotReceive = !paymentId || busy;
+      const statusLabel = paymentId
+        ? t('rentDue.readyToMark')
+        : hasPayments
+          ? t('rentDue.paymentComplete')
+          : t('rentDue.noPendingPayment');
+      const buttonLabel = paymentId
+        ? t('rentDue.markReceived')
+        : hasPayments
+          ? t('rentDue.paymentComplete')
+          : t('rentDue.noPaymentButton');
+      const rentalPeriod = t('rentDue.agreedPeriod', {
+        start: formatDateTimeAmPm(item.rental.startDate),
+        end: formatRentalEndDisplay(item.rental.endDate),
+      });
 
       return (
         <View
           style={[
             screenStyles.surfaceCard,
             styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderLight },
+            {
+              backgroundColor: colors.surface,
+              borderColor: selected ? colors.primaryLight : colors.borderLight,
+              shadowColor: colors.shadow,
+            },
           ]}
         >
-          <View style={styles.cardHeader}>
+          <View style={styles.identityRow}>
             <Checkbox.Android
               status={selected ? 'checked' : 'unchecked'}
               onPress={() => {
@@ -121,11 +155,56 @@ export const RentDueScreen = () => {
               }}
               disabled={cannotReceive}
             />
-            <Text style={[typography.h4, styles.customerName]}>
-              {customer?.name ?? t('common.customer')}
+            <View
+              style={[
+                styles.avatar,
+                {
+                  backgroundColor: selected ? colors.primary : colors.infoBg,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.avatarText,
+                  { color: selected ? colors.textInverse : colors.primary },
+                ]}
+              >
+                {initialsForName(customerName)}
+              </Text>
+            </View>
+            <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={2}>
+              {customerName}
             </Text>
+          </View>
+          <View style={styles.cardDetails}>
+            <Text
+              style={[styles.rentalPeriod, { color: colors.textSecondary }]}
+              numberOfLines={3}
+            >
+              {rentalPeriod}
+            </Text>
+            <View
+              style={[
+                styles.statusPill,
+                {
+                  backgroundColor: paymentId ? colors.successBg : colors.borderLight,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: paymentId ? colors.success : colors.textMuted },
+                ]}
+                numberOfLines={1}
+              >
+                {statusLabel}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.cardActions}>
             <AppButton
-              label={t('common.received')}
+              label={buttonLabel}
               onPress={() => {
                 if (paymentId) {
                   onReceived(paymentId);
@@ -136,6 +215,8 @@ export const RentDueScreen = () => {
                 paymentId != null &&
                 (actingId === paymentId || busy)
               }
+              contentStyle={styles.compactButtonContent}
+              labelStyle={styles.compactButtonLabel}
               style={styles.receivedButton}
             />
           </View>
@@ -148,6 +229,7 @@ export const RentDueScreen = () => {
       colors,
       customers,
       onReceived,
+      payments,
       selectedIdSet,
       t,
       togglePayment,
@@ -185,6 +267,8 @@ export const RentDueScreen = () => {
             variant="outline"
             onPress={() => selectSection(sectionPaymentIds)}
             disabled={sectionPaymentIds.length === 0}
+            contentStyle={styles.compactButtonContent}
+            labelStyle={styles.compactButtonLabel}
             style={styles.sectionButton}
           />
         </View>
@@ -196,15 +280,26 @@ export const RentDueScreen = () => {
   const listHeader = useMemo(
     () => (
       <View style={screenStyles.earningsHeader}>
-        <Text style={[screenStyles.earningsLead, { color: colors.primary }]}>
-          {t('rentDue.title')}
-        </Text>
-        <Text style={[screenStyles.earningsHint, { color: colors.textSecondary }]}>
-          {t('rentDue.hint')}
-        </Text>
-        <Text style={[screenStyles.earningsMeta, { color: colors.textMuted }]}>
-          {t('rentDue.rosterCount', { count: rosterCount })}
-        </Text>
+        <View
+          style={[
+            styles.heroCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.borderLight,
+              shadowColor: colors.shadow,
+            },
+          ]}
+        >
+          <Text style={[styles.heroTitle, { color: colors.primary }]}>
+            {t('rentDue.title')}
+          </Text>
+          <Text style={[styles.heroHint, { color: colors.textSecondary }]}>
+            {t('rentDue.hint')}
+          </Text>
+          <Text style={[styles.heroMeta, { color: colors.textMuted }]}>
+            {t('rentDue.rosterCount', { count: rosterCount })}
+          </Text>
+        </View>
       </View>
     ),
     [colors, rosterCount, t],
@@ -214,16 +309,29 @@ export const RentDueScreen = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.topBar, { paddingHorizontal: horizontalPadding }]}>
         {listHeader}
-        <View style={styles.bulkBar}>
-          <Text style={[styles.bulkTitle, { color: colors.text }]}>
-            {t('rentDue.selectedCount', { count: selectedPaymentIds.length })}
-          </Text>
-          <AppButton
-            label={t('rentDue.markSelectedPaid')}
-            onPress={markSelectedReceived}
-            disabled={selectedPaymentIds.length === 0}
-            style={styles.bulkButton}
-          />
+        <View
+          style={[
+            styles.bulkBar,
+            { backgroundColor: colors.surface, borderColor: colors.borderLight },
+          ]}
+        >
+          <View style={styles.bulkCopy}>
+            <Text style={[styles.bulkTitle, { color: colors.text }]}>
+              {t('rentDue.selectedCount', { count: selectedPaymentIds.length })}
+            </Text>
+            <Text style={[styles.bulkHint, { color: colors.textMuted }]}>
+              {t('rentDue.selectedHint')}
+            </Text>
+          </View>
+          {selectedPaymentIds.length > 0 ? (
+            <AppButton
+              label={t('rentDue.markSelectedPaid')}
+              onPress={markSelectedReceived}
+              contentStyle={styles.compactButtonContent}
+              labelStyle={styles.compactButtonLabel}
+              style={styles.bulkButton}
+            />
+          ) : null}
         </View>
       </View>
       <SectionList
@@ -256,17 +364,59 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
+  heroCard: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+  heroTitle: {
+    ...typography.h3,
+    fontWeight: '700',
+  },
+  heroHint: {
+    ...typography.bodySmall,
+    lineHeight: 21,
+  },
+  heroMeta: {
+    ...typography.caption,
+  },
   bulkBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  bulkCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   bulkTitle: {
     ...typography.label,
-    flex: 1,
+  },
+  bulkHint: {
+    ...typography.caption,
+    marginTop: spacing.xxs,
   },
   bulkButton: {
-    minWidth: 150,
+    alignSelf: 'stretch',
+  },
+  compactButtonContent: {
+    minHeight: 42,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  compactButtonLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    marginVertical: 0,
+    marginHorizontal: 0,
   },
   listContent: {
     paddingTop: spacing.sm,
@@ -277,7 +427,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
     paddingHorizontal: spacing.xs,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
@@ -293,24 +444,67 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxs,
   },
   sectionButton: {
-    minWidth: 118,
+    minWidth: 132,
+    maxWidth: 160,
   },
   sectionSpacer: {
     height: spacing.md,
   },
   card: {
     marginBottom: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+    minHeight: 168,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
   },
-  cardHeader: {
+  identityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    ...typography.label,
+    fontWeight: '700',
+  },
   customerName: {
+    ...typography.h4,
     flex: 1,
     minWidth: 0,
   },
+  cardDetails: {
+    marginLeft: CARD_CONTENT_INDENT,
+    gap: spacing.sm,
+  },
+  rentalPeriod: {
+    ...typography.bodySmall,
+    lineHeight: 20,
+  },
+  statusPill: {
+    alignSelf: 'flex-start',
+    maxWidth: 130,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  statusText: {
+    ...typography.caption,
+    fontWeight: '600',
+  },
+  cardActions: {
+    marginLeft: CARD_CONTENT_INDENT,
+  },
   receivedButton: {
-    minWidth: 112,
+    alignSelf: 'stretch',
   },
 });
