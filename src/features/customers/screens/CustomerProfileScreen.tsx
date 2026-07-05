@@ -9,7 +9,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CustomersStackParamList } from '@app/navigation/types';
-import { spacing, typography } from '@app/theme';
+import { radius, spacing, typography } from '@app/theme';
 import { useThemeContext } from '@contextApis/theme/useThemeContext';
 import { formatDate, formatDateTimeAmPm } from '@core/helpers/date';
 import { sortPaymentsByDueDate } from '@core/helpers/paymentInstallment';
@@ -27,7 +27,13 @@ import { useCarStore } from '@features/cars/store/useCarStore';
 import { ScreenLayout } from '@shared/layouts/ScreenLayout';
 import { ScreenSection } from '@shared/layouts/ScreenSection';
 import { screenStyles } from '@shared/layouts/screenStyles';
-import { AppButton, TimelineView } from '@shared/ui';
+import {
+  AppButton,
+  AppDatePickerModal,
+  AppDialog,
+  TimelineView,
+  WeekdayPicker,
+} from '@shared/ui';
 import { ImageSlider } from '@shared/media';
 import { reportImageLoadError } from '@shared/media/reportImageLoadError';
 import {
@@ -43,6 +49,10 @@ import { SignedRentalAgreementDocuments } from '@features/rentals/components/Sig
 import { SecureDeleteDialog } from '@features/security/components/SecureDeleteDialog';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
+import {
+  billingFrequencyLabel,
+  formatRentDueDaySummary,
+} from '@core/services/rentalBillingService';
 
 export const CustomerProfileScreen = () => {
   const { t } = useTranslation();
@@ -60,10 +70,22 @@ export const CustomerProfileScreen = () => {
   const accidents = useAccidentStore(s => s.accidents);
   const cars = useCarStore(s => s.cars);
   const setRentalEndDate = useRentalStore(s => s.setRentalEndDate);
+  const updateRentalRentDueDay = useRentalStore(s => s.updateRentalRentDueDay);
   const { hydrateAll } = useHydrateStores();
   const assignmentRef = useRef<AssignmentModalRef>(null);
   const [endingRentalId, setEndingRentalId] = useState<string | null>(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [rentDueDialogRental, setRentDueDialogRental] = useState<Rental | null>(
+    null,
+  );
+  const [selectedRentDueWeekday, setSelectedRentDueWeekday] = useState<number>(
+    dayjs().day(),
+  );
+  const [selectedRentDueDayOfMonth, setSelectedRentDueDayOfMonth] = useState(
+    Math.min(dayjs().date(), 28),
+  );
+  const [rentDueDayPickerVisible, setRentDueDayPickerVisible] = useState(false);
+  const [savingRentDueDay, setSavingRentDueDay] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -198,6 +220,63 @@ export const CustomerProfileScreen = () => {
     [hydrateAll, setRentalEndDate, t],
   );
 
+  const openRentDueDialog = useCallback((rental: Rental) => {
+    setRentDueDialogRental(rental);
+    setSelectedRentDueWeekday(rental.rentDueWeekday ?? dayjs().day());
+    setSelectedRentDueDayOfMonth(
+      rental.rentDueDayOfMonth ?? Math.min(dayjs().date(), 28),
+    );
+  }, []);
+
+  const closeRentDueDialog = useCallback(() => {
+    if (savingRentDueDay) {
+      return;
+    }
+    setRentDueDialogRental(null);
+    setRentDueDayPickerVisible(false);
+  }, [savingRentDueDay]);
+
+  const handleSaveRentDueDay = useCallback(async () => {
+    if (!rentDueDialogRental) {
+      return;
+    }
+
+    setSavingRentDueDay(true);
+    const result = await updateRentalRentDueDay(rentDueDialogRental.id, {
+      rentDueWeekday:
+        rentDueDialogRental.billingFrequency === 'WEEKLY'
+          ? selectedRentDueWeekday
+          : undefined,
+      rentDueDayOfMonth:
+        rentDueDialogRental.billingFrequency === 'MONTHLY'
+          ? selectedRentDueDayOfMonth
+          : undefined,
+    })
+      .catch(error => ({
+        success: false as const,
+        error:
+          error instanceof Error ? error.message : t('common.notAvailable'),
+      }))
+      .finally(() => {
+        setSavingRentDueDay(false);
+      });
+
+    if (!result.success) {
+      Alert.alert(t('customers.updateRentDueDayFailedTitle'), result.error);
+      return;
+    }
+
+    setRentDueDialogRental(null);
+    hydrateAll().catch(() => undefined);
+  }, [
+    hydrateAll,
+    rentDueDialogRental,
+    selectedRentDueDayOfMonth,
+    selectedRentDueWeekday,
+    t,
+    updateRentalRentDueDay,
+  ]);
+
   if (!customer) {
     return (
       <ScreenLayout>
@@ -324,6 +403,9 @@ export const CustomerProfileScreen = () => {
             activeRentals.map(rental => {
               const rentalCar = carsById.get(rental.carId);
               const carName = rentalCar?.name ?? t('common.car');
+              const canEditRentDueDay =
+                rental.billingFrequency === 'WEEKLY' ||
+                rental.billingFrequency === 'MONTHLY';
 
               return (
                 <View
@@ -354,6 +436,39 @@ export const CustomerProfileScreen = () => {
                       end: formatRentalEndDisplay(rental.endDate),
                     })}
                   </Text>
+                  {rental.billingFrequency ? (
+                    <View
+                      style={[
+                        styles.rentDueSummary,
+                        {
+                          backgroundColor: colors.infoBg,
+                          borderColor: colors.borderLight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.rentDueLabel, { color: colors.primary }]}
+                      >
+                        {t('customers.rentDueSchedule')}
+                      </Text>
+                      <Text style={[typography.body, { color: colors.text }]}>
+                        {billingFrequencyLabel(rental.billingFrequency)} ·{' '}
+                        {formatRentDueDaySummary(
+                          rental.billingFrequency,
+                          rental.rentDueWeekday,
+                          rental.rentDueDayOfMonth,
+                        )}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {canEditRentDueDay ? (
+                    <AppButton
+                      label={t('customers.editRentDueDay')}
+                      variant="outline"
+                      onPress={() => openRentDueDialog(rental)}
+                      fullWidth
+                    />
+                  ) : null}
                   <AppButton
                     label={t('customers.endThisRentalNow')}
                     variant="danger"
@@ -491,7 +606,7 @@ export const CustomerProfileScreen = () => {
           style={styles.editBtn}
         />
         <AppButton
-          label="Delete customer"
+          label={t('customers.deleteCustomer')}
           variant="danger"
           onPress={() => setDeleteDialogVisible(true)}
           fullWidth
@@ -503,6 +618,93 @@ export const CustomerProfileScreen = () => {
         onSuccess={() => {
           hydrateAll().catch(() => undefined);
         }}
+      />
+      <AppDialog
+        visible={Boolean(rentDueDialogRental)}
+        title={t('customers.editRentDueDayTitle')}
+        onDismiss={closeRentDueDialog}
+        dismissOnBackdrop
+        actions={
+          <View style={styles.dialogActions}>
+            <AppButton
+              label={t('common.cancel')}
+              variant="outline"
+              onPress={closeRentDueDialog}
+              disabled={savingRentDueDay}
+              style={styles.dialogActionButton}
+            />
+            <AppButton
+              label={t('common.save')}
+              onPress={handleSaveRentDueDay}
+              loading={savingRentDueDay}
+              style={styles.dialogActionButton}
+            />
+          </View>
+        }
+      >
+        <View style={styles.rentDueDialogContent}>
+          <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+            {t('customers.editRentDueDayDescription')}
+          </Text>
+          {rentDueDialogRental?.billingFrequency === 'WEEKLY' ? (
+            <>
+              <Text style={styles.dialogFieldLabel}>
+                {t('assignment.rentPaidOn')}
+              </Text>
+              <WeekdayPicker
+                value={selectedRentDueWeekday}
+                onChange={setSelectedRentDueWeekday}
+              />
+              <Text style={[styles.rentDueHint, { color: colors.textMuted }]}>
+                {formatRentDueDaySummary('WEEKLY', selectedRentDueWeekday)}
+              </Text>
+            </>
+          ) : null}
+          {rentDueDialogRental?.billingFrequency === 'MONTHLY' ? (
+            <>
+              <Text style={styles.dialogFieldLabel}>
+                {t('assignment.rentDueDayOfMonth')}
+              </Text>
+              <AppButton
+                label={t('common.dayOfMonthButton', {
+                  day: selectedRentDueDayOfMonth,
+                })}
+                variant="outline"
+                onPress={() => setRentDueDayPickerVisible(true)}
+                fullWidth
+              />
+              <Text style={[styles.rentDueHint, { color: colors.textMuted }]}>
+                {formatRentDueDaySummary(
+                  'MONTHLY',
+                  undefined,
+                  selectedRentDueDayOfMonth,
+                )}
+              </Text>
+            </>
+          ) : null}
+          <View
+            style={[
+              styles.rentDueNote,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.borderLight,
+              },
+            ]}
+          >
+            <Text style={[typography.caption, { color: colors.textMuted }]}>
+              {t('customers.editRentDueDayNote')}
+            </Text>
+          </View>
+        </View>
+      </AppDialog>
+      <AppDatePickerModal
+        open={rentDueDayPickerVisible}
+        date={dayjs().date(selectedRentDueDayOfMonth).toDate()}
+        onConfirm={date => {
+          setRentDueDayPickerVisible(false);
+          setSelectedRentDueDayOfMonth(Math.min(dayjs(date).date(), 28));
+        }}
+        onCancel={() => setRentDueDayPickerVisible(false)}
       />
       <SecureDeleteDialog
         visible={deleteDialogVisible}
@@ -558,9 +760,44 @@ const styles = StyleSheet.create({
   },
   activeRentalCard: {
     marginBottom: spacing.md,
+    gap: spacing.md,
+  },
+  rentDueSummary: {
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+  },
+  rentDueLabel: {
+    ...typography.caption,
+    fontWeight: '600',
   },
   signedAgreementCard: {
     gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  dialogActions: {
+    flexDirection: 'column',
+    gap: spacing.sm,
+    width: '100%',
+  },
+  dialogActionButton: {
+    width: '100%',
+  },
+  rentDueDialogContent: {
+    gap: spacing.md,
+  },
+  dialogFieldLabel: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+  },
+  rentDueNote: {
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+  },
+  rentDueHint: {
+    ...typography.caption,
   },
 });
