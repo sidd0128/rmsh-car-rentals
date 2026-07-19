@@ -38,6 +38,7 @@ import {
 } from '@core/helpers/historyDates';
 import { mergeDateAndTime } from '@core/helpers/rentalDisplay';
 import { formatDateTimeAmPm } from '@core/helpers/date';
+import { isCarAvailableForRange } from '@core/services/bookingConflictService';
 import dayjs from 'dayjs';
 import { useTranslation } from '@core/i18n';
 
@@ -115,6 +116,7 @@ export const AssignmentModal = forwardRef<
 
   const customers = useCustomerStore(s => s.customers);
   const cars = useCarStore(s => s.cars);
+  const rentals = useRentalStore(s => s.rentals);
   const car = useCarStore(s => (carId ? s.getCarById(carId) : undefined));
   const assignRental = useRentalStore(s => s.assignRental);
   const selectedCustomer = customers.find(c => c.id === customerId);
@@ -122,25 +124,6 @@ export const AssignmentModal = forwardRef<
     () => customers.map(c => ({ label: c.name, value: c.id })),
     [customers],
   );
-  const availableCarOptions = useMemo(
-    () =>
-      cars
-        .filter(c => c.status !== 'ON_RENT')
-        .map(c => ({
-          label: c.name,
-          value: c.id,
-          description: c.futureBookings[0]
-            ? `${c.brand} ${c.model} · ${c.numberPlate} · ${t(
-                'cars.nextBooking',
-                {
-                  date: formatDateTimeAmPm(c.futureBookings[0].startDate),
-                },
-              )}`
-            : `${c.brand} ${c.model} · ${c.numberPlate}`,
-        })),
-    [cars, t],
-  );
-
   const startDateTime = useMemo(
     () => mergeDateAndTime(startDatePart, startTimePart),
     [startDatePart, startTimePart],
@@ -149,6 +132,39 @@ export const AssignmentModal = forwardRef<
     () => mergeDateAndTime(endDatePart, endTimePart),
     [endDatePart, endTimePart],
   );
+  const availableCarOptions = useMemo(() => {
+    const selectedStart = dayjs(startDateTime);
+    const availabilityProbe = {
+      startDate: selectedStart.toISOString(),
+      endDate: selectedStart.add(1, 'minute').toISOString(),
+    };
+
+    return cars
+      .filter(c => isCarAvailableForRange(c.id, rentals, availabilityProbe))
+      .map(c => ({
+        label: c.name,
+        value: c.id,
+        description: c.futureBookings[0]
+          ? `${c.brand} ${c.model} · ${c.numberPlate} · ${t(
+              'cars.nextBooking',
+              {
+                date: formatDateTimeAmPm(c.futureBookings[0].startDate),
+              },
+            )}`
+          : `${c.brand} ${c.model} · ${c.numberPlate}`,
+      }));
+  }, [cars, rentals, startDateTime, t]);
+
+  useEffect(() => {
+    if (
+      carLocked ||
+      !carId ||
+      availableCarOptions.some(option => option.value === carId)
+    ) {
+      return;
+    }
+    setCarId('');
+  }, [availableCarOptions, carId, carLocked]);
 
   const resetScheduleDefaults = useCallback(() => {
     const now = new Date();
@@ -268,25 +284,6 @@ export const AssignmentModal = forwardRef<
         {t('assignment.subtitle')}
       </Text>
 
-      {carLocked ? null : (
-        <>
-          <AppDropdown
-            label={car?.name ?? t('assignment.selectCar')}
-            options={availableCarOptions}
-            onSelect={setCarId}
-            fullWidth
-            searchable
-            searchPlaceholder={t('assignment.searchCars')}
-            emptySearchMessage={t('assignment.noCarsMatchSearch')}
-          />
-          {availableCarOptions.length === 0 ? (
-            <Text style={[styles.hint, { color: colors.textMuted }]}>
-              {t('assignment.noAvailableCars')}
-            </Text>
-          ) : null}
-        </>
-      )}
-
       {customerLocked ? (
         <View>
           <Text style={modalFormStyles.fieldLabel}>{t('common.customer')}</Text>
@@ -316,23 +313,6 @@ export const AssignmentModal = forwardRef<
       )}
 
       <Text style={modalFormStyles.fieldLabel}>
-        {t('assignment.rentFrequency')}
-      </Text>
-      <SegmentedButtons
-        value={frequency}
-        onValueChange={v => setFrequency(v as BillingFrequency)}
-        buttons={frequencyOptions}
-        style={styles.segment}
-      />
-
-      <AppInput
-        label={rateFieldLabel(frequency)}
-        value={rate}
-        onChangeText={setRate}
-        keyboardType="numeric"
-      />
-
-      <Text style={modalFormStyles.fieldLabel}>
         {t('assignment.startDateTime')}
       </Text>
       <View style={styles.dateRow}>
@@ -356,6 +336,42 @@ export const AssignmentModal = forwardRef<
       <Text style={[styles.hint, { color: colors.textMuted }]}>
         {formatDateTimeAmPm(startDateTime.toISOString())}
       </Text>
+
+      {carLocked ? null : (
+        <>
+          <AppDropdown
+            label={car?.name ?? t('assignment.selectCar')}
+            options={availableCarOptions}
+            onSelect={setCarId}
+            fullWidth
+            searchable
+            searchPlaceholder={t('assignment.searchCars')}
+            emptySearchMessage={t('assignment.noCarsMatchSearch')}
+          />
+          {availableCarOptions.length === 0 ? (
+            <Text style={[styles.hint, { color: colors.textMuted }]}>
+              {t('assignment.noAvailableCars')}
+            </Text>
+          ) : null}
+        </>
+      )}
+
+      <Text style={modalFormStyles.fieldLabel}>
+        {t('assignment.rentFrequency')}
+      </Text>
+      <SegmentedButtons
+        value={frequency}
+        onValueChange={v => setFrequency(v as BillingFrequency)}
+        buttons={frequencyOptions}
+        style={styles.segment}
+      />
+
+      <AppInput
+        label={rateFieldLabel(frequency)}
+        value={rate}
+        onChangeText={setRate}
+        keyboardType="numeric"
+      />
 
       <Text style={modalFormStyles.fieldLabel}>
         {t('assignment.endDateTime')}
@@ -450,6 +466,12 @@ export const AssignmentModal = forwardRef<
         onConfirm={d => {
           setShowStartDate(false);
           setStartDatePart(d);
+          const nextStart = mergeDateAndTime(d, startTimePart);
+          if (!endDateUnset && !dayjs(endDateTime).isAfter(nextStart)) {
+            const nextEnd = dayjs(nextStart).add(7, 'day').toDate();
+            setEndDatePart(nextEnd);
+            setEndTimePart(nextEnd);
+          }
         }}
         onCancel={() => setShowStartDate(false)}
       />
@@ -460,6 +482,12 @@ export const AssignmentModal = forwardRef<
         onConfirm={d => {
           setShowStartTime(false);
           setStartTimePart(d);
+          const nextStart = mergeDateAndTime(startDatePart, d);
+          if (!endDateUnset && !dayjs(endDateTime).isAfter(nextStart)) {
+            const nextEnd = dayjs(nextStart).add(7, 'day').toDate();
+            setEndDatePart(nextEnd);
+            setEndTimePart(nextEnd);
+          }
         }}
         onCancel={() => setShowStartTime(false)}
       />

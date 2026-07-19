@@ -1,6 +1,7 @@
 import {
   findBookingConflict,
   hasBookingConflict,
+  isCarAvailableForRange,
 } from '../bookingConflictService';
 import type { Rental } from '../../types/domain';
 
@@ -86,5 +87,39 @@ describe('bookingConflictService', () => {
       endDate: '2026-07-31T23:59:59.000Z',
     });
     expect(conflict).toBe(false);
+  });
+
+  it('shows a currently rented car for a start time after it is returned', () => {
+    const rentals = [
+      baseRental({
+        carId: 'returning-car',
+        startDate: '2026-07-01T09:00:00.000Z',
+        endDate: '2026-07-20T17:00:00.000Z',
+      }),
+    ];
+
+    expect(
+      isCarAvailableForRange('returning-car', rentals, {
+        startDate: '2026-07-21T09:00:00.000Z',
+        endDate: '2026-07-21T09:01:00.000Z',
+      }),
+    ).toBe(true);
+  });
+
+  it('hides a currently rented car when the selected start time overlaps', () => {
+    const rentals = [
+      baseRental({
+        carId: 'returning-car',
+        startDate: '2026-07-01T09:00:00.000Z',
+        endDate: '2026-07-20T17:00:00.000Z',
+      }),
+    ];
+
+    expect(
+      isCarAvailableForRange('returning-car', rentals, {
+        startDate: '2026-07-20T09:00:00.000Z',
+        endDate: '2026-07-20T09:01:00.000Z',
+      }),
+    ).toBe(false);
   });
 });

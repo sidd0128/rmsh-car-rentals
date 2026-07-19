@@ -335,7 +335,7 @@
     "searchCustomers": "Search customers...",
     "noCustomersMatchSearch": "No customers match your search.",
     "selectCarAlert": "Select a car",
-    "noAvailableCars": "No available cars right now.",
+    "noAvailableCars": "No cars are available at the selected start date and time.",
     "addNewCustomer": "+ Add new customer",
     "rentFrequency": "Rent payment frequency",
     "frequencyDaily": "Daily",

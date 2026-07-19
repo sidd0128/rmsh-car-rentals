@@ -144,11 +144,6 @@ export const CustomerProfileScreen = () => {
     [accidents, route.params.customerId],
   );
 
-  const availableCarCount = useMemo(
-    () => cars.filter(candidate => candidate.status !== 'ON_RENT').length,
-    [cars],
-  );
-
   const handleAssignNewCar = useCallback(() => {
     if (!customer) {
       return;
@@ -160,15 +155,8 @@ export const CustomerProfileScreen = () => {
       );
       return;
     }
-    if (availableCarCount === 0) {
-      Alert.alert(
-        t('customers.noAvailableCarsTitle'),
-        t('customers.noAvailableCarsMessage'),
-      );
-      return;
-    }
     assignmentRef.current?.openForCustomer(customer.id);
-  }, [availableCarCount, customer, t]);
+  }, [customer, t]);
 
   const handleEndCurrentRentalNow = useCallback(
     (rental: Rental, carName: string) => {

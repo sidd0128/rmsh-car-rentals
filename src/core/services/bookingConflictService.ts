@@ -37,8 +37,20 @@ export const findBookingConflict = (
       rangesOverlap(range, { startDate: r.startDate, endDate: r.endDate }),
     );
 
+/** Checks one car's availability for a requested rental window. */
+export const isCarAvailableForRange = (
+  carId: string,
+  rentals: Rental[],
+  range: DateRange,
+): boolean =>
+  !hasBookingConflict(
+    rentals.filter(rental => rental.carId === carId),
+    range,
+  );
+
 export const bookingConflictService = {
   hasBookingConflict,
   findBookingConflict,
+  isCarAvailableForRange,
   rangesOverlap,
 };
